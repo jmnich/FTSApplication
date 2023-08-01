@@ -6,6 +6,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sys
 from mfli_driver import MFLIDriver
 from zaber_driver import ZaberDriver
+import time
 
 
 class FTSApp:
@@ -183,11 +184,11 @@ class FTSApp:
         self.mfliIDBox.grid(row=4, column=1, sticky="E", padx=5, pady=5)
 
         self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
-                                            text="Connect\nall",
+                                            text="Reconnect\nall",
                                             width=120,
                                             height=80,
                                             corner_radius=10,
-                                            command=self.onCmdUnusedButton)
+                                            command=self.onCmdConnectHardware)
         self.buttonHardware.grid(row=6, column=0, sticky="N", padx=5, pady=5)
 
         self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
@@ -234,6 +235,12 @@ class FTSApp:
 
     def onCmdSingleCapture(self):
         print("Single capture command")
+        self.MFLIDrv.configureForMeasurement()
+        self.MFLIDrv.measureData()
+
+        self.currentInterferogramY = self.MFLIDrv.lastData
+        self.currentInterferogramX = np.arange(len(self.currentInterferogramY))
+
         self.updatePlot()
 
     def onCmdUnusedButton(self):
@@ -257,19 +264,19 @@ class FTSApp:
         plt.title("Spectrum")
         plt.plot(self.currentSpectrumX, self.currentSpectrumY)
         plt.ion()
-        plt.pause(0.25)
+        plt.pause(1.0)
         plt.show()
-        plt.pause(0.25)
+        plt.pause(1.0)
         plt.ioff()
 
     def onCmdOpenInterferogramPlot(self):
         plt.figure()
         plt.title("Interferogram")
-        plt.plot(self.currentInterferogramX, self.currentInterferogramY)
+        plt.plot(self.currentInterferogramY)
         plt.ion()
-        plt.pause(0.25)
+        plt.pause(1.0)
         plt.show()
-        plt.pause(0.25)
+        plt.pause(1.0)
         plt.ioff()
 
     # def onCmdConfigureHardware(self):
@@ -325,8 +332,8 @@ class FTSApp:
     # canvas.pack(side="top", fill='both', expand=True)
 
     def updatePlot(self):
-        self.currentInterferogramX = np.arange(0, 100, 1)
-        self.currentInterferogramY = np.random.random(len(self.currentInterferogramX))
+        # self.currentInterferogramX = np.arange(0, 100, 1)
+        # self.currentInterferogramY = np.random.random(len(self.currentInterferogramX))
 
         self.currentSpectrumX = np.arange(0, 100, 1)
         self.currentSpectrumY = np.random.random(len(self.currentSpectrumX))
@@ -339,6 +346,7 @@ class FTSApp:
         self.axBot.plot(spectrumX, spectrumY, color="white")
 
         self.axTop.clear()
+        # self.axTop.plot(interferogramY, color="white")
         self.axTop.plot(interferogramX, interferogramY, color="white")
         self.canvasTopPlot.draw()
         self.canvasBotPlot.draw()
