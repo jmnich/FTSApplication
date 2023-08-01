@@ -86,7 +86,7 @@ class FTSApp:
                                                  width=120,
                                                  height=80,
                                                  corner_radius=10,
-                                                 command=self.onCmdUnusedButton)
+                                                 command=self.onCmdOpenInterferogramPlot)
         self.buttonInterferogram.grid(row=1, column=0, sticky="N", padx=5, pady=5)
 
         self.buttonSpectrum = ctk.CTkButton(master=self.frameButtonsTop,
@@ -140,7 +140,7 @@ class FTSApp:
         self.hardwareStatusLabel.grid(row=0, column=1, sticky="W", padx=5, pady=5)
 
         self.mfliStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
-                                                  text="Acquisition\ncard",
+                                                  text="DAQ\nsystem",
                                                   font=ctk.CTkFont(size=12))
         self.mfliStatusLabelHeader.grid(row=1, column=0, sticky="E", padx=5, pady=5)
 
@@ -167,7 +167,8 @@ class FTSApp:
         self.zaberCOMLabel.grid(row=3, column=0, sticky="W", padx=5, pady=5)
 
         self.zaberPortCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Hardware"),
-                                              values=["COM1", "COM14", "COM6"])
+                                              values=["COM1", "COM14", "COM6"],
+                                              width=140)
         self.zaberPortCombo.grid(row=3, column=1, sticky="E", padx=5, pady=5)
 
         self.mfliIDLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
@@ -175,8 +176,14 @@ class FTSApp:
                                         font=ctk.CTkFont(size=12))
         self.mfliIDLabel.grid(row=4, column=0, sticky="W", padx=5, pady=5)
 
+        self.mfliIDBox = ctk.CTkTextbox(master=self.settingsTabs.tab("Hardware"),
+                                        width=140, height=30)
+        self.mfliIDBox.configure(wrap='none')
+        self.mfliIDBox.insert("0.0", "dev6285")
+        self.mfliIDBox.grid(row=4, column=1, sticky="E", padx=5, pady=5)
+
         self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
-                                            text="Connect\nhardware",
+                                            text="Connect\nall",
                                             width=120,
                                             height=80,
                                             corner_radius=10,
@@ -218,7 +225,7 @@ class FTSApp:
         plt.close()
 
         # create driver
-        self.MFLIDrv = MFLIDriver()
+        self.MFLIDrv = MFLIDriver(self.mfliIDBox.get("0.0", "end"))
         self.ZaberDrv = ZaberDriver()
 
         # run the app
@@ -232,15 +239,37 @@ class FTSApp:
     def onCmdUnusedButton(self):
         print("Unused button click")
 
+    def onCmdConnectHardware(self):
+        strippedMFLIID = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace(
+            '\r', '')
+
+        if self.MFLIDrv.isConnected and self.MFLIDrv.deviceID == strippedMFLIID:
+            # the correct MFLI is currently connected and no further action is required
+            print("Correct MFLI is already connected")
+        else:
+            if self.MFLIDrv.tryConnect(strippedMFLIID):
+                print("Connection to MFLI successful")
+            else:
+                print("Connection to MFLI failed")
+
     def onCmdOpenSpectrumPlot(self):
         plt.figure()
         plt.title("Spectrum")
-        # plt.style.use('default')
         plt.plot(self.currentSpectrumX, self.currentSpectrumY)
         plt.ion()
-        plt.pause(0.1)
+        plt.pause(0.25)
         plt.show()
-        plt.pause(0.1)
+        plt.pause(0.25)
+        plt.ioff()
+
+    def onCmdOpenInterferogramPlot(self):
+        plt.figure()
+        plt.title("Interferogram")
+        plt.plot(self.currentInterferogramX, self.currentInterferogramY)
+        plt.ion()
+        plt.pause(0.25)
+        plt.show()
+        plt.pause(0.25)
         plt.ioff()
 
     # def onCmdConfigureHardware(self):
