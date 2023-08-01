@@ -10,7 +10,8 @@ class MFLIDriver:
         self.Scope = None
         # self.DAQModule = None
         self.isConnected = False
-        self.lastData = []
+        self.lastInterferogramData = []
+        self.lastReferenceData = []
         self.deviceID = devID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
         self.tryConnect(self.deviceID)
 
@@ -66,9 +67,11 @@ class MFLIDriver:
         # scope.set('save/directory', 'C:\\Users\\JakubMnich\\Documents\\Zurich Instruments\\LabOne\\WebServer')
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/time', 9)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/length', 1000)
-        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channels/1/inputselect', 8)
+        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channels/1/inputselect', 8) # '8' - Ref 0
         self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/single', 1)
+        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channel', 3) # '3' - both channels active
+
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
 
         # force global synchronization between the device and the data server
@@ -79,10 +82,16 @@ class MFLIDriver:
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 1)
         result = 0
         while self.Scope.progress() < 1.0 and not self.Scope.finished():
-            time.sleep(0.1)
+            time.sleep(0.01)
             print(f"Progress {float(self.Scope.progress()) * 100:.2f} %\r")
 
         result = self.Scope.read()
-        waveCh0 = result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][0]
-        self.lastData = waveCh0
+
+        # dig the data vectors out of the confusing maze dumped by the MFLI
+        self.lastInterferogramData = \
+            result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][0]
+
+        self.lastReferenceData = \
+            result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][1]
+
         self.Scope.finish()

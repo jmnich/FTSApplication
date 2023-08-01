@@ -28,7 +28,7 @@ class FTSApp:
         self.root.title("FTS App")
         self.root.iconbitmap(default='icon.ico')
         # self.root.attributes('-fullscreen',True)
-        self.root.columnconfigure(0, weight=1, minsize=200)
+        self.root.columnconfigure(0, weight=1, minsize=250)
         self.root.columnconfigure(1, weight=3)
 
         self.root.rowconfigure(0, weight=1)
@@ -238,8 +238,11 @@ class FTSApp:
         self.MFLIDrv.configureForMeasurement()
         self.MFLIDrv.measureData()
 
-        self.currentInterferogramY = self.MFLIDrv.lastData
+        self.currentInterferogramY = self.MFLIDrv.lastInterferogramData
         self.currentInterferogramX = np.arange(len(self.currentInterferogramY))
+
+        self.currentSpectrumY = self.MFLIDrv.lastReferenceData
+        self.currentSpectrumX = np.arange(len(self.currentSpectrumY))
 
         self.updatePlot()
 
@@ -272,7 +275,7 @@ class FTSApp:
     def onCmdOpenInterferogramPlot(self):
         plt.figure()
         plt.title("Interferogram")
-        plt.plot(self.currentInterferogramY)
+        plt.plot(self.currentInterferogramX, self.currentInterferogramY)
         plt.ion()
         plt.pause(1.0)
         plt.show()
@@ -335,19 +338,27 @@ class FTSApp:
         # self.currentInterferogramX = np.arange(0, 100, 1)
         # self.currentInterferogramY = np.random.random(len(self.currentInterferogramX))
 
-        self.currentSpectrumX = np.arange(0, 100, 1)
-        self.currentSpectrumY = np.random.random(len(self.currentSpectrumX))
+        # self.currentSpectrumX = np.arange(0, 100, 1)
+        # self.currentSpectrumY = np.random.random(len(self.currentSpectrumX))
 
         self.loadDataToPlots(self.currentInterferogramX, self.currentInterferogramY,
                              self.currentSpectrumX, self.currentSpectrumY)
 
     def loadDataToPlots(self, interferogramX, interferogramY, spectrumX, spectrumY):
-        self.axBot.clear()
-        self.axBot.plot(spectrumX, spectrumY, color="white")
 
+        self.axBot.clear()
         self.axTop.clear()
-        # self.axTop.plot(interferogramY, color="white")
-        self.axTop.plot(interferogramX, interferogramY, color="white")
+
+        if len(spectrumX) == len(spectrumY) and len(spectrumX) > 0:
+            self.axBot.grid(color=self.backgroundGray, linestyle='-', linewidth=1, alpha=0.6)
+            self.axBot.plot(spectrumX, spectrumY, color="dodgerblue")
+            self.axBot.set_xlim(np.min(spectrumX), np.max(spectrumX))
+
+        if len(interferogramX) == len(interferogramY) and len(interferogramX) > 0:
+            self.axTop.grid(color=self.backgroundGray, linestyle='-', linewidth=1, alpha=0.6)
+            self.axTop.plot(interferogramX, interferogramY, color="dodgerblue")
+            self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
+
         self.canvasTopPlot.draw()
         self.canvasBotPlot.draw()
         self.root.update()
