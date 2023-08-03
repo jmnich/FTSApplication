@@ -155,8 +155,10 @@ class FTSApp:
 
         self.samplingFreqCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Scan"),
                                                  values=self.MFLIFreqneuenciesAsStrings,
+                                                 state="readonly",
                                                  width=120)
         self.samplingFreqCombo.grid(row=0, column=1, sticky="E", padx=5, pady=5)
+        self.samplingFreqCombo.set(self.MFLIFreqneuenciesAsStrings[9])
 
         # configure settings 'hardware' tab
         # ==============================================================================================================
@@ -212,8 +214,10 @@ class FTSApp:
 
         self.zaberPortCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Hardware"),
                                               values=portsList,
+                                              state="readonly",
                                               width=140)
         self.zaberPortCombo.grid(row=3, column=1, sticky="E", padx=5, pady=5)
+        self.zaberPortCombo.set(portsList[0])
 
         self.mfliIDLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
                                         text="MFLI ID",
