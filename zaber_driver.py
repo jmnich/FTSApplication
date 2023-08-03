@@ -3,10 +3,15 @@ from threading import *
 
 class ZaberDriver:
 
+    DelayLineModelNumber = "X-LSQ150D-E01"
+    DelayLineResolution = 1.984375  # [um / step]
+    DelayLineNominalLength = 150000 # [um]
+
     def __init__(self):
         self.isReady = False
         self.isConnected = False
-        print("Zaber driver initializing...")
+
+        self.serialPort = None
 
     def tryConnect(self, port):
         print(f"Zaber trying to connect to {port}")

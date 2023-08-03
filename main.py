@@ -11,7 +11,6 @@ import si_prefix as si
 from background_controller import BackgroundController
 import serial.tools.list_ports
 
-
 class FTSApp:
 
     def __init__(self):
@@ -203,21 +202,20 @@ class FTSApp:
                                           font=ctk.CTkFont(size=12))
         self.zaberCOMLabel.grid(row=3, column=0, sticky="W", padx=5, pady=5)
 
-        # list COM ports available at the moment of application launch
-        ports = serial.tools.list_ports.comports()
-        portsList = []
-        for port, desc, hwid in sorted(ports):
-            portsList.append("{}".format(port))
-
-        if len(portsList) == 0:
-            portsList.append("NONE")
-
         self.zaberPortCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Hardware"),
-                                              values=portsList,
+                                              values=[],
                                               state="readonly",
                                               width=140)
         self.zaberPortCombo.grid(row=3, column=1, sticky="E", padx=5, pady=5)
-        self.zaberPortCombo.set(portsList[0])
+        self.onCmdRefreshCOMPorts()
+
+        self.zaberPortRefreshButton = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
+                                            text="",
+                                            width=20,
+                                            height=20,
+                                            corner_radius=4,
+                                            command=self.onCmdRefreshCOMPorts)
+        self.zaberPortRefreshButton.grid(row=3, column=0, sticky="E", padx=5, pady=5)
 
         self.mfliIDLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
                                         text="MFLI ID",
@@ -298,6 +296,7 @@ class FTSApp:
         self.ApplicationController.SetGeneralReadyFlagMethod = self.setGeneralReadyFlag
         self.ApplicationController.SetDAQReadyFlagMethod = self.setDAQReadyFlag
         self.ApplicationController.SetDelayLineReadyFlagMethod = self.setDelayLineReadyFlag
+        self.ApplicationController.SendResultsToPlot = self.receiveMeasurementResults
 
         # try to connect to all the hardware with some default settings
         self.ApplicationController.MFLIDeviceName = self.mfliIDBox.get("0.0", "end")
@@ -331,20 +330,43 @@ class FTSApp:
         else:
             self.zaberStatusLabel.configure(text="NOT\nREADY", text_color="red")
 
-    def onCmdSingleCapture(self):
-        self.updateStatusMessage("Single capture in progress...")
-        print(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()))
-        self.MFLIDrv.configureForMeasurement(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()), 1000)
-        self.MFLIDrv.measureData()
-
-        self.currentInterferogramY = self.MFLIDrv.lastInterferogramData
-        self.currentInterferogramX = np.arange(len(self.currentInterferogramY))
-
-        self.currentSpectrumY = self.MFLIDrv.lastReferenceData
-        self.currentSpectrumX = np.arange(len(self.currentSpectrumY))
-
+    def receiveMeasurementResults(self, interfX, interfY, spectrumX, spectrumY):
+        self.currentSpectrumX = spectrumX
+        self.currentSpectrumY = spectrumY
+        self.currentInterferogramX = interfX
+        self.currentInterferogramY = interfY
         self.updatePlot()
-        self.updateStatusMessage("Single capture done")
+
+    def onCmdRefreshCOMPorts(self):
+        ports = serial.tools.list_ports.comports()
+        portsList = []
+        for port, desc, hwid in sorted(ports):
+            portsList.append("{}".format(port))
+
+        if len(portsList) == 0:
+            portsList.append("NONE")
+
+        self.zaberPortCombo.configure(values=portsList)
+        self.zaberPortCombo.set(portsList[0])
+
+    def onCmdSingleCapture(self):
+        self.ApplicationController.performMeasurements(measurementsCount=1,
+                                                       samplesCount=1000,
+                                                       samplingFrequency=self.MFLIFreqneuenciesAsStrings.
+                                                                                index(self.samplingFreqCombo.get()))
+        # self.updateStatusMessage("Single capture in progress...")
+        # print(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()))
+        # self.MFLIDrv.configureForMeasurement(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()), 1000)
+        # self.MFLIDrv.measureData()
+        #
+        # self.currentInterferogramY = self.MFLIDrv.lastInterferogramData
+        # self.currentInterferogramX = np.arange(len(self.currentInterferogramY))
+        #
+        # self.currentSpectrumY = self.MFLIDrv.lastReferenceData
+        # self.currentSpectrumX = np.arange(len(self.currentSpectrumY))
+        #
+        # self.updatePlot()
+        # self.updateStatusMessage("Single capture done")
 
     def onCmdUnusedButton(self):
         self.ApplicationController.performInitialization()

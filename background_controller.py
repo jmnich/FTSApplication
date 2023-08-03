@@ -1,11 +1,16 @@
 from threading import *
 from mfli_driver import MFLIDriver
 from zaber_driver import ZaberDriver
+import numpy as np
 
 class BackgroundController:
 
     def __init__(self, mfliDrv, zaberDrv):
         print("Background controller created")
+
+        self.orderedMeasurementsCount = 0
+        self.mfliFrequencyIndex = 0
+        self.mfliSamplesCount = 0
 
         self.MFLIDriver     = mfliDrv
         self.ZaberDriver    = zaberDrv
@@ -15,6 +20,7 @@ class BackgroundController:
         self.SetDAQReadyFlagMethod          = None
         self.SetDelayLineReadyFlagMethod    = None
         self.UploadNewDataMethod            = None
+        self.SendResultsToPlot              = None
 
     def setZaberPort(self, port):
         self.ZaberPort = port
@@ -43,7 +49,43 @@ class BackgroundController:
             self.SetGeneralReadyFlagMethod(False)
 
     def performInitialization(self):
-        t = Thread(target=self.initializationWork)
+        t = Thread(target=self.initializationWork, daemon=True)
         t.start()
+
+    def performMeasurements(self, measurementsCount, samplesCount, samplingFrequency):
+        self.orderedMeasurementsCount = measurementsCount
+        self.mfliSamplesCount = samplesCount
+        self.mfliFrequencyIndex = samplingFrequency
+
+        t = Thread(target=self.measurementsWork, daemon=True)
+        t.start()
+
+    def measurementsWork(self):
+        self.SetStatusMessageMethod("Homing...")
+        self.ZaberDriver.home()
+        self.ZaberDriver.waitUntilDone()
+
+        self.SetStatusMessageMethod("Configuration...")
+        # configure MFLI
+        self.MFLIDriver.configureForMeasurement(self.mfliFrequencyIndex, self.mfliSamplesCount)
+        # zaber move to beginning of the trajectory
+        # start zaber sweep
+        # start acquisition
+        self.SetStatusMessageMethod("Measurement...")
+        self.MFLIDriver.measureData()
+        # display results
+
+        interferogramY = self.MFLIDriver.lastInterferogramData
+        interferogramX = np.arange(len(interferogramY))
+
+        spectrumY = self.MFLIDriver.lastReferenceData
+        spectrumX = np.arange(len(spectrumY))
+
+        self.SendResultsToPlot(interferogramX, interferogramY, spectrumX, spectrumY)
+        self.SetStatusMessageMethod("Done")
+
+
+
+
 
 
