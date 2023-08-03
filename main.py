@@ -8,8 +8,9 @@ from mfli_driver import MFLIDriver
 from zaber_driver import ZaberDriver
 import time
 import si_prefix as si
-
+from background_controller import BackgroundController
 import serial.tools.list_ports
+
 
 class FTSApp:
 
@@ -30,14 +31,23 @@ class FTSApp:
         self.root.title("FTS App")
         self.root.iconbitmap(default='icon.ico')
         # self.root.attributes('-fullscreen',True)
-        self.root.columnconfigure(0, weight=1, minsize=250)
+
+        self.root.resizable(True, True)
+        self.root.state('zoomed')
+
+        self.screen_geometry = self.root.winfo_geometry()
+        scr_width = int(self.screen_geometry.split('x')[0])
+
+        if scr_width > 1920:
+            menu_col_width = 350
+        else:
+            menu_col_width = 250
+
+        self.root.columnconfigure(0, weight=1, minsize=menu_col_width)
         self.root.columnconfigure(1, weight=3)
 
         self.root.rowconfigure(0, weight=1)
         self.root.rowconfigure(1, weight=1)
-
-        self.root.resizable(True, True)
-        self.root.state('zoomed')
 
         self.root.protocol("WM_DELETE_WINDOW", self.onClosing)
 
@@ -134,8 +144,8 @@ class FTSApp:
         self.settingsTabs.tab("Scan").columnconfigure(1, weight=1)
 
         self.samplingFreqLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Scan"),
-                                                      text="Sampling\nfreqency",
-                                                      font=ctk.CTkFont(size=12))
+                                                    text="Sampling\nfreqency",
+                                                    font=ctk.CTkFont(size=12))
         self.samplingFreqLabelHeader.grid(row=0, column=0, sticky="E", padx=5, pady=5)
 
         self.MFLIFreqneuenciesAsStrings = []
@@ -144,8 +154,8 @@ class FTSApp:
             self.MFLIFreqneuenciesAsStrings.append(si.si_format(f, precision=2) + "Hz")
 
         self.samplingFreqCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Scan"),
-                                              values=self.MFLIFreqneuenciesAsStrings,
-                                              width=120)
+                                                 values=self.MFLIFreqneuenciesAsStrings,
+                                                 width=120)
         self.samplingFreqCombo.grid(row=0, column=1, sticky="E", padx=5, pady=5)
 
         # configure settings 'hardware' tab
@@ -159,8 +169,8 @@ class FTSApp:
         self.hardwareStatusLabelHeader.grid(row=0, column=0, sticky="E", padx=5, pady=5)
 
         self.hardwareStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
-                                                text="READY",
-                                                text_color="lightgreen",
+                                                text="NOT\nREADY",
+                                                text_color="red",
                                                 font=ctk.CTkFont(size=14, weight="bold"))
         self.hardwareStatusLabel.grid(row=0, column=1, sticky="W", padx=5, pady=5)
 
@@ -170,8 +180,8 @@ class FTSApp:
         self.mfliStatusLabelHeader.grid(row=1, column=0, sticky="E", padx=5, pady=5)
 
         self.mfliStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
-                                            text="READY",
-                                            text_color="lightgreen",
+                                            text="NOT\nREADY",
+                                            text_color="red",
                                             font=ctk.CTkFont(size=14, weight="bold"))
         self.mfliStatusLabel.grid(row=1, column=1, sticky="W", padx=5, pady=5)
 
@@ -181,8 +191,8 @@ class FTSApp:
         self.zaberStatusLabelHeader.grid(row=2, column=0, sticky="E", padx=5, pady=5)
 
         self.zaberStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
-                                             text="READY",
-                                             text_color="lightgreen",
+                                             text="NOT\nREADY",
+                                             text_color="red",
                                              font=ctk.CTkFont(size=14, weight="bold"))
         self.zaberStatusLabel.grid(row=2, column=1, sticky="W", padx=5, pady=5)
 
@@ -237,7 +247,8 @@ class FTSApp:
         self.figTop, self.axTop = plt.subplots()
         self.figTop.suptitle("Interferogram")
         self.figTop.set_facecolor(self.backgroundGray)
-        self.figTop.set_size_inches(15, 4.75)
+        self.figTop.set_size_inches(100, 100)
+        # self.figTop.set_size_inches(15, 4.75)
         self.figTop.subplots_adjust(left=0.1, right=0.99, bottom=0.01, top=0.97, wspace=0, hspace=0)
         self.figTop.set_tight_layout(True)
         self.canvasTopPlot = FigureCanvasTkAgg(self.figTop, master=self.frameTopPlot)
@@ -247,7 +258,8 @@ class FTSApp:
         self.figBot, self.axBot = plt.subplots()
         self.figBot.suptitle("Spectrum")
         self.figBot.set_facecolor(self.backgroundGray)
-        self.figBot.set_size_inches(15, 4.75)
+        self.figBot.set_size_inches(100, 100)
+        # self.figBot.set_size_inches(15, 4.75)
         self.figBot.subplots_adjust(left=0.1, right=0.99, bottom=0.01, top=0.97, wspace=0, hspace=0)
         self.figBot.set_tight_layout(True)
         self.canvasBotPlot = FigureCanvasTkAgg(self.figBot, master=self.frameBottomPlot)
@@ -259,30 +271,61 @@ class FTSApp:
         plt.close()
 
         # create a status bar
-        self.statusLabel =  ctk.CTkLabel(master=self.root,
+        self.statusLabel = ctk.CTkLabel(master=self.root,
                                         text="Status bar",
                                         font=ctk.CTkFont(size=12))
         self.statusLabel.grid(row=0, column=1, columnspan=2, sticky="NE", padx=15, pady=5)
 
         # create drivers
-        self.updateStatusMessage("Connecting to MFLI...")
+        # self.updateStatusMessage("Connecting to MFLI...")
         self.MFLIDrv = MFLIDriver(self.mfliIDBox.get("0.0", "end"))
 
-        self.updateStatusMessage("Connecting to Zaber...")
+        # self.updateStatusMessage("Connecting to Zaber...")
         self.ZaberDrv = ZaberDriver()
 
-        if self.MFLIDrv.isConnected and self.ZaberDrv.isConnected:
-            self.updateStatusMessage("Automatic hardware\nconnection successful")
-        else:
-            self.updateStatusMessage("One or more hardware components\nfailed to connect")
+        # if self.MFLIDrv.isConnected and self.ZaberDrv.isConnected:
+        #     self.updateStatusMessage("Automatic hardware\nconnection successful")
+        # else:
+        #     self.updateStatusMessage("One or more hardware components\nfailed to connect")
+
+        # set up the background application controller
+        self.ApplicationController = BackgroundController(self.MFLIDrv, self.ZaberDrv)
+        self.ApplicationController.SetStatusMessageMethod = self.updateStatusMessage
+        self.ApplicationController.SetGeneralReadyFlagMethod = self.setGeneralReadyFlag
+        self.ApplicationController.SetDAQReadyFlagMethod = self.setDAQReadyFlag
+        self.ApplicationController.SetDelayLineReadyFlagMethod = self.setDelayLineReadyFlag
+
+        # try to connect to all the hardware with some default settings
+        self.ApplicationController.MFLIDeviceName = self.mfliIDBox.get("0.0", "end")
+        self.ApplicationController.ZaberPort = None
+
+        self.ApplicationController.performInitialization()
 
         # run the app
         self.root.update()
         self.root.mainloop()
 
     def updateStatusMessage(self, message):
-        self.statusLabel.configure(text = message)
+        self.statusLabel.configure(text=message)
         self.root.update()
+
+    def setGeneralReadyFlag(self, isReady):
+        if isReady:
+            self.hardwareStatusLabel.configure(text="READY", text_color="lightgreen")
+        else:
+            self.hardwareStatusLabel.configure(text="NOT\nREADY", text_color="red")
+
+    def setDAQReadyFlag(self, isReady):
+        if isReady:
+            self.mfliStatusLabel.configure(text="READY", text_color="lightgreen")
+        else:
+            self.mfliStatusLabel.configure(text="NOT\nREADY", text_color="red")
+
+    def setDelayLineReadyFlag(self, isReady):
+        if isReady:
+            self.zaberStatusLabel.configure(text="READY", text_color="lightgreen")
+        else:
+            self.zaberStatusLabel.configure(text="NOT\nREADY", text_color="red")
 
     def onCmdSingleCapture(self):
         self.updateStatusMessage("Single capture in progress...")
@@ -300,6 +343,7 @@ class FTSApp:
         self.updateStatusMessage("Single capture done")
 
     def onCmdUnusedButton(self):
+        self.ApplicationController.performInitialization()
         print("Unused button click")
 
     def onCmdConnectHardware(self):
@@ -318,11 +362,11 @@ class FTSApp:
             else:
                 print("Connection to MFLI failed")
 
-        if strippedZaberPort  != "NONE":
-            if self.ZaberDrv.tryConnect(strippedZaberPort ):
-                print(f"Zaber connected at {strippedZaberPort }")
+        if strippedZaberPort != "NONE":
+            if self.ZaberDrv.tryConnect(strippedZaberPort):
+                print(f"Zaber connected at {strippedZaberPort}")
             else:
-                print(f"Zaber failed to connect at {strippedZaberPort }")
+                print(f"Zaber failed to connect at {strippedZaberPort}")
         else:
             self.updateStatusMessage("Invalid COM for Zaber")
 

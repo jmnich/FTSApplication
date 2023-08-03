@@ -20,15 +20,17 @@ class MFLIDriver:
         self.lastInterferogramData = []
         self.lastReferenceData = []
         self.deviceID = devID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
-        self.tryConnect(self.deviceID)
+        # self.tryConnect(self.deviceID)
 
         # sampling rates available in MFLI at their respective indices
 
 
     def tryConnect(self, deviceID):
 
+        self.deviceID = deviceID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
+
         try:
-            device_id: str = deviceID
+            device_id: str = self.deviceID
             server_host: str = "localhost"
             server_port: int = 8004
 
