@@ -300,7 +300,8 @@ class FTSApp:
 
         # try to connect to all the hardware with some default settings
         self.ApplicationController.MFLIDeviceName = self.mfliIDBox.get("0.0", "end")
-        self.ApplicationController.ZaberPort = None
+        self.ApplicationController.ZaberPort = self.zaberPortCombo.get().replace(' ', '').replace(
+            '\t', '').replace('\n', '').replace('\r', '')
 
         self.ApplicationController.performInitialization()
 
@@ -369,7 +370,9 @@ class FTSApp:
         # self.updateStatusMessage("Single capture done")
 
     def onCmdUnusedButton(self):
-        self.ApplicationController.performInitialization()
+        self.ZaberDrv.setPosition(75000)
+        self.ZaberDrv.waitUntilIdle()
+        self.ZaberDrv.setPosition(10000)
         print("Unused button click")
 
     def onCmdConnectHardware(self):

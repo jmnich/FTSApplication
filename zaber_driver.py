@@ -8,6 +8,7 @@ class ZaberDriver:
     DelayLineModelNumber = "X-LSQ150D-E01"
     DelayLineResolution = 1.984375  # [um / step]
     DelayLineNominalLength = 150000 # [um]
+    MaxSpeed = 400000   # [um/s]
 
     def __init__(self):
         self.isReady = False
@@ -36,6 +37,7 @@ class ZaberDriver:
 
     def home(self):
         self.sendCommand("/home")
+        self.serialPort.readline()
 
     def sendCommand(self, command):
         dummy = command + "\r\n"
@@ -49,13 +51,21 @@ class ZaberDriver:
 
         while True:
             self.sendCommand("/")
-            response = self.serialPort.readline()
-
-            if response.contains("IDLE"):
+            responseascii = self.serialPort.readline()
+            response = ''.join(map(chr, responseascii))
+            print("-> " + response)
+            if "IDLE" in response:
                 break
             else:
-                time.sleep(0.01)
+                time.sleep(0.05)
 
-    def setPosition(self, position):
+    def setPosition(self, position, speed = 10000):
         calculated_steps = round(position / self.DelayLineResolution)
-        self.sendCommand(f"/move abs {calculated_steps}")
+        command = f"/move abs {calculated_steps} {self.convertVelocityFromSIToZaber(speed)}"
+        print(command)
+        self.sendCommand(command)
+        self.serialPort.readline()
+        # time.sleep(0.5)
+
+    def convertVelocityFromSIToZaber(self, velInUmPerS):
+        return round((velInUmPerS * 1.6384) / ZaberDriver.DelayLineResolution)

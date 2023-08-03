@@ -37,6 +37,9 @@ class BackgroundController:
             self.SetDAQReadyFlagMethod(False)
 
         if self.ZaberDriver.tryConnect(self.ZaberPort):
+            self.SetStatusMessageMethod("Homing...")
+            self.ZaberDriver.home()
+            self.ZaberDriver.waitUntilIdle()
             self.SetDelayLineReadyFlagMethod(True)
         else:
             self.SetDelayLineReadyFlagMethod(False)
@@ -61,28 +64,43 @@ class BackgroundController:
         t.start()
 
     def measurementsWork(self):
-        self.SetStatusMessageMethod("Homing...")
-        self.ZaberDriver.home()
-        self.ZaberDriver.waitUntilIdle()
+        mfliSamplingFrequency = MFLIDriver.MFLISamplingRates[self.mfliFrequencyIndex]
 
-        self.SetStatusMessageMethod("Configuration...")
-        # configure MFLI
-        self.MFLIDriver.configureForMeasurement(self.mfliFrequencyIndex, self.mfliSamplesCount)
-        # zaber move to beginning of the trajectory
-        # start zaber sweep
-        # start acquisition
-        self.SetStatusMessageMethod("Measurement...")
-        self.MFLIDriver.measureData()
-        # display results
+        # TODO
+        # - dodać okienko do wpisywania początku skanu
+        # - dodać okienko z suwakiem do wybierania długości skanu
+        # - dodać suwak do szybkości skanu
+        # - liczba sampli obliczy się automatycznie z sample rate MFLI
+        #  I to będzie akwizycja
 
-        interferogramY = self.MFLIDriver.lastInterferogramData
-        interferogramX = np.arange(len(interferogramY))
+        # self.SetStatusMessageMethod("Homing...")
+        # self.ZaberDriver.home()
+        # self.ZaberDriver.waitUntilIdle()
 
-        spectrumY = self.MFLIDriver.lastReferenceData
-        spectrumX = np.arange(len(spectrumY))
-
-        self.SendResultsToPlot(interferogramX, interferogramY, spectrumX, spectrumY)
-        self.SetStatusMessageMethod("Done")
+        # self.SetStatusMessageMethod("Test...")
+        # while True:
+        #     self.ZaberDriver.setPosition(position=49000, speed=400000)
+        #     self.ZaberDriver.waitUntilIdle()
+        #     self.ZaberDriver.setPosition(position=149000, speed=400000)
+        #     self.ZaberDriver.waitUntilIdle()
+        # self.SetStatusMessageMethod("Configuration...")
+        # # configure MFLI
+        # self.MFLIDriver.configureForMeasurement(self.mfliFrequencyIndex, self.mfliSamplesCount)
+        # # zaber move to beginning of the trajectory
+        # # start zaber sweep
+        # # start acquisition
+        # self.SetStatusMessageMethod("Measurement...")
+        # self.MFLIDriver.measureData()
+        # # display results
+        #
+        # interferogramY = self.MFLIDriver.lastInterferogramData
+        # interferogramX = np.arange(len(interferogramY))
+        #
+        # spectrumY = self.MFLIDriver.lastReferenceData
+        # spectrumX = np.arange(len(spectrumY))
+        #
+        # self.SendResultsToPlot(interferogramX, interferogramY, spectrumX, spectrumY)
+        # self.SetStatusMessageMethod("Done")
 
 
 
