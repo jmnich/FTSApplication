@@ -39,10 +39,13 @@ class ZaberDriver:
 
     def sendCommand(self, command):
         dummy = command + "\r\n"
-        self.serialPort.write(bytes(dummy, 'ascii'))
-        return 0
+        if self.serialPort.isOpen():
+            self.serialPort.write(bytes(dummy, 'ascii'))
 
     def waitUntilIdle(self):
+
+        if not self.serialPort.isOpen():
+            return
 
         while True:
             self.sendCommand("/")
