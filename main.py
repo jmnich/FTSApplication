@@ -7,7 +7,9 @@ import sys
 from mfli_driver import MFLIDriver
 from zaber_driver import ZaberDriver
 import time
+import si_prefix as si
 
+import serial.tools.list_ports
 
 class FTSApp:
 
@@ -126,6 +128,28 @@ class FTSApp:
         self.settingsTabs.add("Scan")
         self.settingsTabs.add("Hardware")
 
+        # configure settings 'scan' tab
+        # ==============================================================================================================
+        self.settingsTabs.tab("Scan").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Scan").columnconfigure(1, weight=1)
+
+        self.samplingFreqLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Scan"),
+                                                      text="Sampling\nfreqency",
+                                                      font=ctk.CTkFont(size=12))
+        self.samplingFreqLabelHeader.grid(row=0, column=0, sticky="E", padx=5, pady=5)
+
+        self.MFLIFreqneuenciesAsStrings = []
+
+        for f in MFLIDriver.MFLISamplingRates:
+            self.MFLIFreqneuenciesAsStrings.append(si.si_format(f, precision=2) + "Hz")
+
+        self.samplingFreqCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Scan"),
+                                              values=self.MFLIFreqneuenciesAsStrings,
+                                              width=120)
+        self.samplingFreqCombo.grid(row=0, column=1, sticky="E", padx=5, pady=5)
+
+        # configure settings 'hardware' tab
+        # ==============================================================================================================
         self.settingsTabs.tab("Hardware").columnconfigure(0, weight=1)
         self.settingsTabs.tab("Hardware").columnconfigure(1, weight=1)
 
@@ -167,8 +191,17 @@ class FTSApp:
                                           font=ctk.CTkFont(size=12))
         self.zaberCOMLabel.grid(row=3, column=0, sticky="W", padx=5, pady=5)
 
+        # list COM ports available at the moment of application launch
+        ports = serial.tools.list_ports.comports()
+        portsList = []
+        for port, desc, hwid in sorted(ports):
+            portsList.append("{}".format(port))
+
+        if len(portsList) == 0:
+            portsList.append("NONE")
+
         self.zaberPortCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Hardware"),
-                                              values=["COM1", "COM14", "COM6"],
+                                              values=portsList,
                                               width=140)
         self.zaberPortCombo.grid(row=3, column=1, sticky="E", padx=5, pady=5)
 
@@ -225,17 +258,36 @@ class FTSApp:
         plt.close()
         plt.close()
 
-        # create driver
+        # create a status bar
+        self.statusLabel =  ctk.CTkLabel(master=self.root,
+                                        text="Status bar",
+                                        font=ctk.CTkFont(size=12))
+        self.statusLabel.grid(row=0, column=1, columnspan=2, sticky="NE", padx=15, pady=5)
+
+        # create drivers
+        self.updateStatusMessage("Connecting to MFLI...")
         self.MFLIDrv = MFLIDriver(self.mfliIDBox.get("0.0", "end"))
+
+        self.updateStatusMessage("Connecting to Zaber...")
         self.ZaberDrv = ZaberDriver()
+
+        if self.MFLIDrv.isConnected and self.ZaberDrv.isConnected:
+            self.updateStatusMessage("Automatic hardware\nconnection successful")
+        else:
+            self.updateStatusMessage("One or more hardware components\nfailed to connect")
 
         # run the app
         self.root.update()
         self.root.mainloop()
 
+    def updateStatusMessage(self, message):
+        self.statusLabel.configure(text = message)
+        self.root.update()
+
     def onCmdSingleCapture(self):
-        print("Single capture command")
-        self.MFLIDrv.configureForMeasurement()
+        self.updateStatusMessage("Single capture in progress...")
+        print(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()))
+        self.MFLIDrv.configureForMeasurement(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()), 1000)
         self.MFLIDrv.measureData()
 
         self.currentInterferogramY = self.MFLIDrv.lastInterferogramData
@@ -245,12 +297,16 @@ class FTSApp:
         self.currentSpectrumX = np.arange(len(self.currentSpectrumY))
 
         self.updatePlot()
+        self.updateStatusMessage("Single capture done")
 
     def onCmdUnusedButton(self):
         print("Unused button click")
 
     def onCmdConnectHardware(self):
         strippedMFLIID = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace(
+            '\r', '')
+
+        strippedZaberPort = self.zaberPortCombo.get().replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
 
         if self.MFLIDrv.isConnected and self.MFLIDrv.deviceID == strippedMFLIID:
@@ -261,6 +317,14 @@ class FTSApp:
                 print("Connection to MFLI successful")
             else:
                 print("Connection to MFLI failed")
+
+        if strippedZaberPort  != "NONE":
+            if self.ZaberDrv.tryConnect(strippedZaberPort ):
+                print(f"Zaber connected at {strippedZaberPort }")
+            else:
+                print(f"Zaber failed to connect at {strippedZaberPort }")
+        else:
+            self.updateStatusMessage("Invalid COM for Zaber")
 
     def onCmdOpenSpectrumPlot(self):
         plt.figure()

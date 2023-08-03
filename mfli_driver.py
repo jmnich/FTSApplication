@@ -3,7 +3,14 @@ import zhinst.core
 import zhinst.utils
 
 
+
 class MFLIDriver:
+
+    MFLISamplingRates = (6.0E7, 3.0E7, 1.5E7, 7.5E6,
+                         3.75E6, 1.88E6, 9.38E5, 4.69E5,
+                         2.34E5, 1.17E5, 5.86E4, 2.93E4,
+                         1.46E4, 7.32E3, 3.66E3, 1.83E3)
+
     def __init__(self, devID):
         print("MFLI driver initializing...")
         self.DAQ = None
@@ -14,6 +21,9 @@ class MFLIDriver:
         self.lastReferenceData = []
         self.deviceID = devID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
         self.tryConnect(self.deviceID)
+
+        # sampling rates available in MFLI at their respective indices
+
 
     def tryConnect(self, deviceID):
 
@@ -44,7 +54,7 @@ class MFLIDriver:
         self.isConnected = True
         return True
 
-    def configureForMeasurement(self):
+    def configureForMeasurement(self, samplingFreqIndex, sampleLength):
         zhinst.utils.disable_everything(self.DAQ, self.deviceID)
 
         self.DAQ.setInt(f'/{self.deviceID}/auxouts/2/demodselect', 0)
@@ -65,8 +75,8 @@ class MFLIDriver:
         self.Scope.set('fft/spectraldensity', 0)
         self.Scope.set('fft/window', 1)
         # scope.set('save/directory', 'C:\\Users\\JakubMnich\\Documents\\Zurich Instruments\\LabOne\\WebServer')
-        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/time', 9)
-        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/length', 1000)
+        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/time', samplingFreqIndex)
+        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/length', sampleLength)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channels/1/inputselect', 8) # '8' - Ref 0
         self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/single', 1)
@@ -83,7 +93,7 @@ class MFLIDriver:
         result = 0
         while self.Scope.progress() < 1.0 and not self.Scope.finished():
             time.sleep(0.01)
-            print(f"Progress {float(self.Scope.progress()) * 100:.2f} %\r")
+            #print(f"Progress {float(self.Scope.progress()) * 100:.2f} %\r")
 
         result = self.Scope.read()
 
