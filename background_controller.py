@@ -63,7 +63,7 @@ class BackgroundController:
     def measurementsWork(self):
         self.SetStatusMessageMethod("Homing...")
         self.ZaberDriver.home()
-        self.ZaberDriver.waitUntilDone()
+        self.ZaberDriver.waitUntilIdle()
 
         self.SetStatusMessageMethod("Configuration...")
         # configure MFLI

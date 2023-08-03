@@ -1,3 +1,5 @@
+import time
+
 import serial
 from threading import *
 
@@ -16,13 +18,41 @@ class ZaberDriver:
     def tryConnect(self, port):
         print(f"Zaber trying to connect to {port}")
 
-        return False
+        self.serialPort = serial.Serial()
+        self.serialPort.port = port
+        self.serialPort.baudrate = 115200
+
+        try:
+            self.serialPort.open()
+        except:
+            pass
+
+        if self.serialPort.isOpen():
+            print("Zaber connected")
+            return True
+        else:
+            print("Zaber disconnected")
+            return False
 
     def home(self):
         self.sendCommand("/home")
 
     def sendCommand(self, command):
+        dummy = command + "\r\n"
+        self.serialPort.write(bytes(dummy, 'ascii'))
         return 0
 
-    def waitUntilDone(self):
-        return 0
+    def waitUntilIdle(self):
+
+        while True:
+            self.sendCommand("/")
+            response = self.serialPort.readline()
+
+            if response.contains("IDLE"):
+                break
+            else:
+                time.sleep(0.01)
+
+    def setPosition(self, position):
+        calculated_steps = round(position / self.DelayLineResolution)
+        self.sendCommand(f"/move abs {calculated_steps}")
