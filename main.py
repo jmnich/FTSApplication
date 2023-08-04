@@ -19,6 +19,9 @@ class FTSApp:
         self.configuredStartingPosition = 149000
         self.configuredScanLength = 50000
         self.minimalScanLength = 1000
+        self.minSpeed = 1   # mm/s
+        self.maxSpeed = 50  # mm/s
+        self.configuredScanSpeed = 5 # mm/s
 
         self.currentSpectrumX = []
         self.currentSpectrumY = []
@@ -200,6 +203,27 @@ class FTSApp:
                                               command=self.onCmdUpdateScanLengthFromSlider)
         self.scanLengthSlider.grid(row=3, column=0, columnspan=2, sticky="N", padx=5, pady=5)
         self.scanLengthSlider.set(self.configuredScanLength)
+
+        self.scanSpeedLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Scan"),
+                                                    text="Scan speed\n[mm/s]",
+                                                    font=ctk.CTkFont(size=12))
+        self.scanSpeedLabel.grid(row=4, column=0, sticky="E", padx=5, pady=5)
+
+        self.scanSpeedValueLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Scan"),
+                                                    text=str(self.configuredScanSpeed),
+                                                    font=ctk.CTkFont(size=12))
+        self.scanSpeedValueLabel.grid(row=4, column=1, sticky="W", padx=5, pady=5)
+
+        self.scanSpeedSlider = ctk.CTkSlider(master=self.settingsTabs.tab("Scan"),
+                                              width=250,
+                                              height=20,
+                                              from_=self.minSpeed,
+                                              to=self.maxSpeed,
+                                              number_of_steps=49,
+                                              command=self.onCmdScanSpeedUpdateFromSlider)
+        self.scanSpeedSlider.grid(row=5, column=0, columnspan=2, sticky="N", padx=5, pady=5)
+        self.scanSpeedSlider.set(self.configuredScanSpeed)
+
 
         # configure settings 'HARDWARE' tab
         # ==============================================================================================================
@@ -441,8 +465,6 @@ class FTSApp:
         minSetting = 2000
         maxSetting = ZaberDriver.DelayLineNominalLength
 
-        print("Start pos update")
-
         try:
             newSetting = int(self.startingPosBox.get())
         except:
@@ -468,7 +490,9 @@ class FTSApp:
         # use this command to make sure settings are ok
         self.onCmdUpdateScanLengthFromBox(None)
 
-        print("Update starting pos")
+    def onCmdScanSpeedUpdateFromSlider(self, other):
+        self.configuredScanSpeed = self.scanSpeedSlider.get()
+        self.scanSpeedValueLabel.configure(text=str(int(self.configuredScanSpeed)))
 
     def onCmdUnusedButton(self):
         self.ZaberDrv.setPosition(75000)
