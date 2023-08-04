@@ -1,3 +1,4 @@
+import time
 from threading import *
 from mfli_driver import MFLIDriver
 from zaber_driver import ZaberDriver
@@ -11,6 +12,9 @@ class BackgroundController:
         self.orderedMeasurementsCount = 0
         self.mfliFrequencyIndex = 0
         self.mfliSamplesCount = 0
+        self.scanStartPosition = 0
+        self.scanLength = 0
+        self.scanSpeed = 0
 
         self.MFLIDriver     = mfliDrv
         self.ZaberDriver    = zaberDrv
@@ -55,23 +59,49 @@ class BackgroundController:
         t = Thread(target=self.initializationWork, daemon=True)
         t.start()
 
-    def performMeasurements(self, measurementsCount, samplesCount, samplingFrequency):
+    def performMeasurements(self, measurementsCount, samplingFrequency, scanStart, scanLength, scanSpeed):
         self.orderedMeasurementsCount = measurementsCount
-        self.mfliSamplesCount = samplesCount
         self.mfliFrequencyIndex = samplingFrequency
+        self.scanStartPosition = scanStart
+        self.scanLength = scanLength
+        self.scanSpeed = scanSpeed
 
         t = Thread(target=self.measurementsWork, daemon=True)
         t.start()
 
     def measurementsWork(self):
+        self.SetStatusMessageMethod("Preparing...")
         mfliSamplingFrequency = MFLIDriver.MFLISamplingRates[self.mfliFrequencyIndex]
+        self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
 
-        # TODO
-    # - dodać okienko do wpisywania początku skanu
-        # - dodać okienko z suwakiem do wybierania długości skanu
-        # - dodać suwak do szybkości skanu
-        # - liczba sampli obliczy się automatycznie z sample rate MFLI
-        #  I to będzie akwizycja
+        # send the delay line to the starting position
+        self.ZaberDriver.setPosition(position=self.scanStartPosition, speed=ZaberDriver.MaxSpeed)
+
+        # configure MFLI
+        self.MFLIDriver.configureForMeasurement(self.mfliFrequencyIndex, self.mfliSamplesCount)
+
+        # wait until the mirror is in position
+        self.ZaberDriver.waitUntilIdle()
+
+        # acquire data (note: zaber uses us/s, interface uses mm/s)
+        self.SetStatusMessageMethod("Acquisition...")
+        self.MFLIDriver.measureData()
+        self.ZaberDriver.setPosition(position=self.scanStartPosition-self.scanLength, speed=self.scanSpeed * 1000)
+        self.ZaberDriver.waitUntilIdle()
+
+        # synchronization delay
+        time.sleep(0.1)
+
+        # display results
+        interferogramY = self.MFLIDriver.lastInterferogramData
+        interferogramX = np.arange(len(interferogramY))
+
+        spectrumY = self.MFLIDriver.lastReferenceData
+        spectrumX = np.arange(len(spectrumY))
+
+        self.SendResultsToPlot(interferogramX, interferogramY, spectrumX, spectrumY)
+        self.SetStatusMessageMethod("Done")
+
 
         # self.SetStatusMessageMethod("Homing...")
         # self.ZaberDriver.home()

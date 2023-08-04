@@ -142,6 +142,7 @@ class FTSApp:
         self.settingsTabs.grid(row=4, column=0, columnspan=2, sticky="NSEW", padx=2, pady=2)
         self.settingsTabs.add("Scan")
         self.settingsTabs.add("Hardware")
+        self.settingsTabs.add("Save")
 
         # configure settings 'SCAN' tab
         # ==============================================================================================================
@@ -310,7 +311,14 @@ class FTSApp:
                                             command=self.onCmdUnusedButton)
         self.buttonHardware.grid(row=6, column=1, sticky="N", padx=5, pady=5)
 
-        # create plots
+        # configure settings 'SAVE' tab
+        # ==============================================================================================================
+        self.settingsTabs.tab("Save").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Save").columnconfigure(1, weight=1)
+
+
+        # Create plots
+        # ==============================================================================================================
         plt.style.use('dark_background')
         self.figTop, self.axTop = plt.subplots()
         self.figTop.suptitle("Interferogram")
@@ -418,9 +426,11 @@ class FTSApp:
 
     def onCmdSingleCapture(self):
         self.ApplicationController.performMeasurements(measurementsCount=1,
-                                                       samplesCount=1000,
                                                        samplingFrequency=self.MFLIFreqneuenciesAsStrings.
-                                                                                index(self.samplingFreqCombo.get()))
+                                                                                index(self.samplingFreqCombo.get()),
+                                                       scanStart=self.configuredStartingPosition,
+                                                       scanLength=self.configuredScanLength,
+                                                       scanSpeed=self.configuredScanSpeed)
         # self.updateStatusMessage("Single capture in progress...")
         # print(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()))
         # self.MFLIDrv.configureForMeasurement(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()), 1000)
