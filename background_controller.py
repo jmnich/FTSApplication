@@ -67,7 +67,7 @@ class BackgroundController:
         mfliSamplingFrequency = MFLIDriver.MFLISamplingRates[self.mfliFrequencyIndex]
 
         # TODO
-        # - dodać okienko do wpisywania początku skanu
+    # - dodać okienko do wpisywania początku skanu
         # - dodać okienko z suwakiem do wybierania długości skanu
         # - dodać suwak do szybkości skanu
         # - liczba sampli obliczy się automatycznie z sample rate MFLI

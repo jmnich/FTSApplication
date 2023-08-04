@@ -16,6 +16,9 @@ class FTSApp:
     def __init__(self):
         # constants
         self.backgroundGray = "#242424"
+        self.configuredStartingPosition = 149000
+        self.configuredScanLength = 50000
+        self.minimalScanLength = 1000
 
         self.currentSpectrumX = []
         self.currentSpectrumY = []
@@ -137,7 +140,7 @@ class FTSApp:
         self.settingsTabs.add("Scan")
         self.settingsTabs.add("Hardware")
 
-        # configure settings 'scan' tab
+        # configure settings 'SCAN' tab
         # ==============================================================================================================
         self.settingsTabs.tab("Scan").columnconfigure(0, weight=1)
         self.settingsTabs.tab("Scan").columnconfigure(1, weight=1)
@@ -159,7 +162,46 @@ class FTSApp:
         self.samplingFreqCombo.grid(row=0, column=1, sticky="E", padx=5, pady=5)
         self.samplingFreqCombo.set(self.MFLIFreqneuenciesAsStrings[9])
 
-        # configure settings 'hardware' tab
+        self.startingPosLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Scan"),
+                                                    text="Start\nposition [\u03BCm]",
+                                                    font=ctk.CTkFont(size=12))
+        self.startingPosLabel.grid(row=1, column=0, sticky="E", padx=5, pady=5)
+
+        self.startingPosBox = ctk.CTkEntry(master=self.settingsTabs.tab("Scan"),
+                                        width=120, height=30)
+        self.startingPosBox.insert(0, str(self.configuredStartingPosition))
+        self.startingPosBox.grid(row=1, column=1, sticky="E", padx=5, pady=5)
+        self.startingPosBox.bind("<FocusOut>", self.onCmdUpdateStartingPositionFromBox)
+        self.startingPosBox.bind("<Return>", self.onCmdUpdateStartingPositionFromBox)
+
+        self.scanLengthLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Scan"),
+                                                    text="Scan\nlength [\u03BCm]",
+                                                    font=ctk.CTkFont(size=12))
+        self.scanLengthLabel.grid(row=2, column=0, sticky="E", padx=5, pady=5)
+
+        self.scanLengthBox = ctk.CTkEntry(master=self.settingsTabs.tab("Scan"),
+                                        width=120, height=30)
+        # self.scanLengthBox.configure(wrap='none')
+        self.scanLengthBox.insert(0, str(self.configuredScanLength))
+        self.scanLengthBox.grid(row=2, column=1, sticky="E", padx=5, pady=5)
+        self.scanLengthBox.bind("<FocusOut>", self.onCmdUpdateScanLengthFromBox)
+        self.scanLengthBox.bind("<Return>", self.onCmdUpdateScanLengthFromBox)
+
+        self.scanLengthSlider = ctk.CTkSlider(master=self.settingsTabs.tab("Scan"),
+                                              width=250,
+                                              height=20,
+                                              from_=self.minimalScanLength,
+                                              to=ZaberDriver.DelayLineNominalLength -
+                                                 (ZaberDriver.DelayLineNominalLength - self.configuredStartingPosition),
+                                              number_of_steps=(ZaberDriver.DelayLineNominalLength -
+                                                             (ZaberDriver.DelayLineNominalLength -
+                                                             self.configuredStartingPosition) -
+                                                             self.minimalScanLength) / 100,
+                                              command=self.onCmdUpdateScanLengthFromSlider)
+        self.scanLengthSlider.grid(row=3, column=0, columnspan=2, sticky="N", padx=5, pady=5)
+        self.scanLengthSlider.set(self.configuredScanLength)
+
+        # configure settings 'HARDWARE' tab
         # ==============================================================================================================
         self.settingsTabs.tab("Hardware").columnconfigure(0, weight=1)
         self.settingsTabs.tab("Hardware").columnconfigure(1, weight=1)
@@ -368,6 +410,66 @@ class FTSApp:
         #
         # self.updatePlot()
         # self.updateStatusMessage("Single capture done")
+
+    def onCmdUpdateScanLengthFromSlider(self, other):
+        sliderSetting = self.scanLengthSlider.get()
+        self.scanLengthBox.delete(0, "end")
+        self.scanLengthBox.insert(0, str(int(sliderSetting)))
+        self.configuredScanLength = sliderSetting
+
+    def onCmdUpdateScanLengthFromBox(self, other):
+        minSetting = 1000
+        maxSetting =  (ZaberDriver.DelayLineNominalLength -
+                       (ZaberDriver.DelayLineNominalLength - self.configuredStartingPosition))
+
+        try:
+            newSetting = int(self.scanLengthBox.get())
+
+            if newSetting > maxSetting:
+                newSetting = maxSetting
+            elif newSetting < minSetting:
+                newSetting = minSetting
+
+            self.scanLengthBox.delete(0, "end")
+            self.scanLengthBox.insert(0, str(newSetting))
+            self.scanLengthSlider.set(newSetting)
+            self.configuredScanLength = newSetting
+
+        except:
+            return
+
+    def onCmdUpdateStartingPositionFromBox(self, other):
+        minSetting = 2000
+        maxSetting = ZaberDriver.DelayLineNominalLength
+
+        print("Start pos update")
+
+        try:
+            newSetting = int(self.startingPosBox.get())
+        except:
+            newSetting = 149000
+
+        if newSetting > maxSetting:
+            newSetting = maxSetting
+        elif newSetting < minSetting:
+            newSetting = minSetting
+
+        self.startingPosBox.delete(0, "end")
+        self.startingPosBox.insert(0, str(newSetting))
+        self.configuredStartingPosition = newSetting
+
+        # make sure scan length settings are valid and slider is configured correctly
+        self.scanLengthSlider.configure(to=ZaberDriver.DelayLineNominalLength -
+                                           (ZaberDriver.DelayLineNominalLength -
+                                           self.configuredStartingPosition))
+        self.scanLengthSlider.configure(number_of_steps=(ZaberDriver.DelayLineNominalLength -
+                                                    (ZaberDriver.DelayLineNominalLength -
+                                                    self.configuredStartingPosition) -
+                                                    self.minimalScanLength) / 100)
+        # use this command to make sure settings are ok
+        self.onCmdUpdateScanLengthFromBox(None)
+
+        print("Update starting pos")
 
     def onCmdUnusedButton(self):
         self.ZaberDrv.setPosition(75000)
