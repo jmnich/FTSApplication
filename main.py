@@ -424,19 +424,18 @@ class FTSApp:
 
         try:
             newSetting = int(self.scanLengthBox.get())
-
-            if newSetting > maxSetting:
-                newSetting = maxSetting
-            elif newSetting < minSetting:
-                newSetting = minSetting
-
-            self.scanLengthBox.delete(0, "end")
-            self.scanLengthBox.insert(0, str(newSetting))
-            self.scanLengthSlider.set(newSetting)
-            self.configuredScanLength = newSetting
-
         except:
-            return
+            newSetting = (maxSetting - minSetting) / 2
+
+        if newSetting > maxSetting:
+            newSetting = maxSetting
+        elif newSetting < minSetting:
+            newSetting = minSetting
+
+        self.scanLengthBox.delete(0, "end")
+        self.scanLengthBox.insert(0, str(newSetting))
+        self.scanLengthSlider.set(newSetting)
+        self.configuredScanLength = newSetting
 
     def onCmdUpdateStartingPositionFromBox(self, other):
         minSetting = 2000
