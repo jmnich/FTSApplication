@@ -77,8 +77,8 @@ class MFLIDriver:
         self.Scope.set('fft/spectraldensity', 0)
         self.Scope.set('fft/window', 1)
         # scope.set('save/directory', 'C:\\Users\\JakubMnich\\Documents\\Zurich Instruments\\LabOne\\WebServer')
-        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/time', samplingFreqIndex)
-        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/length', sampleLength)
+        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/time', int(samplingFreqIndex))
+        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/length', int(sampleLength))
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channels/1/inputselect', 8) # '8' - Ref 0
         self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/single', 1)

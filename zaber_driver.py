@@ -30,9 +30,11 @@ class ZaberDriver:
 
         if self.serialPort.isOpen():
             print("Zaber connected")
+            self.isConnected = True
             return True
         else:
             print("Zaber disconnected")
+            self.isConnected = False
             return False
 
     def home(self):

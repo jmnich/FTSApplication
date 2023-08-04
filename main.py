@@ -377,7 +377,7 @@ class FTSApp:
         self.ApplicationController.ZaberPort = self.zaberPortCombo.get().replace(' ', '').replace(
             '\t', '').replace('\n', '').replace('\r', '')
 
-        self.ApplicationController.performInitialization()
+        # self.ApplicationController.performInitialization()
 
         # run the app
         self.root.update()
@@ -431,19 +431,6 @@ class FTSApp:
                                                        scanStart=self.configuredStartingPosition,
                                                        scanLength=self.configuredScanLength,
                                                        scanSpeed=self.configuredScanSpeed)
-        # self.updateStatusMessage("Single capture in progress...")
-        # print(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()))
-        # self.MFLIDrv.configureForMeasurement(self.MFLIFreqneuenciesAsStrings.index(self.samplingFreqCombo.get()), 1000)
-        # self.MFLIDrv.measureData()
-        #
-        # self.currentInterferogramY = self.MFLIDrv.lastInterferogramData
-        # self.currentInterferogramX = np.arange(len(self.currentInterferogramY))
-        #
-        # self.currentSpectrumY = self.MFLIDrv.lastReferenceData
-        # self.currentSpectrumX = np.arange(len(self.currentSpectrumY))
-        #
-        # self.updatePlot()
-        # self.updateStatusMessage("Single capture done")
 
     def onCmdUpdateScanLengthFromSlider(self, other):
         sliderSetting = self.scanLengthSlider.get()
@@ -517,22 +504,9 @@ class FTSApp:
         strippedZaberPort = self.zaberPortCombo.get().replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
 
-        if self.MFLIDrv.isConnected and self.MFLIDrv.deviceID == strippedMFLIID:
-            # the correct MFLI is currently connected and no further action is required
-            print("Correct MFLI is already connected")
-        else:
-            if self.MFLIDrv.tryConnect(strippedMFLIID):
-                print("Connection to MFLI successful")
-            else:
-                print("Connection to MFLI failed")
-
-        if strippedZaberPort != "NONE":
-            if self.ZaberDrv.tryConnect(strippedZaberPort):
-                print(f"Zaber connected at {strippedZaberPort}")
-            else:
-                print(f"Zaber failed to connect at {strippedZaberPort}")
-        else:
-            self.updateStatusMessage("Invalid COM for Zaber")
+        self.ApplicationController.setZaberPort(strippedZaberPort)
+        self.ApplicationController.setMFLIDeviceName(strippedMFLIID)
+        self.ApplicationController.performInitialization()
 
     def onCmdOpenSpectrumPlot(self):
         plt.figure()
@@ -554,65 +528,11 @@ class FTSApp:
         plt.pause(1.0)
         plt.ioff()
 
-    # def onCmdConfigureHardware(self):
-    #     print("Configure hardware")
-    #
-    #     # construct the hardware configuration window
-    #     newWindow = ctk.CTkToplevel()
-    #     newWindow.title("Hardware configuration window")
-    #     newWindow.geometry("400x300")
-    #     newWindow.attributes("-topmost", True)
-    #     newWindow.resizable(False, False)
-    #
-    #     newWindow.columnconfigure(0, weight=1)
-    #     newWindow.columnconfigure(1, weight=2)
-    #
-    #     newWindow.rowconfigure(0, weight=1, minsize=30)
-    #     newWindow.rowconfigure(1, weight=1, minsize=30)
-    #     newWindow.rowconfigure(2, weight=4)
-    #     newWindow.rowconfigure(3, weight=4)
-    #
-    #     label1 = ctk.CTkLabel(newWindow, text="MFLI status").grid(row=0, column=0)
-    #     labelMFLIStatus = ctk.CTkLabel(newWindow, text="MFLI disconnected", text_color="red").grid(row=0, column=1,
-    #                                                                                                sticky="W")
-    #     label2 = ctk.CTkLabel(newWindow, text="Zaber status").grid(row=1, column=0)
-    #     labelZaberStatus = ctk.CTkLabel(newWindow, text="Zaber disconnected", text_color="red").grid(row=1, column=1,
-    #                                                                                                  sticky="W")
-    #     buttonMFLI = ctk.CTkButton(master=newWindow,
-    #                                        text="Connect MFLI",
-    #                                        width=200,
-    #                                        height=80,
-    #                                        corner_radius=10,
-    #                                        command=self.onCmdUnusedButton)
-    #     buttonMFLI.grid(row=2, column=0, columnspan=2, sticky="NSEW", padx=5, pady=5)
-
     def onClosing(self):
         # make sure the application closes properly when the main window is destroyed
         sys.exit()
 
-    # def createPlot(self):
-    # fig.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
-    # canvas.get_tk_widget().grid(row=0, column=1, padx=(15, 0), pady=10, sticky="NW")
-    # fig.set_size_inches(11, 5.3)
-    # fig2.subplots_adjust(left=0, right=1, bottom=0, top=1, wspace=0, hspace=0)
-    # canvas.get_tk_widget().grid(row=0, column=1, padx=(15, 0), pady=10, sticky="NW")
-    # canvas.grid(row=0, column=1, padx=(10, 5), pady=10, sticky=customtkinter.W)
-    # canvas.get_tk_widget().place(relx=0.33, rely=0.025)
-    # canvas.get_tk_widget().pack(side="top", fill='both', expand=True)
-    # plt.ion()
-    # plt.pause(0.1)
-    # plt.show()
-    # plt.pause(0.1)
-    # plt.ioff()
-    # canvas.pack(side="top", fill='both', expand=True)
-
     def updatePlot(self):
-        # self.currentInterferogramX = np.arange(0, 100, 1)
-        # self.currentInterferogramY = np.random.random(len(self.currentInterferogramX))
-
-        # self.currentSpectrumX = np.arange(0, 100, 1)
-        # self.currentSpectrumY = np.random.random(len(self.currentSpectrumX))
-
         self.loadDataToPlots(self.currentInterferogramX, self.currentInterferogramY,
                              self.currentSpectrumX, self.currentSpectrumY)
 
@@ -622,12 +542,12 @@ class FTSApp:
         self.axTop.clear()
 
         if len(spectrumX) == len(spectrumY) and len(spectrumX) > 0:
-            self.axBot.grid(color=self.backgroundGray, linestyle='-', linewidth=1, alpha=0.6)
+            self.axBot.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axBot.plot(spectrumX, spectrumY, color="dodgerblue")
             self.axBot.set_xlim(np.min(spectrumX), np.max(spectrumX))
 
         if len(interferogramX) == len(interferogramY) and len(interferogramX) > 0:
-            self.axTop.grid(color=self.backgroundGray, linestyle='-', linewidth=1, alpha=0.6)
+            self.axTop.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axTop.plot(interferogramX, interferogramY, color="dodgerblue")
             self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
 
