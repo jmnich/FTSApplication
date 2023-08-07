@@ -1,5 +1,5 @@
+import os
 import customtkinter as ctk
-from PIL import Image, ImageOps
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -13,7 +13,9 @@ import serial.tools.list_ports
 import settings_manager as SM
 import logging
 from tkinter.filedialog import asksaveasfilename
+from tkinter import filedialog
 from datetime import datetime
+import data_export_tool as DataExportTool
 
 class FTSApp:
 
@@ -667,25 +669,18 @@ class FTSApp:
         plt.ioff()
 
     def onCmdSaveCSVOnly(self):
-
-        if len(self.currentSpectrumX) == len(self.currentSpectrumY) and len(self.currentSpectrumX) != 0:
-
-            initial_file_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_spectrum.csv")
-
-            f = asksaveasfilename(initialfile=initial_file_name,
-                              defaultextension=".csv", filetypes=[("CSV", "*.csv"), ("CSV Files", "*.csv")])
-
-            np.savetxt(f, np.column_stack((self.currentSpectrumX, self.currentSpectrumY)),
-                       fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [a.u.]',
-                       footer='', comments='', encoding=None)
-
-            logging.info(f"Spectrum saved as a .CSV file: " + str(f))
-        else:
-            logging.info(f"Failed to save spectrum as a .CSV file")
+        DataExportTool.exportSpectrumAsCSV(self.currentSpectrumX, self.currentSpectrumY)
 
     def onCmdSaveFull(self):
-        print("")
-
+        DataExportTool.exportAllData(
+            spectrumX=self.currentSpectrumX,
+            spectrumY=self.currentSpectrumY,
+            interferogramX=self.currentInterferogramX,
+            interferogramY=self.currentInterferogramY,
+            interferogramRaw=None,
+            referenceSignalRaw=None,
+            settings=self.appSettings
+        )
     def onClosing(self):
         SM.saveSettingsToFile(self.appSettings)
         # make sure the application closes properly when the main window is destroyed
