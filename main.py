@@ -12,6 +12,8 @@ from background_controller import BackgroundController
 import serial.tools.list_ports
 import settings_manager as SM
 import logging
+from tkinter.filedialog import asksaveasfilename
+from datetime import datetime
 
 class FTSApp:
 
@@ -304,7 +306,7 @@ class FTSApp:
         self.mfliIDBox.grid(row=4, column=1, sticky="E", padx=5, pady=5)
 
         self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
-                                            text="Reconnect\nall",
+                                            text="Connect\nall",
                                             width=120,
                                             height=80,
                                             corner_radius=10,
@@ -323,7 +325,25 @@ class FTSApp:
         # ==============================================================================================================
         self.settingsTabs.tab("Export").columnconfigure(0, weight=1)
         self.settingsTabs.tab("Export").columnconfigure(1, weight=1)
-        # TODO
+
+        self.settingsTabs.tab("Export").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Export").columnconfigure(1, weight=1)
+
+        self.buttonSaveNormal = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+                                            text="Save\nresults",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=self.onCmdSaveFull)
+        self.buttonSaveNormal.grid(row=0, column=0, sticky="N", padx=5, pady=5)
+
+        self.buttonSaveCSV = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+                                            text="Save\nspectrum\nas .csv",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=self.onCmdSaveCSVOnly)
+        self.buttonSaveCSV.grid(row=0, column=1, sticky="N", padx=5, pady=5)
 
         # configure settings 'PLOTS' tab
         # ==============================================================================================================
@@ -384,9 +404,6 @@ class FTSApp:
         self.spectrumYMaxBox.grid(row=3, column=1, sticky="E", padx=5, pady=5)
         self.spectrumYMaxBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
         self.spectrumYMaxBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
-
-
-        # TODO
 
         # Create plots
         # ==============================================================================================================
@@ -621,7 +638,7 @@ class FTSApp:
         strippedZaberPort = self.zaberPortCombo.get().replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
 
-        logging.info(f"Attempting to conntect to hardware. Zaber port: {strippedZaberPort} and MFLI devID: {strippedMFLIID}")
+        logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and MFLI devID: {strippedMFLIID}")
         self.ApplicationController.setZaberPort(strippedZaberPort)
         self.ApplicationController.setMFLIDeviceName(strippedMFLIID)
         self.ApplicationController.performInitialization()
@@ -648,6 +665,26 @@ class FTSApp:
         plt.show()
         plt.pause(1.0)
         plt.ioff()
+
+    def onCmdSaveCSVOnly(self):
+
+        if len(self.currentSpectrumX) == len(self.currentSpectrumY) and len(self.currentSpectrumX) != 0:
+
+            initial_file_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_spectrum.csv")
+
+            f = asksaveasfilename(initialfile=initial_file_name,
+                              defaultextension=".csv", filetypes=[("CSV", "*.csv"), ("CSV Files", "*.csv")])
+
+            np.savetxt(f, np.column_stack((self.currentSpectrumX, self.currentSpectrumY)),
+                       fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [a.u.]',
+                       footer='', comments='', encoding=None)
+
+            logging.info(f"Spectrum saved as a .CSV file: " + str(f))
+        else:
+            logging.info(f"Failed to save spectrum as a .CSV file")
+
+    def onCmdSaveFull(self):
+        print("")
 
     def onClosing(self):
         SM.saveSettingsToFile(self.appSettings)

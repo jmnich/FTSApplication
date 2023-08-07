@@ -23,9 +23,6 @@ class MFLIDriver:
         self.deviceID = devID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
         # self.tryConnect(self.deviceID)
 
-        # sampling rates available in MFLI at their respective indices
-
-
     def tryConnect(self, deviceID):
 
         self.deviceID = deviceID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
