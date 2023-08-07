@@ -32,11 +32,19 @@ def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interfer
     if len(selectedName) > 0:
         savePackageRootName = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_") + selectedName
     else:
-        savePackageRootName = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_result")
+        savePackageRootName = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_results")
 
     savePackageRootPath = os.path.join(direcotry_selected, savePackageRootName)
+    os.mkdir(savePackageRootPath)
 
-    print(savePackageRootPath)
+    pathToSpectrumCSV = os.path.join(savePackageRootPath, "spectrum.csv")
+    pathToInterferogramCSV = os.path.join(savePackageRootPath, "interferogram.csv")
+    pathToRawData = os.path.join(savePackageRootPath, "raw_data.csv")
+    pathToSpectrumPicture = os.path.join(savePackageRootPath, "spectrum.png")
+    pathToInterferogramPicture = os.path.join(savePackageRootPath, "interferogram.png")
+    pathToMatlabData = os.path.join(savePackageRootPath, "matlabData.mat")
+    pathToMeasurementInfo = os.path.join(savePackageRootPath, "measurementInfo.txt")
+
     # savePackageRootName = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_") + packageNameDialog.get_input()
         # savePackageRoot = os.path.join()
         #
