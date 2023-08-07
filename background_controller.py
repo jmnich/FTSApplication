@@ -3,6 +3,7 @@ from threading import *
 from mfli_driver import MFLIDriver
 from zaber_driver import ZaberDriver
 from data_processor import DataProcessor
+import logging
 
 class BackgroundController:
 
@@ -64,10 +65,12 @@ class BackgroundController:
             self.SetGeneralReadyFlagMethod(False)
 
     def performInitialization(self):
+        logging.info(f"Application controller: hardware initialization starting")
         t = Thread(target=self.initializationWork, daemon=True)
         t.start()
 
     def performMeasurements(self, measurementsCount, samplingFrequency, scanStart, scanLength, scanSpeed):
+        logging.info(f"Application controller: measurement starting")
         self.orderedMeasurementsCount = measurementsCount
         self.mfliFrequencyIndex = samplingFrequency
         self.scanStartPosition = scanStart
