@@ -10,23 +10,33 @@ import time
 import si_prefix as si
 from background_controller import BackgroundController
 import serial.tools.list_ports
+import settings_manager as SM
 
 class FTSApp:
 
     def __init__(self):
+
+        if SM.isSettingsFileAvailable():
+            self.appSettings = SM.readSettingsFromFile()
+            SM.validateAndFixSettings(self.appSettings)
+        else:
+            self.appSettings = SM.getDefaultSettings()
+
         # constants
         self.backgroundGray = "#242424"
-        self.configuredStartingPosition = 149000
-        self.configuredScanLength = 50000
-        self.minimalScanLength = 1000
-        self.minSpeed = 1   # mm/s
-        self.maxSpeed = 50  # mm/s
-        self.configuredScanSpeed = 5 # mm/s
+        # self.configuredStartingPosition = 149000
+        # self.configuredScanLength = 50000
+        # self.minimalScanLength = 1000
+        # self.minSpeed = 1   # mm/s
+        # self.maxSpeed = 50  # mm/s
+        # self.configuredScanSpeed = 5 # mm/s
 
         self.currentSpectrumX = []
         self.currentSpectrumY = []
         self.currentInterferogramX = []
         self.currentInterferogramY = []
+
+        self.currentlyAvailableCOMPorts = []
 
         # construct GUI
         ctk.set_appearance_mode("dark")
@@ -58,18 +68,14 @@ class FTSApp:
 
         # build GUI elements
         self.frameTopPlot = ctk.CTkFrame(master=self.root,
-                                         height=60,
-                                         width=120,
                                          fg_color="darkblue")
 
-        self.frameTopPlot.grid(row=0, column=1, padx=(15, 5), pady=0, sticky="NE")
+        self.frameTopPlot.grid(row=0, column=1, padx=(5, 5), pady=0)#, sticky="N")
 
         self.frameBottomPlot = ctk.CTkFrame(master=self.root,
-                                            height=60,
-                                            width=120,
                                             fg_color="darkblue")
         # self.frame.place(relx=0.33, rely=0.025)
-        self.frameBottomPlot.grid(row=1, column=1, padx=(15, 5), pady=0, sticky="NE")
+        self.frameBottomPlot.grid(row=1, column=1, padx=(5, 5), pady=0)#, sticky="N")
 
         # buttons
         # create a frame to hold all the buttons related to measurements
@@ -115,7 +121,7 @@ class FTSApp:
                                             command=self.onCmdOpenSpectrumPlot)
         self.buttonSpectrum.grid(row=1, column=1, sticky="N", padx=5, pady=5)
 
-        # create a frame to hold all the buttons related to measurements
+        # create a frame to hold all the buttons related to settings and configuration
         self.frameButtonsBottom = ctk.CTkFrame(master=self.root,
                                                height=60,
                                                width=5000,
@@ -142,7 +148,8 @@ class FTSApp:
         self.settingsTabs.grid(row=4, column=0, columnspan=2, sticky="NSEW", padx=2, pady=2)
         self.settingsTabs.add("Scan")
         self.settingsTabs.add("Hardware")
-        self.settingsTabs.add("Save")
+        self.settingsTabs.add("Plots")
+        self.settingsTabs.add("Export")
 
         # configure settings 'SCAN' tab
         # ==============================================================================================================
@@ -164,7 +171,7 @@ class FTSApp:
                                                  state="readonly",
                                                  width=120)
         self.samplingFreqCombo.grid(row=0, column=1, sticky="E", padx=5, pady=5)
-        self.samplingFreqCombo.set(self.MFLIFreqneuenciesAsStrings[9])
+        self.samplingFreqCombo.set(self.MFLIFreqneuenciesAsStrings[int(self.appSettings["mfliSelectedFrequencyIndex"])])
 
         self.startingPosLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Scan"),
                                                     text="Start\nposition [\u03BCm]",
@@ -173,7 +180,7 @@ class FTSApp:
 
         self.startingPosBox = ctk.CTkEntry(master=self.settingsTabs.tab("Scan"),
                                         width=120, height=30)
-        self.startingPosBox.insert(0, str(self.configuredStartingPosition))
+        self.startingPosBox.insert(0, self.appSettings["delayLineConfiguredScanStart"])
         self.startingPosBox.grid(row=1, column=1, sticky="E", padx=5, pady=5)
         self.startingPosBox.bind("<FocusOut>", self.onCmdUpdateStartingPositionFromBox)
         self.startingPosBox.bind("<Return>", self.onCmdUpdateStartingPositionFromBox)
@@ -186,24 +193,25 @@ class FTSApp:
         self.scanLengthBox = ctk.CTkEntry(master=self.settingsTabs.tab("Scan"),
                                         width=120, height=30)
         # self.scanLengthBox.configure(wrap='none')
-        self.scanLengthBox.insert(0, str(self.configuredScanLength))
+        self.scanLengthBox.insert(0, self.appSettings["delayLineConfiguredScanLength"])
         self.scanLengthBox.grid(row=2, column=1, sticky="E", padx=5, pady=5)
         self.scanLengthBox.bind("<FocusOut>", self.onCmdUpdateScanLengthFromBox)
         self.scanLengthBox.bind("<Return>", self.onCmdUpdateScanLengthFromBox)
 
-        self.scanLengthSlider = ctk.CTkSlider(master=self.settingsTabs.tab("Scan"),
-                                              width=250,
-                                              height=20,
-                                              from_=self.minimalScanLength,
-                                              to=ZaberDriver.DelayLineNominalLength -
-                                                 (ZaberDriver.DelayLineNominalLength - self.configuredStartingPosition),
+        self.scanLengthSlider = ctk.CTkSlider(master = self.settingsTabs.tab("Scan"),
+                                              width = 250,
+                                              height = 20,
+                                              from_ = int(self.appSettings["delayLineMinimalScanLength"]),
+                                              to = ZaberDriver.DelayLineNominalLength -
+                                                 (ZaberDriver.DelayLineNominalLength -
+                                                  int(self.appSettings["delayLineConfiguredScanStart"])),
                                               number_of_steps=(ZaberDriver.DelayLineNominalLength -
                                                              (ZaberDriver.DelayLineNominalLength -
-                                                             self.configuredStartingPosition) -
-                                                             self.minimalScanLength) / 100,
+                                                             int(self.appSettings["delayLineConfiguredScanStart"])) -
+                                                             int(self.appSettings["delayLineMinimalScanLength"])) / 100,
                                               command=self.onCmdUpdateScanLengthFromSlider)
         self.scanLengthSlider.grid(row=3, column=0, columnspan=2, sticky="N", padx=5, pady=5)
-        self.scanLengthSlider.set(self.configuredScanLength)
+        self.scanLengthSlider.set(float(self.appSettings["delayLineConfiguredScanLength"]))
 
         self.scanSpeedLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Scan"),
                                                     text="Scan speed\n[mm/s]",
@@ -211,20 +219,19 @@ class FTSApp:
         self.scanSpeedLabel.grid(row=4, column=0, sticky="E", padx=5, pady=5)
 
         self.scanSpeedValueLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Scan"),
-                                                    text=str(self.configuredScanSpeed),
+                                                    text=self.appSettings["delayLineConfiguredScanSpeed"],
                                                     font=ctk.CTkFont(size=12))
         self.scanSpeedValueLabel.grid(row=4, column=1, sticky="W", padx=5, pady=5)
 
-        self.scanSpeedSlider = ctk.CTkSlider(master=self.settingsTabs.tab("Scan"),
-                                              width=250,
-                                              height=20,
-                                              from_=self.minSpeed,
-                                              to=self.maxSpeed,
-                                              number_of_steps=49,
+        self.scanSpeedSlider = ctk.CTkSlider(master = self.settingsTabs.tab("Scan"),
+                                              width = 250,
+                                              height = 20,
+                                              from_ = int(self.appSettings["delayLineMinimumSpeed"]),
+                                              to = int(self.appSettings["delayLineMaximumSpeed"]),
+                                              number_of_steps = int(self.appSettings["delayLineSpeedSliderTicks"]),
                                               command=self.onCmdScanSpeedUpdateFromSlider)
         self.scanSpeedSlider.grid(row=5, column=0, columnspan=2, sticky="N", padx=5, pady=5)
-        self.scanSpeedSlider.set(self.configuredScanSpeed)
-
+        self.scanSpeedSlider.set(float(self.appSettings["delayLineConfiguredScanSpeed"]))
 
         # configure settings 'HARDWARE' tab
         # ==============================================================================================================
@@ -276,6 +283,10 @@ class FTSApp:
         self.zaberPortCombo.grid(row=3, column=1, sticky="E", padx=5, pady=5)
         self.onCmdRefreshCOMPorts()
 
+        # set the last used Zaber COM port if it is currently available
+        if self.currentlyAvailableCOMPorts.__contains__(self.appSettings["delayLineCOMPort"]):
+            self.zaberPortCombo.set(self.appSettings["delayLineCOMPort"])
+
         self.zaberPortRefreshButton = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
                                             text="",
                                             width=20,
@@ -292,7 +303,7 @@ class FTSApp:
         self.mfliIDBox = ctk.CTkTextbox(master=self.settingsTabs.tab("Hardware"),
                                         width=140, height=30)
         self.mfliIDBox.configure(wrap='none')
-        self.mfliIDBox.insert("0.0", "dev6285")
+        self.mfliIDBox.insert("0.0", self.appSettings["mfliDeviceID"])
         self.mfliIDBox.grid(row=4, column=1, sticky="E", padx=5, pady=5)
 
         self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
@@ -311,11 +322,17 @@ class FTSApp:
                                             command=self.onCmdUnusedButton)
         self.buttonHardware.grid(row=6, column=1, sticky="N", padx=5, pady=5)
 
-        # configure settings 'SAVE' tab
+        # configure settings 'EXPORT' tab
         # ==============================================================================================================
-        self.settingsTabs.tab("Save").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Save").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Export").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Export").columnconfigure(1, weight=1)
+        # TODO
 
+        # configure settings 'PLOTS' tab
+        # ==============================================================================================================
+        self.settingsTabs.tab("Plots").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Plots").columnconfigure(1, weight=1)
+        # TODO
 
         # Create plots
         # ==============================================================================================================
@@ -396,12 +413,14 @@ class FTSApp:
     def setDAQReadyFlag(self, isReady):
         if isReady:
             self.mfliStatusLabel.configure(text="READY", text_color="lightgreen")
+            self.appSettings["mfliDeviceID"] = self.MFLIDrv.deviceID
         else:
             self.mfliStatusLabel.configure(text="NOT\nREADY", text_color="red")
 
     def setDelayLineReadyFlag(self, isReady):
         if isReady:
             self.zaberStatusLabel.configure(text="READY", text_color="lightgreen")
+            self.appSettings["delayLineCOMPort"] = self.zaberPortCombo.get()
         else:
             self.zaberStatusLabel.configure(text="NOT\nREADY", text_color="red")
 
@@ -414,34 +433,38 @@ class FTSApp:
 
     def onCmdRefreshCOMPorts(self):
         ports = serial.tools.list_ports.comports()
-        portsList = []
+        self.currentlyAvailableCOMPorts.clear()
         for port, desc, hwid in sorted(ports):
-            portsList.append("{}".format(port))
+            self.currentlyAvailableCOMPorts.append("{}".format(port))
 
-        if len(portsList) == 0:
-            portsList.append("NONE")
+        if len(self.currentlyAvailableCOMPorts) == 0:
+            self.currentlyAvailableCOMPorts.append("NONE")
 
-        self.zaberPortCombo.configure(values=portsList)
-        self.zaberPortCombo.set(portsList[0])
+        self.zaberPortCombo.configure(values=self.currentlyAvailableCOMPorts)
+        self.zaberPortCombo.set(self.currentlyAvailableCOMPorts[0])
 
     def onCmdSingleCapture(self):
         self.ApplicationController.performMeasurements(measurementsCount=1,
                                                        samplingFrequency=self.MFLIFreqneuenciesAsStrings.
                                                                                 index(self.samplingFreqCombo.get()),
-                                                       scanStart=self.configuredStartingPosition,
-                                                       scanLength=self.configuredScanLength,
-                                                       scanSpeed=self.configuredScanSpeed)
+                                                       scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
+                                                       scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
+                                                       scanSpeed=int(self.appSettings["delayLineConfiguredScanSpeed"]))
+
+        self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
+                                                             index(self.samplingFreqCombo.get()))
+
 
     def onCmdUpdateScanLengthFromSlider(self, other):
         sliderSetting = self.scanLengthSlider.get()
         self.scanLengthBox.delete(0, "end")
         self.scanLengthBox.insert(0, str(int(sliderSetting)))
-        self.configuredScanLength = sliderSetting
+        self.appSettings["delayLineConfiguredScanSpeed"] = str(sliderSetting)
 
     def onCmdUpdateScanLengthFromBox(self, other):
-        minSetting = 1000
+        minSetting = int(self.appSettings["delayLineMinimalScanLength"])
         maxSetting =  (ZaberDriver.DelayLineNominalLength -
-                       (ZaberDriver.DelayLineNominalLength - self.configuredStartingPosition))
+                       (ZaberDriver.DelayLineNominalLength - int(self.appSettings["delayLineConfiguredScanStart"])))
 
         try:
             newSetting = int(self.scanLengthBox.get())
@@ -456,7 +479,7 @@ class FTSApp:
         self.scanLengthBox.delete(0, "end")
         self.scanLengthBox.insert(0, str(newSetting))
         self.scanLengthSlider.set(newSetting)
-        self.configuredScanLength = newSetting
+        self.appSettings["delayLineConfiguredScanLength"] = str(newSetting)
 
     def onCmdUpdateStartingPositionFromBox(self, other):
         minSetting = 2000
@@ -474,22 +497,26 @@ class FTSApp:
 
         self.startingPosBox.delete(0, "end")
         self.startingPosBox.insert(0, str(newSetting))
-        self.configuredStartingPosition = newSetting
+
+        self.appSettings["delayLineConfiguredScanStart"] = str(newSetting)
+        configuredStartingPosition = int(self.appSettings["delayLineConfiguredScanStart"])
+        minimalScanLength = int(self.appSettings["delayLineMinimalScanLength"])
 
         # make sure scan length settings are valid and slider is configured correctly
         self.scanLengthSlider.configure(to=ZaberDriver.DelayLineNominalLength -
                                            (ZaberDriver.DelayLineNominalLength -
-                                           self.configuredStartingPosition))
+                                           configuredStartingPosition))
         self.scanLengthSlider.configure(number_of_steps=(ZaberDriver.DelayLineNominalLength -
                                                     (ZaberDriver.DelayLineNominalLength -
-                                                    self.configuredStartingPosition) -
-                                                    self.minimalScanLength) / 100)
+                                                    configuredStartingPosition) -
+                                                    minimalScanLength) / 100)
         # use this command to make sure settings are ok
         self.onCmdUpdateScanLengthFromBox(None)
 
     def onCmdScanSpeedUpdateFromSlider(self, other):
-        self.configuredScanSpeed = self.scanSpeedSlider.get()
-        self.scanSpeedValueLabel.configure(text=str(int(self.configuredScanSpeed)))
+        configuredScanSpeed = self.scanSpeedSlider.get()
+        self.scanSpeedValueLabel.configure(text=str(int(configuredScanSpeed)))
+        self.appSettings["delayLineConfiguredScanSpeed"] = str(configuredScanSpeed)
 
     def onCmdUnusedButton(self):
         self.ZaberDrv.setPosition(75000)
@@ -529,6 +556,7 @@ class FTSApp:
         plt.ioff()
 
     def onClosing(self):
+        SM.saveSettingsToFile(self.appSettings)
         # make sure the application closes properly when the main window is destroyed
         sys.exit()
 
