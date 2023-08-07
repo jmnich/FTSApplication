@@ -42,7 +42,7 @@ def getDefaultSettings():
         "delayLineMinimalScanLength":"1000",
 
         "mfliSelectedFrequencyIndex":"9",
-        "mfliDeviceID":"dec6285",
+        "mfliDeviceID":"dev6285",
 
         "plotSpectrumXRangeMin":"1",
         "plotSpectrumXRangeMax": "30",

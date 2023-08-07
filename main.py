@@ -505,7 +505,7 @@ class FTSApp:
                                                                                 index(self.samplingFreqCombo.get()),
                                                        scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
                                                        scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
-                                                       scanSpeed=int(self.appSettings["delayLineConfiguredScanSpeed"]))
+                                                       scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]))
 
         self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
                                                              index(self.samplingFreqCombo.get()))
