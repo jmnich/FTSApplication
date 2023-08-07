@@ -24,13 +24,6 @@ class FTSApp:
 
         # constants
         self.backgroundGray = "#242424"
-        # self.configuredStartingPosition = 149000
-        # self.configuredScanLength = 50000
-        # self.minimalScanLength = 1000
-        # self.minSpeed = 1   # mm/s
-        # self.maxSpeed = 50  # mm/s
-        # self.configuredScanSpeed = 5 # mm/s
-
         self.currentSpectrumX = []
         self.currentSpectrumY = []
         self.currentInterferogramX = []
@@ -332,6 +325,63 @@ class FTSApp:
         # ==============================================================================================================
         self.settingsTabs.tab("Plots").columnconfigure(0, weight=1)
         self.settingsTabs.tab("Plots").columnconfigure(1, weight=1)
+
+        self.settingsTabs.tab("Plots").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Plots").columnconfigure(1, weight=1)
+
+        self.spectrumXMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+                                                    text="Spectrum plot\nrng X MIN [\u03BCm]",
+                                                    font=ctk.CTkFont(size=12))
+        self.spectrumXMinLabel.grid(row=0, column=0, sticky="E", padx=5, pady=5)
+
+        self.spectrumXMinBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plots"),
+                                        width=120, height=30)
+        # self.scanLengthBox.configure(wrap='none')
+        self.spectrumXMinBox.insert(0, self.appSettings["plotSpectrumXRangeMin"])
+        self.spectrumXMinBox.grid(row=0, column=1, sticky="E", padx=5, pady=5)
+        self.spectrumXMinBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
+        self.spectrumXMinBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
+
+        self.spectrumXMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+                                                    text="Spectrum plot\nrng X MAX [\u03BCm]",
+                                                    font=ctk.CTkFont(size=12))
+        self.spectrumXMaxLabel.grid(row=1, column=0, sticky="E", padx=5, pady=5)
+
+        self.spectrumXMaxBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plots"),
+                                        width=120, height=30)
+        # self.scanLengthBox.configure(wrap='none')
+        self.spectrumXMaxBox.insert(0, self.appSettings["plotSpectrumXRangeMax"])
+        self.spectrumXMaxBox.grid(row=1, column=1, sticky="E", padx=5, pady=5)
+        self.spectrumXMaxBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
+        self.spectrumXMaxBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
+
+        self.spectrumYMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+                                                    text="Spectrum plot\nrng Y MIN [\u03BCm]",
+                                                    font=ctk.CTkFont(size=12))
+        self.spectrumYMinLabel.grid(row=2, column=0, sticky="E", padx=5, pady=5)
+
+        self.spectrumYMinBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plots"),
+                                        width=120, height=30)
+        # self.scanLengthBox.configure(wrap='none')
+        self.spectrumYMinBox.insert(0, self.appSettings["plotSpectrumYRangeMin"])
+        self.spectrumYMinBox.grid(row=2, column=1, sticky="E", padx=5, pady=5)
+        self.spectrumYMinBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
+        self.spectrumYMinBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
+
+        self.spectrumYMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+                                                    text="Spectrum plot\nrng Y MAX [\u03BCm]",
+                                                    font=ctk.CTkFont(size=12))
+        self.spectrumYMaxLabel.grid(row=3, column=0, sticky="E", padx=5, pady=5)
+
+        self.spectrumYMaxBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plots"),
+                                        width=120, height=30)
+        # self.scanLengthBox.configure(wrap='none')
+        self.spectrumYMaxBox.insert(0, self.appSettings["plotSpectrumYRangeMax"])
+        self.spectrumYMaxBox.grid(row=3, column=1, sticky="E", padx=5, pady=5)
+        self.spectrumYMaxBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
+        self.spectrumYMaxBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
+
+
         # TODO
 
         # Create plots
@@ -362,6 +412,13 @@ class FTSApp:
         self.updatePlot()
         plt.close()
         plt.close()
+
+        self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
+                            float(self.appSettings["plotSpectrumXRangeMax"]))
+        self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),
+                            float(self.appSettings["plotSpectrumYRangeMax"]))
+        self.axBot.set_yscale("log")
+
 
         # create a status bar
         self.statusLabel = ctk.CTkLabel(master=self.root,
@@ -395,7 +452,6 @@ class FTSApp:
             '\t', '').replace('\n', '').replace('\r', '')
 
         # self.ApplicationController.performInitialization()
-
         # run the app
         self.root.update()
         self.root.mainloop()
@@ -524,6 +580,22 @@ class FTSApp:
         self.ZaberDrv.setPosition(10000)
         print("Unused button click")
 
+    def onCmdUpdateSpectrumPlotRanges(self, other):
+        print("update plot ranges")
+
+        self.appSettings["plotSpectrumXRangeMin"] = self.spectrumXMinBox.get()
+        self.appSettings["plotSpectrumXRangeMax"] = self.spectrumXMaxBox.get()
+        self.appSettings["plotSpectrumYRangeMin"] = self.spectrumYMinBox.get()
+        self.appSettings["plotSpectrumYRangeMax"] = self.spectrumYMaxBox.get()
+
+        self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
+                            float(self.appSettings["plotSpectrumXRangeMax"]))
+        self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),
+                            float(self.appSettings["plotSpectrumYRangeMax"]))
+
+        self.canvasBotPlot.draw()
+        self.root.update()
+
     def onCmdConnectHardware(self):
         strippedMFLIID = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
@@ -539,6 +611,7 @@ class FTSApp:
         plt.figure()
         plt.title("Spectrum")
         plt.plot(self.currentSpectrumX, self.currentSpectrumY)
+        plt.yscale("log")
         plt.ion()
         plt.pause(1.0)
         plt.show()
@@ -572,7 +645,11 @@ class FTSApp:
         if len(spectrumX) == len(spectrumY) and len(spectrumX) > 0:
             self.axBot.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axBot.plot(spectrumX, spectrumY, color="dodgerblue")
-            self.axBot.set_xlim(np.min(spectrumX), np.max(spectrumX))
+            self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
+                                float(self.appSettings["plotSpectrumXRangeMax"]))
+            self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),
+                                float(self.appSettings["plotSpectrumYRangeMax"]))
+            self.axBot.set_yscale("log")
 
         if len(interferogramX) == len(interferogramY) and len(interferogramX) > 0:
             self.axTop.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
