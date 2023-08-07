@@ -393,10 +393,11 @@ class FTSApp:
         plt.style.use('dark_background')
         self.figTop, self.axTop = plt.subplots()
         self.figTop.suptitle("Interferogram")
+        self.axTop.set_xlabel('Mirror position [\u03BCm]')
+        self.axTop.set_ylabel('Detector voltage [V]')
         self.figTop.set_facecolor(self.backgroundGray)
         self.figTop.set_size_inches(100, 100)
-        # self.figTop.set_size_inches(15, 4.75)
-        self.figTop.subplots_adjust(left=0.1, right=0.99, bottom=0.01, top=0.97, wspace=0, hspace=0)
+        self.figTop.subplots_adjust(left=0.1, right=0.99, bottom=0.1, top=0.97, wspace=0, hspace=0)
         self.figTop.set_tight_layout(True)
         self.canvasTopPlot = FigureCanvasTkAgg(self.figTop, master=self.frameTopPlot)
         self.canvasTopPlot.get_tk_widget().pack(side='right', fill='both', expand=True)
@@ -404,10 +405,11 @@ class FTSApp:
 
         self.figBot, self.axBot = plt.subplots()
         self.figBot.suptitle("Spectrum")
+        self.axBot.set_xlabel('Wavelength [\u03BCm]')
+        self.axBot.set_ylabel('[a.u.]')
         self.figBot.set_facecolor(self.backgroundGray)
         self.figBot.set_size_inches(100, 100)
-        # self.figBot.set_size_inches(15, 4.75)
-        self.figBot.subplots_adjust(left=0.1, right=0.99, bottom=0.01, top=0.97, wspace=0, hspace=0)
+        self.figBot.subplots_adjust(left=0.1, right=0.99, bottom=0.1, top=0.97, wspace=0, hspace=0)
         self.figBot.set_tight_layout(True)
         self.canvasBotPlot = FigureCanvasTkAgg(self.figBot, master=self.frameBottomPlot)
         self.canvasBotPlot.get_tk_widget().pack(side='right', fill='both', expand=True)
@@ -529,8 +531,7 @@ class FTSApp:
         sliderSetting = self.scanLengthSlider.get()
         self.scanLengthBox.delete(0, "end")
         self.scanLengthBox.insert(0, str(int(sliderSetting)))
-        logging.info(f"Scan speed set to: {sliderSetting}")
-        self.appSettings["delayLineConfiguredScanSpeed"] = str(sliderSetting)
+        self.appSettings["delayLineConfiguredScanLength"] = str(sliderSetting)
 
     def onCmdUpdateScanLengthFromBox(self, other):
         minSetting = int(self.appSettings["delayLineMinimalScanLength"])
@@ -550,7 +551,6 @@ class FTSApp:
         self.scanLengthBox.delete(0, "end")
         self.scanLengthBox.insert(0, str(newSetting))
         self.scanLengthSlider.set(newSetting)
-        logging.info(f"Scan length set to: {newSetting}")
         self.appSettings["delayLineConfiguredScanLength"] = str(newSetting)
 
     def onCmdUpdateStartingPositionFromBox(self, other):
@@ -590,7 +590,6 @@ class FTSApp:
     def onCmdScanSpeedUpdateFromSlider(self, other):
         configuredScanSpeed = self.scanSpeedSlider.get()
         self.scanSpeedValueLabel.configure(text=str(int(configuredScanSpeed)))
-        logging.info(f"Scan speed set to: {configuredScanSpeed}")
         self.appSettings["delayLineConfiguredScanSpeed"] = str(configuredScanSpeed)
 
     def onCmdUnusedButton(self):
@@ -674,10 +673,17 @@ class FTSApp:
                                 float(self.appSettings["plotSpectrumYRangeMax"]))
             self.axBot.set_yscale("log")
 
+            self.axBot.set_xlabel('Wavelength [\u03BCm]')
+            self.axBot.set_ylabel('[a.u.]')
+
+
         if len(interferogramX) == len(interferogramY) and len(interferogramX) > 0:
             self.axTop.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axTop.plot(interferogramX, interferogramY, color="dodgerblue")
             self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
+
+            self.axTop.set_xlabel('Mirror position [\u03BCm]')
+            self.axTop.set_ylabel('Detector voltage [V]')
 
         self.canvasTopPlot.draw()
         self.canvasBotPlot.draw()
