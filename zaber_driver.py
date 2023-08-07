@@ -1,5 +1,5 @@
 import time
-
+import logging
 import serial
 from threading import *
 
@@ -18,6 +18,7 @@ class ZaberDriver:
 
     def tryConnect(self, port):
         print(f"Zaber trying to connect to {port}")
+        logging.info(f"Zaber driver trying to connect to {port}")
 
         self.serialPort = serial.Serial()
         self.serialPort.port = port
@@ -30,15 +31,18 @@ class ZaberDriver:
 
         if self.serialPort.isOpen():
             print("Zaber connected")
+            logging.info(f"Zaber driver connected")
             self.isConnected = True
             return True
         else:
             print("Zaber disconnected")
+            logging.info(f"Zaber driver connection failed")
             self.isConnected = False
             return False
 
     def home(self):
         self.sendCommand("/home")
+        logging.info(f"Zaber driver: homing")
         self.serialPort.readline()
 
     def sendCommand(self, command):
@@ -55,7 +59,6 @@ class ZaberDriver:
             self.sendCommand("/")
             responseascii = self.serialPort.readline()
             response = ''.join(map(chr, responseascii))
-            print("-> " + response)
             if "IDLE" in response:
                 break
             else:
@@ -64,7 +67,6 @@ class ZaberDriver:
     def setPosition(self, position, speed = 10000):
         calculated_steps = round(position / self.DelayLineResolution)
         command = f"/move abs {calculated_steps} {self.convertVelocityFromSIToZaber(speed)}"
-        print(command)
         self.sendCommand(command)
         self.serialPort.readline()
         # time.sleep(0.5)

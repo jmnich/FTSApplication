@@ -11,10 +11,14 @@ import si_prefix as si
 from background_controller import BackgroundController
 import serial.tools.list_ports
 import settings_manager as SM
+import logging
 
 class FTSApp:
 
     def __init__(self):
+
+        logging.basicConfig(filename='ftsapp.log', format='%(asctime)s %(message)s', level=logging.INFO)
+        logging.info('========= Application started =========')
 
         if SM.isSettingsFileAvailable():
             self.appSettings = SM.readSettingsFromFile()
@@ -458,27 +462,34 @@ class FTSApp:
 
     def updateStatusMessage(self, message):
         self.statusLabel.configure(text=message)
+        logging.info(f"Status bar message set to: {message}")
         self.root.update()
 
     def setGeneralReadyFlag(self, isReady):
         if isReady:
             self.hardwareStatusLabel.configure(text="READY", text_color="lightgreen")
+            logging.info(f"General status: ready")
         else:
             self.hardwareStatusLabel.configure(text="NOT\nREADY", text_color="red")
+            logging.info(f"General status: not ready")
 
     def setDAQReadyFlag(self, isReady):
         if isReady:
             self.mfliStatusLabel.configure(text="READY", text_color="lightgreen")
             self.appSettings["mfliDeviceID"] = self.MFLIDrv.deviceID
+            logging.info(f"DAQ status: ready")
         else:
             self.mfliStatusLabel.configure(text="NOT\nREADY", text_color="red")
+            logging.info(f"DAQ status: not ready")
 
     def setDelayLineReadyFlag(self, isReady):
         if isReady:
             self.zaberStatusLabel.configure(text="READY", text_color="lightgreen")
             self.appSettings["delayLineCOMPort"] = self.zaberPortCombo.get()
+            logging.info(f"Delay line status: ready")
         else:
             self.zaberStatusLabel.configure(text="NOT\nREADY", text_color="red")
+            logging.info(f"Delay line status: not ready")
 
     def receiveMeasurementResults(self, interfX, interfY, spectrumX, spectrumY):
         self.currentSpectrumX = spectrumX
@@ -499,7 +510,10 @@ class FTSApp:
         self.zaberPortCombo.configure(values=self.currentlyAvailableCOMPorts)
         self.zaberPortCombo.set(self.currentlyAvailableCOMPorts[0])
 
+        logging.info(f"COM ports refresh. Found: {self.currentlyAvailableCOMPorts}")
+
     def onCmdSingleCapture(self):
+        logging.info(f"Single capture started")
         self.ApplicationController.performMeasurements(measurementsCount=1,
                                                        samplingFrequency=self.MFLIFreqneuenciesAsStrings.
                                                                                 index(self.samplingFreqCombo.get()),
@@ -515,6 +529,7 @@ class FTSApp:
         sliderSetting = self.scanLengthSlider.get()
         self.scanLengthBox.delete(0, "end")
         self.scanLengthBox.insert(0, str(int(sliderSetting)))
+        logging.info(f"Scan speed set to: {sliderSetting}")
         self.appSettings["delayLineConfiguredScanSpeed"] = str(sliderSetting)
 
     def onCmdUpdateScanLengthFromBox(self, other):
@@ -535,6 +550,7 @@ class FTSApp:
         self.scanLengthBox.delete(0, "end")
         self.scanLengthBox.insert(0, str(newSetting))
         self.scanLengthSlider.set(newSetting)
+        logging.info(f"Scan length set to: {newSetting}")
         self.appSettings["delayLineConfiguredScanLength"] = str(newSetting)
 
     def onCmdUpdateStartingPositionFromBox(self, other):
@@ -558,6 +574,8 @@ class FTSApp:
         configuredStartingPosition = int(self.appSettings["delayLineConfiguredScanStart"])
         minimalScanLength = int(self.appSettings["delayLineMinimalScanLength"])
 
+        logging.info(f"Scan starting position set to: {configuredStartingPosition}")
+
         # make sure scan length settings are valid and slider is configured correctly
         self.scanLengthSlider.configure(to=ZaberDriver.DelayLineNominalLength -
                                            (ZaberDriver.DelayLineNominalLength -
@@ -572,26 +590,27 @@ class FTSApp:
     def onCmdScanSpeedUpdateFromSlider(self, other):
         configuredScanSpeed = self.scanSpeedSlider.get()
         self.scanSpeedValueLabel.configure(text=str(int(configuredScanSpeed)))
+        logging.info(f"Scan speed set to: {configuredScanSpeed}")
         self.appSettings["delayLineConfiguredScanSpeed"] = str(configuredScanSpeed)
 
     def onCmdUnusedButton(self):
-        self.ZaberDrv.setPosition(75000)
-        self.ZaberDrv.waitUntilIdle()
-        self.ZaberDrv.setPosition(10000)
         print("Unused button click")
 
     def onCmdUpdateSpectrumPlotRanges(self, other):
-        print("update plot ranges")
-
         self.appSettings["plotSpectrumXRangeMin"] = self.spectrumXMinBox.get()
         self.appSettings["plotSpectrumXRangeMax"] = self.spectrumXMaxBox.get()
         self.appSettings["plotSpectrumYRangeMin"] = self.spectrumYMinBox.get()
         self.appSettings["plotSpectrumYRangeMax"] = self.spectrumYMaxBox.get()
 
-        self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
-                            float(self.appSettings["plotSpectrumXRangeMax"]))
-        self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),
-                            float(self.appSettings["plotSpectrumYRangeMax"]))
+        ymin = float(self.appSettings["plotSpectrumYRangeMin"])
+        ymax = float(self.appSettings["plotSpectrumYRangeMax"])
+        xmin = float(self.appSettings["plotSpectrumXRangeMin"])
+        xmax = float(self.appSettings["plotSpectrumXRangeMax"])
+
+        self.axBot.set_xlim(xmin, xmax)
+        self.axBot.set_ylim(ymin, ymax)
+
+        logging.info(f"Spectrum plot ranges updated to: X({xmin},{xmax}) Y({ymin},{ymax})")
 
         self.canvasBotPlot.draw()
         self.root.update()
@@ -603,11 +622,13 @@ class FTSApp:
         strippedZaberPort = self.zaberPortCombo.get().replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
 
+        logging.info(f"Attempting to conntect to hardware. Zaber port: {strippedZaberPort} and MFLI devID: {strippedMFLIID}")
         self.ApplicationController.setZaberPort(strippedZaberPort)
         self.ApplicationController.setMFLIDeviceName(strippedMFLIID)
         self.ApplicationController.performInitialization()
 
     def onCmdOpenSpectrumPlot(self):
+        logging.info(f"External spectrum plot open")
         plt.figure()
         plt.title("Spectrum")
         plt.plot(self.currentSpectrumX, self.currentSpectrumY)
@@ -619,6 +640,7 @@ class FTSApp:
         plt.ioff()
 
     def onCmdOpenInterferogramPlot(self):
+        logging.info(f"External interferogram plot open")
         plt.figure()
         plt.title("Interferogram")
         plt.plot(self.currentInterferogramX, self.currentInterferogramY)
@@ -631,6 +653,7 @@ class FTSApp:
     def onClosing(self):
         SM.saveSettingsToFile(self.appSettings)
         # make sure the application closes properly when the main window is destroyed
+        logging.info('========= Application closed =========\n\n\n')
         sys.exit()
 
     def updatePlot(self):

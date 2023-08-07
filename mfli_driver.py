@@ -1,6 +1,7 @@
 import time
 import zhinst.core
 import zhinst.utils
+import logging
 
 
 
@@ -28,6 +29,7 @@ class MFLIDriver:
     def tryConnect(self, deviceID):
 
         self.deviceID = deviceID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
+        logging.info(f"MFLI driver trying to connect to: {self.deviceID}")
 
         try:
             device_id: str = self.deviceID
@@ -49,14 +51,18 @@ class MFLIDriver:
         except Exception as e:
             print(f"Connection failed to MFLI device")
             print(f"Error message: \n{str(e)}")
+            logging.info(f"MFLI driver: connection failed with message: {str(e)}")
             self.isConnected = False
             return False
 
         print(f"MFLI device connected successfully")
+        logging.info(f"MFLI driver: connected")
         self.isConnected = True
         return True
 
     def configureForMeasurement(self, samplingFreqIndex, sampleLength):
+        logging.info(f"MFLI driver: configuration for measurement. Freq index: {samplingFreqIndex}, sample length: {sampleLength}")
+
         zhinst.utils.disable_everything(self.DAQ, self.deviceID)
 
         self.DAQ.setInt(f'/{self.deviceID}/auxouts/2/demodselect', 0)
