@@ -82,7 +82,8 @@ class FTSApp:
         self.frameBottomPlot.grid(row=1, column=1, padx=(5, 5), pady=0)#, sticky="N")
 
         # buttons
-        # create a frame to hold all the buttons related to measurements
+        # create a frame to hold all the controls related to measurements
+        # ==============================================================================================================
         self.frameButtonsTop = ctk.CTkFrame(master=self.root,
                                             height=60,
                                             width=120,
@@ -93,10 +94,16 @@ class FTSApp:
         self.frameButtonsTop.columnconfigure(0, weight=1)
         self.frameButtonsTop.columnconfigure(1, weight=1)
 
+        self.frameButtonsTop.rowconfigure(0, weight=1)
+        self.frameButtonsTop.rowconfigure(1, weight=1)
+        self.frameButtonsTop.rowconfigure(2, weight=1)
+        self.frameButtonsTop.rowconfigure(3, weight=1)
+        self.frameButtonsTop.rowconfigure(4, weight=1)
+
         self.buttonSingle = ctk.CTkButton(master=self.frameButtonsTop,
                                           text="Single\ncapture",
                                           width=120,
-                                          height=80,
+                                          height=75,
                                           corner_radius=10,
                                           command=self.onCmdSingleCapture)
         self.buttonSingle.grid(row=0, column=0, sticky="N", padx=5, pady=5)
@@ -104,28 +111,74 @@ class FTSApp:
         self.buttonArchive = ctk.CTkButton(master=self.frameButtonsTop,
                                            text="Archive\nviewer",
                                            width=120,
-                                           height=80,
+                                           height=75,
                                            corner_radius=10,
                                            command=self.onCmdUnusedButton)
         self.buttonArchive.grid(row=0, column=1, sticky="N", padx=5, pady=5)
 
         self.buttonInterferogram = ctk.CTkButton(master=self.frameButtonsTop,
-                                                 text="Open\ninterfer.\nplot",
+                                                 text="Plot\ninterferogram",
                                                  width=120,
-                                                 height=80,
+                                                 height=75,
                                                  corner_radius=10,
                                                  command=self.onCmdOpenInterferogramPlot)
         self.buttonInterferogram.grid(row=1, column=0, sticky="N", padx=5, pady=5)
 
         self.buttonSpectrum = ctk.CTkButton(master=self.frameButtonsTop,
-                                            text="Open\nspectrum\nplot",
+                                            text="Plot\nspectrum",
                                             width=120,
-                                            height=80,
+                                            height=75,
                                             corner_radius=10,
                                             command=self.onCmdOpenSpectrumPlot)
         self.buttonSpectrum.grid(row=1, column=1, sticky="N", padx=5, pady=5)
 
-        # create a frame to hold all the buttons related to settings and configuration
+        self.referenceSignalButton = ctk.CTkButton(master=self.frameButtonsTop,
+                                            text="Plot\nreference\nsignal",
+                                            width=120,
+                                            height=75,
+                                            corner_radius=10,
+                                            command=self.onCmdUnusedButton)
+        self.referenceSignalButton.grid(row=2, column=0, sticky="N", padx=5, pady=5)
+
+        self.absorbanceToolButton = ctk.CTkButton(master=self.frameButtonsTop,
+                                            text="Absorbance\ntool",
+                                            width=120,
+                                            height=75,
+                                            corner_radius=10,
+                                            command=self.onCmdUnusedButton)
+        self.absorbanceToolButton.grid(row=2, column=1, sticky="N", padx=5, pady=5)
+
+
+        self.multipleMeasStartButton = ctk.CTkButton(master=self.frameButtonsTop,
+                                            text="Capture\nmultiple\nspectra",
+                                            width=120,
+                                            height=75,
+                                            corner_radius=10,
+                                            command=self.onCmdUnusedButton)
+        self.multipleMeasStartButton.grid(row=3, column=0, sticky="N", padx=5, pady=5)
+
+        self.multipleMeasStopButton = ctk.CTkButton(master=self.frameButtonsTop,
+                                            text="Stop",
+                                            width=120,
+                                            height=75,
+                                            corner_radius=10,
+                                            command=self.onCmdUnusedButton)
+        self.multipleMeasStopButton.grid(row=3, column=1, sticky="N", padx=5, pady=5)
+
+        self.multipleMeasLabel = ctk.CTkLabel(master=self.frameButtonsTop,
+                                                    text="Number of\naverages",
+                                                    font=ctk.CTkFont(size=12))
+        self.multipleMeasLabel.grid(row=4, column=0, sticky="N", padx=5, pady=5)
+
+        self.multipleMeasBox = ctk.CTkEntry(master=self.frameButtonsTop,
+                                        width=120, height=30)
+        self.multipleMeasBox.insert(0, 5)
+        self.multipleMeasBox.grid(row=4, column=1, sticky="N", padx=5, pady=5)
+        # self.multipleMeasBox.bind("<FocusOut>", self.onCmdUpdateScanLengthFromBox)
+        # self.multipleMeasBox.bind("<Return>", self.onCmdUpdateScanLengthFromBox)
+
+        # create a frame to hold all the controls related to settings and configuration
+        # ==============================================================================================================
         self.frameButtonsBottom = ctk.CTkFrame(master=self.root,
                                                height=60,
                                                width=5000,
