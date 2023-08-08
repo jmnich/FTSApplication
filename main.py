@@ -30,6 +30,8 @@ class FTSApp:
         else:
             self.appSettings = SM.getDefaultSettings()
 
+        self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
+
         # constants
         self.backgroundGray = "#242424"
         self.currentSpectrumX = []
@@ -535,6 +537,7 @@ class FTSApp:
 
     def onCmdSingleCapture(self):
         logging.info(f"Single capture started")
+        self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
         self.ApplicationController.performMeasurements(measurementsCount=1,
                                                        samplingFrequency=self.MFLIFreqneuenciesAsStrings.
                                                                                 index(self.samplingFreqCombo.get()),
@@ -685,7 +688,7 @@ class FTSApp:
             interferogramY = self.currentInterferogramY,
             interferogramRaw = np.arange(100), #self.MFLIDrv.lastInterferogramData,
             referenceSignalRaw = np.arange(100), #self.MFLIDrv.lastReferenceData,
-            settings = self.appSettings
+            settings = self.settingsUsedForCurrentMeasurement
         )
     def onClosing(self):
         SM.saveSettingsToFile(self.appSettings)
