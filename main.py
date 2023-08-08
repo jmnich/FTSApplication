@@ -1,6 +1,7 @@
 import os
 import customtkinter as ctk
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sys
@@ -650,10 +651,20 @@ class FTSApp:
 
     def onCmdOpenSpectrumPlot(self):
         logging.info(f"External spectrum plot open")
+
+        mpl.rcParams.update(mpl.rcParamsDefault)
         plt.figure()
-        plt.title("Spectrum")
+        plt.locator_params(nbins=15)
+        plt.rc('xtick', labelsize=18)
+        plt.rc('ytick', labelsize=18)
+        plt.title("Spectrum", fontsize=20)
+        plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
+        plt.ylabel("Intensity [a.u.]", fontsize=20)
         plt.plot(self.currentSpectrumX, self.currentSpectrumY)
-        plt.yscale("log")
+        plt.yscale('log')
+        plt.xlim((float(self.appSettings["plotSpectrumXRangeMin"]), float(self.appSettings["plotSpectrumXRangeMax"])))
+        plt.ylim((float(self.appSettings["plotSpectrumYRangeMin"]), float(self.appSettings["plotSpectrumYRangeMax"])))
+        plt.grid(alpha=0.3)
         plt.ion()
         plt.pause(1.0)
         plt.show()
@@ -662,9 +673,18 @@ class FTSApp:
 
     def onCmdOpenInterferogramPlot(self):
         logging.info(f"External interferogram plot open")
+
+        mpl.rcParams.update(mpl.rcParamsDefault)
         plt.figure()
-        plt.title("Interferogram")
+        plt.locator_params(nbins=15)
+        plt.rc('xtick', labelsize=18)
+        plt.rc('ytick', labelsize=18)
+        plt.title("Interferogram", fontsize=20)
+        plt.xlabel("Position [\u03BCm]", fontsize=20)
+        plt.ylabel("Detector voltage [V]", fontsize=20)
         plt.plot(self.currentInterferogramX, self.currentInterferogramY)
+        plt.xlim((min(self.currentInterferogramX), max(self.currentInterferogramY)))
+        plt.grid(alpha=0.3)
         plt.ion()
         plt.pause(1.0)
         plt.show()
