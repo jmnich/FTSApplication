@@ -672,14 +672,20 @@ class FTSApp:
         DataExportTool.exportSpectrumAsCSV(self.currentSpectrumX, self.currentSpectrumY)
 
     def onCmdSaveFull(self):
+        self.currentSpectrumX = np.arange(100)
+        self.currentSpectrumY = np.sin(self.currentSpectrumX)
+
+        self.currentInterferogramX = np.arange(100)
+        self.currentInterferogramY = np.cos(self.currentInterferogramX)
+
         DataExportTool.exportAllData(
-            spectrumX=self.currentSpectrumX,
-            spectrumY=self.currentSpectrumY,
-            interferogramX=self.currentInterferogramX,
-            interferogramY=self.currentInterferogramY,
-            interferogramRaw=None,
-            referenceSignalRaw=None,
-            settings=self.appSettings
+            spectrumX = self.currentSpectrumX,
+            spectrumY = self.currentSpectrumY,
+            interferogramX = self.currentInterferogramX,
+            interferogramY = self.currentInterferogramY,
+            interferogramRaw = np.arange(100), #self.MFLIDrv.lastInterferogramData,
+            referenceSignalRaw = np.arange(100), #self.MFLIDrv.lastReferenceData,
+            settings = self.appSettings
         )
     def onClosing(self):
         SM.saveSettingsToFile(self.appSettings)
