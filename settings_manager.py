@@ -50,6 +50,8 @@ def getDefaultSettings():
         "plotSpectrumYRangeMax": "1",
 
         "plotEngine":"matplotlib",
+
+        "averagingCount":"5"
     }
 
     return  defaultSettings

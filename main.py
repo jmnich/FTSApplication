@@ -174,10 +174,10 @@ class FTSApp:
 
         self.multipleMeasBox = ctk.CTkEntry(master=self.frameButtonsTop,
                                         width=120, height=30)
-        self.multipleMeasBox.insert(0, 5)
+        self.multipleMeasBox.insert(0, self.appSettings["averagingCount"])
         self.multipleMeasBox.grid(row=4, column=1, sticky="N", padx=5, pady=5)
-        # self.multipleMeasBox.bind("<FocusOut>", self.onCmdUpdateScanLengthFromBox)
-        # self.multipleMeasBox.bind("<Return>", self.onCmdUpdateScanLengthFromBox)
+        self.multipleMeasBox.bind("<FocusOut>", self.onCmdUpdateAveragingCount)
+        self.multipleMeasBox.bind("<Return>", self.onCmdUpdateAveragingCount)
 
         # create a frame to hold all the controls related to settings and configuration
         # ==============================================================================================================
@@ -581,11 +581,13 @@ class FTSApp:
         self.currentAverageSpectrumX = averageSpectrumX
         self.currentAverageSpectrumY = averageSpectrumY
 
-        if completedMeasurements != 0:
-            self.multipleMeasBox.delete(0, "end")
-            self.multipleMeasBox.insert(0,
-                                f"{completedMeasurements}/{self.ApplicationController.orderedMeasurementsCount}")
+        self.multipleMeasBox.delete(0, "end")
 
+        if completedMeasurements + 1 == self.ApplicationController.orderedMeasurementsCount:
+            self.multipleMeasBox.insert(0,f"{self.ApplicationController.orderedMeasurementsCount}")
+        else:
+            self.multipleMeasBox.insert(0,
+                                        f"{completedMeasurements + 1}/{self.ApplicationController.orderedMeasurementsCount}")
         self.updatePlot()
 
     def onCmdRefreshCOMPorts(self):
@@ -603,6 +605,9 @@ class FTSApp:
         logging.info(f"COM ports refresh. Found: {self.currentlyAvailableCOMPorts}")
 
     def onCmdSingleCapture(self):
+        self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
+                                                             index(self.samplingFreqCombo.get()))
+
         logging.info(f"Single capture started")
         self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
         self.ApplicationController.performMeasurements(measurementsCount=1,
@@ -612,17 +617,17 @@ class FTSApp:
                                                        scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
                                                        scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]))
 
-        self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
-                                                             index(self.samplingFreqCombo.get()))
-
     def onCmdMultipleCapture(self):
 
         try:
-            measCount = int(self.multipleMeasBox.get())
+            measCount = int(self.appSettings["averagingCount"])
         except:
-            logging.info(f"Multiple captures failed due to incorrect data in the measurement count text box")
-            self.updateStatusMessage("Incorrect data in the\nmeasurement count text box")
+            logging.info(f"Multiple captures failed due to incorrect data in the measurement count setting")
+            self.updateStatusMessage("Incorrect data in the\nmeasurement count setting")
             return
+
+        self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
+                                                             index(self.samplingFreqCombo.get()))
 
         logging.info(f"Multiple captures with averaging started. Count = {measCount}")
         self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
@@ -632,9 +637,6 @@ class FTSApp:
                                                        scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
                                                        scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
                                                        scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]))
-
-        self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
-                                                             index(self.samplingFreqCombo.get()))
 
     def onCmdUpdateScanLengthFromSlider(self, other):
         sliderSetting = self.scanLengthSlider.get()
@@ -700,6 +702,23 @@ class FTSApp:
         configuredScanSpeed = self.scanSpeedSlider.get()
         self.scanSpeedValueLabel.configure(text=str(int(configuredScanSpeed)))
         self.appSettings["delayLineConfiguredScanSpeed"] = str(configuredScanSpeed)
+
+    def onCmdUpdateAveragingCount(self, other):
+
+        try:
+            newSetting = int(self.multipleMeasBox.get().replace(' ', '').replace('\t', '').replace('\n', '').replace(
+            '\r', ''))
+
+            if 1 < newSetting <= 10000:
+                self.appSettings["averagingCount"] = str(newSetting)
+                self.multipleMeasBox.delete(0, "end")
+                self.multipleMeasBox.insert(0, self.appSettings["averagingCount"])
+            else:
+                self.multipleMeasBox.delete(0, "end")
+                self.multipleMeasBox.insert(0, self.appSettings["averagingCount"])
+        except:
+            self.multipleMeasBox.delete(0, "end")
+            self.multipleMeasBox.insert(0, self.appSettings["averagingCount"])
 
     def onCmdUnusedButton(self):
         print("Unused button click")
@@ -769,7 +788,7 @@ class FTSApp:
         plt.xlabel("Position [\u03BCm]", fontsize=20)
         plt.ylabel("Detector voltage [V]", fontsize=20)
         plt.plot(self.currentInterferogramX, self.currentInterferogramY)
-        plt.xlim((min(self.currentInterferogramX), max(self.currentInterferogramY)))
+        plt.xlim((min(self.currentInterferogramX), max(self.currentInterferogramX)))
         plt.grid(alpha=0.3)
         plt.ion()
         plt.pause(1.0)
@@ -822,6 +841,7 @@ class FTSApp:
             self.multipleMeasBox.insert(0,
                                     f"{completedMeasurements}/{self.ApplicationController.orderedMeasurementsCount}")
 
+        plt.style.use('dark_background')
         self.axBot.clear()
         self.axTop.clear()
 
