@@ -40,10 +40,6 @@ class MFLIDriver:
             # restore the base configuration
             zhinst.utils.disable_everything(self.DAQ, self.deviceID)
 
-            # self.DAQModule = self.DAQ.dataAcquisitionModule()
-
-            # self.DAQ = zhinst.core.ziDAQServer('localhost', 8004, 6)
-            # self.DAQModule = self.DAQ.dataAcquisitionModule()
 
         except Exception as e:
             print(f"Connection failed to MFLI device")

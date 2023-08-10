@@ -405,6 +405,25 @@ class FTSApp:
                                             command=self.onCmdSaveCSVOnly)
         self.buttonSaveCSV.grid(row=0, column=1, sticky="N", padx=5, pady=5)
 
+        self.exportRawDataSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Export"),
+                                                    text="Export raw data", command=self.onExportSwitchModified,
+                                                    onvalue="True", offvalue="False")
+        self.exportRawDataSwitch.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="W")
+
+        if self.appSettings["saveRawData"] == "True":
+            self.exportRawDataSwitch.select()
+        else:
+            self.exportRawDataSwitch.deselect()
+
+        self.exportToMatSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Export"),
+                                                    text="Export to .MAT", command=self.onExportSwitchModified,
+                                                    onvalue="True", offvalue="False")
+        self.exportToMatSwitch.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="W")
+
+        if self.appSettings["saveDataToMAT"] == "True":
+            self.exportToMatSwitch.select()
+        else:
+            self.exportToMatSwitch.deselect()
         # configure settings 'PLOTS' tab
         # ==============================================================================================================
         self.settingsTabs.tab("Plots").columnconfigure(0, weight=1)
@@ -665,6 +684,13 @@ class FTSApp:
         self.scanLengthSlider.set(newSetting)
         self.appSettings["delayLineConfiguredScanLength"] = str(newSetting)
 
+    def onExportSwitchModified(self):
+        self.appSettings["saveDataToMAT"] = self.exportToMatSwitch.get()
+        self.appSettings["saveRawData"] = self.exportRawDataSwitch.get()
+
+        print(self.appSettings["saveDataToMAT"])
+        print(self.appSettings["saveRawData"])
+
     def onCmdUpdateStartingPositionFromBox(self, other):
         minSetting = 2000
         maxSetting = ZaberDriver.DelayLineNominalLength
@@ -802,16 +828,6 @@ class FTSApp:
         DataExportTool.exportSpectrumAsCSV(self.currentSpectrumX, self.currentSpectrumY)
 
     def onCmdSaveFull(self):
-        # DataExportTool.exportAllData(
-        #     spectrumX = self.currentSpectrumX,
-        #     spectrumY = self.currentSpectrumY,
-        #     interferogramX = self.currentInterferogramX,
-        #     interferogramY = self.currentInterferogramY,
-        #     interferogramRaw = np.arange(100), #self.MFLIDrv.lastInterferogramData,
-        #     referenceSignalRaw = np.arange(100), #self.MFLIDrv.lastReferenceData,
-        #     settings = self.settingsUsedForCurrentMeasurement
-        # )
-
         DataExportTool.exportAllDataMultipleMeasurements(
             averageSpectrumX            = self.currentAverageSpectrumX,
             averageSpectrumY            = self.currentAverageSpectrumY,
