@@ -39,6 +39,8 @@ class FTSApp:
         self.currentSpectrumY = []
         self.currentInterferogramX = []
         self.currentInterferogramY = []
+        self.currentAverageSpectrumX = []
+        self.currentAverageSpectrumY = []
 
         self.currentlyAvailableCOMPorts = []
 
@@ -154,7 +156,7 @@ class FTSApp:
                                             width=120,
                                             height=75,
                                             corner_radius=10,
-                                            command=self.onCmdUnusedButton)
+                                            command=self.onCmdMultipleCapture)
         self.multipleMeasStartButton.grid(row=3, column=0, sticky="N", padx=5, pady=5)
 
         self.multipleMeasStopButton = ctk.CTkButton(master=self.frameButtonsTop,
@@ -500,10 +502,11 @@ class FTSApp:
                             float(self.appSettings["plotSpectrumYRangeMax"]))
         self.axBot.set_yscale("log")
 
+        self.settingsTabs.set("Hardware")
 
         # create a status bar
         self.statusLabel = ctk.CTkLabel(master=self.root,
-                                        text="Status bar",
+                                        text="",
                                         font=ctk.CTkFont(size=12))
         self.statusLabel.grid(row=0, column=1, columnspan=2, sticky="NE", padx=15, pady=5)
 
@@ -568,11 +571,21 @@ class FTSApp:
             self.zaberStatusLabel.configure(text="NOT\nREADY", text_color="red")
             logging.info(f"Delay line status: not ready")
 
-    def receiveMeasurementResults(self, interfX, interfY, spectrumX, spectrumY):
-        self.currentSpectrumX = spectrumX
-        self.currentSpectrumY = spectrumY
+    def receiveMeasurementResults(self, interfX, interfY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
+        completedMeasurements):
+
         self.currentInterferogramX = interfX
         self.currentInterferogramY = interfY
+        self.currentSpectrumX = spectrumX
+        self.currentSpectrumY = spectrumY
+        self.currentAverageSpectrumX = averageSpectrumX
+        self.currentAverageSpectrumY = averageSpectrumY
+
+        if completedMeasurements != 0:
+            self.multipleMeasBox.delete(0, "end")
+            self.multipleMeasBox.insert(0,
+                                f"{completedMeasurements}/{self.ApplicationController.orderedMeasurementsCount}")
+
         self.updatePlot()
 
     def onCmdRefreshCOMPorts(self):
@@ -602,6 +615,26 @@ class FTSApp:
         self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
                                                              index(self.samplingFreqCombo.get()))
 
+    def onCmdMultipleCapture(self):
+
+        try:
+            measCount = int(self.multipleMeasBox.get())
+        except:
+            logging.info(f"Multiple captures failed due to incorrect data in the measurement count text box")
+            self.updateStatusMessage("Incorrect data in the\nmeasurement count text box")
+            return
+
+        logging.info(f"Multiple captures with averaging started. Count = {measCount}")
+        self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
+        self.ApplicationController.performMeasurements(measurementsCount=measCount,
+                                                       samplingFrequency=self.MFLIFreqneuenciesAsStrings.
+                                                                                index(self.samplingFreqCombo.get()),
+                                                       scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
+                                                       scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
+                                                       scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]))
+
+        self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
+                                                             index(self.samplingFreqCombo.get()))
 
     def onCmdUpdateScanLengthFromSlider(self, other):
         sliderSetting = self.scanLengthSlider.get()
@@ -713,7 +746,7 @@ class FTSApp:
         plt.title("Spectrum", fontsize=20)
         plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
         plt.ylabel("Intensity [a.u.]", fontsize=20)
-        plt.plot(self.currentSpectrumX, self.currentSpectrumY)
+        plt.plot(self.currentAverageSpectrumX, self.currentAverageSpectrumY, color="dodgerblue")
         plt.yscale('log')
         plt.xlim((float(self.appSettings["plotSpectrumXRangeMin"]), float(self.appSettings["plotSpectrumXRangeMax"])))
         plt.ylim((float(self.appSettings["plotSpectrumYRangeMin"]), float(self.appSettings["plotSpectrumYRangeMax"])))
@@ -771,16 +804,32 @@ class FTSApp:
 
     def updatePlot(self):
         self.loadDataToPlots(self.currentInterferogramX, self.currentInterferogramY,
-                             self.currentSpectrumX, self.currentSpectrumY)
+                             self.currentSpectrumX, self.currentSpectrumY,
+                             self.currentAverageSpectrumX, self.currentAverageSpectrumY, 0)
 
-    def loadDataToPlots(self, interferogramX, interferogramY, spectrumX, spectrumY):
+    def loadDataToPlots(self, interferogramX, interferogramY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
+                        completedMeasurements):
+
+        self.currentInterferogramX = interferogramX
+        self.currentInterferogramY = interferogramY
+        self.currentSpectrumX = spectrumX
+        self.currentSpectrumY = spectrumY
+        self.currentAverageSpectrumX = averageSpectrumX
+        self.currentAverageSpectrumY = averageSpectrumY
+
+        if completedMeasurements != 0:
+            self.multipleMeasBox.delete(0, "end")
+            self.multipleMeasBox.insert(0,
+                                    f"{completedMeasurements}/{self.ApplicationController.orderedMeasurementsCount}")
 
         self.axBot.clear()
         self.axTop.clear()
 
         if len(spectrumX) == len(spectrumY) and len(spectrumX) > 0:
             self.axBot.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
-            self.axBot.plot(spectrumX, spectrumY, color="dodgerblue")
+            self.axBot.plot(spectrumX, spectrumY, color="grey", alpha=0.7)
+            self.axBot.plot(averageSpectrumX, averageSpectrumY, color="dodgerblue")
+
             self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
                                 float(self.appSettings["plotSpectrumXRangeMax"]))
             self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),

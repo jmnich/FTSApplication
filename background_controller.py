@@ -1,9 +1,13 @@
 import time
 from threading import *
+
+import numpy
+
 from mfli_driver import MFLIDriver
 from zaber_driver import ZaberDriver
 from data_processor import DataProcessor
 import logging
+import numpy as np
 
 class BackgroundController:
 
@@ -29,6 +33,15 @@ class BackgroundController:
 
         self.ZaberPort                      = None
         self.MFLIDeviceName                 = None
+
+        self.rawInterferograms = []
+        self.rawReferenceSignals = []
+        self.processedInterferogramsX = []
+        self.processedInterferogramsY = []
+        self.spectraX = []
+        self.spectraY = []
+        self.averageSpectrumX = None
+        self.averageSpectrumY = None
 
     def setZaberPort(self, port):
         self.ZaberPort = port
@@ -71,12 +84,24 @@ class BackgroundController:
 
     def performMeasurements(self, measurementsCount, samplingFrequency, scanStart, scanLength, scanSpeed):
         logging.info(f"Application controller: measurement starting")
+
+        # reset and configure the backgroung controller
+        self.rawInterferograms.clear()
+        self.rawReferenceSignals.clear()
+        self.processedInterferogramsX.clear()
+        self.processedInterferogramsY.clear()
+        self.spectraX.clear()
+        self.spectraY.clear()
+        self.averageSpectrumX = None
+        self.averageSpectrumY = None
+
         self.orderedMeasurementsCount = measurementsCount
         self.mfliFrequencyIndex = samplingFrequency
         self.scanStartPosition = scanStart
         self.scanLength = scanLength
         self.scanSpeed = scanSpeed
 
+        # start the actual measurement thread
         t = Thread(target=self.measurementsWork, daemon=True)
         t.start()
 
@@ -86,43 +111,76 @@ class BackgroundController:
         mfliSamplingFrequency = MFLIDriver.MFLISamplingRates[self.mfliFrequencyIndex]
         self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
 
-        # send the delay line to the starting position
-        self.ZaberDriver.setPosition(position=self.scanStartPosition, speed=ZaberDriver.MaxSpeed)
 
-        # configure MFLI
-        self.MFLIDriver.configureForMeasurement(self.mfliFrequencyIndex, self.mfliSamplesCount)
+        for i in range(0, self.orderedMeasurementsCount):
+            # send the delay line to the starting position
+            self.ZaberDriver.setPosition(position=self.scanStartPosition, speed=ZaberDriver.MaxSpeed)
 
-        # wait until the mirror is in position
-        self.ZaberDriver.waitUntilIdle()
+            # configure MFLI
+            self.MFLIDriver.configureForMeasurement(self.mfliFrequencyIndex, self.mfliSamplesCount)
 
-        self.SetStatusMessageMethod("Acquisition...")
-        # acquire data (note: zaber uses us/s, interface uses mm/s)
-        # prepare scanning trajectory with a 0.1 sec marging if possible
-        preferred_margin = self.scanSpeed * 1000 * 0.1
-        if self.scanStartPosition-self.scanLength > preferred_margin:
-            self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength - preferred_margin,
-                                         speed=self.scanSpeed * 1000)
-        else:
-            self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength,
-                                         speed=self.scanSpeed * 1000)
+            # wait until the mirror is in position
+            self.ZaberDriver.waitUntilIdle()
 
-        self.MFLIDriver.measureData()
-        self.ZaberDriver.waitUntilIdle()
+            self.SetStatusMessageMethod("Acquisition...")
+            # acquire data (note: zaber uses us/s, interface uses mm/s)
+            # prepare scanning trajectory with a 0.1 sec marging if possible
+            preferred_margin = self.scanSpeed * 1000 * 0.1
+            if self.scanStartPosition-self.scanLength > preferred_margin:
+                self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength - preferred_margin,
+                                             speed=self.scanSpeed * 1000)
+            else:
+                self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength,
+                                             speed=self.scanSpeed * 1000)
 
-        # synchronization delay
-        # time.sleep(0.1)
+            self.MFLIDriver.measureData()
+            self.ZaberDriver.waitUntilIdle()
 
-        results = self.DataAnalyzer.analyzeData(rawReferenceSignal=self.MFLIDriver.lastReferenceData,
-                                                rawInterferogram=self.MFLIDriver.lastInterferogramData)
+            # synchronization delay
+            # time.sleep(0.1)
+
+            results = self.DataAnalyzer.analyzeData(rawReferenceSignal=self.MFLIDriver.lastReferenceData,
+                                                    rawInterferogram=self.MFLIDriver.lastInterferogramData)
 
 
-        # display results
-        # interferogramY = self.MFLIDriver.lastInterferogramData
-        # interferogramX = np.arange(len(interferogramY))
-        #
-        # spectrumY = self.MFLIDriver.lastReferenceData
-        # spectrumX = np.arange(len(spectrumY))
+            self.rawInterferograms.append(np.copy(self.MFLIDriver.lastInterferogramData))
+            self.rawReferenceSignals.append(np.copy(self.MFLIDriver.lastReferenceData))
+            self.spectraX.append(np.copy(results["spectrumX"]))
+            self.spectraY.append(np.copy(results["spectrumY"]))
+            self.processedInterferogramsX.append(np.copy(results["interferogramX"]))
+            self.processedInterferogramsY.append(np.copy(results["interferogramY"]))
 
-        self.SendResultsToPlot(results["interferogramX"], results["interferogramY"],
-                               results["spectrumX"], results["spectrumY"])
+            # equalize lengths of all spectra before averaging
+            minimalSpectrumLength = len(self.spectraX[0])
+
+            for s in self.spectraX:
+                if len(s) < minimalSpectrumLength:
+                    minimalSpectrumLength = len(s)
+
+            for i in range(0, len(self.spectraX)):
+                if len(self.spectraX[i]) > minimalSpectrumLength:
+                    self.spectraX[i] = self.spectraX[i][:minimalSpectrumLength - 1]
+                    self.spectraY[i] = self.spectraY[i][:minimalSpectrumLength - 1]
+
+            # calculate an average spectrum
+            sumArr = numpy.zeros(len(self.spectraY[0]))
+            for s in self.spectraY:
+               sumArr += s
+
+            sumArr /= len(self.spectraY)
+
+            self.averageSpectrumX = self.spectraX[0]
+            self.averageSpectrumY = sumArr
+
+            # display results
+            # interferogramY = self.MFLIDriver.lastInterferogramData
+            # interferogramX = np.arange(len(interferogramY))
+            #
+            # spectrumY = self.MFLIDriver.lastReferenceData
+            # spectrumX = np.arange(len(spectrumY))
+
+            self.SendResultsToPlot(results["interferogramX"], results["interferogramY"],
+                                   results["spectrumX"], results["spectrumY"],
+                                   self.averageSpectrumX, self.averageSpectrumY, i)
+
         self.SetStatusMessageMethod("Done")
