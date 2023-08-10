@@ -139,7 +139,7 @@ class FTSApp:
                                             width=120,
                                             height=75,
                                             corner_radius=10,
-                                            command=self.onCmdUnusedButton)
+                                            command=self.onCmdReferencePlot)
         self.referenceSignalButton.grid(row=2, column=0, sticky="N", padx=5, pady=5)
 
         self.absorbanceToolButton = ctk.CTkButton(master=self.frameButtonsTop,
@@ -817,6 +817,26 @@ class FTSApp:
         plt.ylabel("Detector voltage [V]", fontsize=20)
         plt.plot(self.currentInterferogramX, self.currentInterferogramY)
         plt.xlim((min(self.currentInterferogramX), max(self.currentInterferogramX)))
+        plt.grid(alpha=0.3)
+        plt.ion()
+        plt.pause(1.0)
+        plt.show()
+        plt.pause(1.0)
+        plt.ioff()
+
+    def onCmdReferencePlot(self):
+        logging.info(f"Reference signal plot open")
+
+        mpl.rcParams.update(mpl.rcParamsDefault)
+        plt.figure()
+        plt.locator_params(nbins=15)
+        plt.rc('xtick', labelsize=18)
+        plt.rc('ytick', labelsize=18)
+        plt.title("Raw data with reference signal", fontsize=20)
+        plt.xlabel("Sample num", fontsize=20)
+        plt.ylabel("Signal", fontsize=20)
+        plt.plot(self.MFLIDrv.lastReferenceData, alpha=0.75)
+        plt.plot(self.MFLIDrv.lastInterferogramData)
         plt.grid(alpha=0.3)
         plt.ion()
         plt.pause(1.0)
