@@ -121,6 +121,7 @@ class BackgroundController:
 
             # wait until the mirror is in position
             self.ZaberDriver.waitUntilIdle()
+            time.sleep(0.25) # wait to let the mirror settle
 
             self.SetStatusMessageMethod("Acquisition...")
             # acquire data (note: zaber uses us/s, interface uses mm/s)

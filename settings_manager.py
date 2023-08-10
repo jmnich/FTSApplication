@@ -53,8 +53,8 @@ def getDefaultSettings():
 
         "averagingCount":"5",
         
-        "saveRawData":"True",
-        "saveDataToMAT":"True",
+        "saveRawData":"False",
+        "saveDataToMAT":"False",
     }
 
     return  defaultSettings
