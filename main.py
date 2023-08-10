@@ -117,6 +117,7 @@ class FTSApp:
                                            corner_radius=10,
                                            command=self.onCmdUnusedButton)
         self.buttonArchive.grid(row=0, column=1, sticky="N", padx=5, pady=5)
+        self.buttonArchive.configure(state="disabled")
 
         self.buttonInterferogram = ctk.CTkButton(master=self.frameButtonsTop,
                                                  text="Plot\ninterferogram",
@@ -149,6 +150,7 @@ class FTSApp:
                                             corner_radius=10,
                                             command=self.onCmdUnusedButton)
         self.absorbanceToolButton.grid(row=2, column=1, sticky="N", padx=5, pady=5)
+        self.absorbanceToolButton.configure(state="disabled")
 
 
         self.multipleMeasStartButton = ctk.CTkButton(master=self.frameButtonsTop,
