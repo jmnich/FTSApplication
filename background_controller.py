@@ -157,10 +157,10 @@ class BackgroundController:
                 if len(s) < minimalSpectrumLength:
                     minimalSpectrumLength = len(s)
 
-            for i in range(0, len(self.spectraX)):
-                if len(self.spectraX[i]) > minimalSpectrumLength:
-                    self.spectraX[i] = self.spectraX[i][:minimalSpectrumLength - 1]
-                    self.spectraY[i] = self.spectraY[i][:minimalSpectrumLength - 1]
+            for z in range(0, len(self.spectraX)):
+                if len(self.spectraX[z]) > minimalSpectrumLength:
+                    self.spectraX[z] = self.spectraX[z][:minimalSpectrumLength - 1]
+                    self.spectraY[z] = self.spectraY[z][:minimalSpectrumLength - 1]
 
             # calculate an average spectrum
             sumArr = numpy.zeros(len(self.spectraY[0]))

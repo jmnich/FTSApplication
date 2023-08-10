@@ -66,7 +66,7 @@ class ZaberDriver:
 
     def setPosition(self, position, speed = 10000):
         calculated_steps = round(position / self.DelayLineResolution)
-        command = f"/move abs {calculated_steps} {self.convertVelocityFromSIToZaber(speed)}"
+        command = f"/move abs {calculated_steps} {self.convertVelocityFromSIToZaber(speed)} {50}"
         self.sendCommand(command)
         self.serialPort.readline()
         # time.sleep(0.5)

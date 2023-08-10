@@ -610,6 +610,7 @@ class FTSApp:
 
         logging.info(f"Single capture started")
         self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
+        self.settingsUsedForCurrentMeasurement["averagingCount"] = 1
         self.ApplicationController.performMeasurements(measurementsCount=1,
                                                        samplingFrequency=self.MFLIFreqneuenciesAsStrings.
                                                                                 index(self.samplingFreqCombo.get()),
@@ -716,6 +717,7 @@ class FTSApp:
             else:
                 self.multipleMeasBox.delete(0, "end")
                 self.multipleMeasBox.insert(0, self.appSettings["averagingCount"])
+
         except:
             self.multipleMeasBox.delete(0, "end")
             self.multipleMeasBox.insert(0, self.appSettings["averagingCount"])
@@ -800,21 +802,28 @@ class FTSApp:
         DataExportTool.exportSpectrumAsCSV(self.currentSpectrumX, self.currentSpectrumY)
 
     def onCmdSaveFull(self):
-        self.currentSpectrumX = np.arange(100)
-        self.currentSpectrumY = np.sin(self.currentSpectrumX)
+        # DataExportTool.exportAllData(
+        #     spectrumX = self.currentSpectrumX,
+        #     spectrumY = self.currentSpectrumY,
+        #     interferogramX = self.currentInterferogramX,
+        #     interferogramY = self.currentInterferogramY,
+        #     interferogramRaw = np.arange(100), #self.MFLIDrv.lastInterferogramData,
+        #     referenceSignalRaw = np.arange(100), #self.MFLIDrv.lastReferenceData,
+        #     settings = self.settingsUsedForCurrentMeasurement
+        # )
 
-        self.currentInterferogramX = np.arange(100)
-        self.currentInterferogramY = np.cos(self.currentInterferogramX)
-
-        DataExportTool.exportAllData(
-            spectrumX = self.currentSpectrumX,
-            spectrumY = self.currentSpectrumY,
-            interferogramX = self.currentInterferogramX,
-            interferogramY = self.currentInterferogramY,
-            interferogramRaw = np.arange(100), #self.MFLIDrv.lastInterferogramData,
-            referenceSignalRaw = np.arange(100), #self.MFLIDrv.lastReferenceData,
-            settings = self.settingsUsedForCurrentMeasurement
+        DataExportTool.exportAllDataMultipleMeasurements(
+            averageSpectrumX            = self.currentAverageSpectrumX,
+            averageSpectrumY            = self.currentAverageSpectrumY,
+            rawSpectraX                 = self.ApplicationController.spectraX,
+            rawSpectraY                 = self.ApplicationController.spectraY,
+            correctedInterferogramsX    = self.ApplicationController.processedInterferogramsX,
+            correctedInterferogramsY    = self.ApplicationController.processedInterferogramsY,
+            interferogramsRaw           = self.ApplicationController.rawInterferograms,
+            referenceSignalsRaw         = self.ApplicationController.rawReferenceSignals,
+            settings                    = self.settingsUsedForCurrentMeasurement
         )
+
     def onClosing(self):
         SM.saveSettingsToFile(self.appSettings)
         # make sure the application closes properly when the main window is destroyed

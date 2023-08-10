@@ -51,7 +51,10 @@ def getDefaultSettings():
 
         "plotEngine":"matplotlib",
 
-        "averagingCount":"5"
+        "averagingCount":"5",
+        
+        "saveRawData":"True",
+        "saveDataToMAT":"True",
     }
 
     return  defaultSettings

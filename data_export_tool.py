@@ -25,6 +25,215 @@ def exportSpectrumAsCSV(spectrumX, spectrumY):
     else:
         logging.info(f"Failed to save spectrum as a .CSV file")
 
+def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
+                                      rawSpectraX, rawSpectraY,
+                                      correctedInterferogramsX, correctedInterferogramsY,
+                                      interferogramsRaw, referenceSignalsRaw, settings):
+
+    direcotry_selected = filedialog.askdirectory()
+    packageNameDialog = ctk.CTkInputDialog(text="Type in a short name for the data package", title="Name your results")
+    selectedName = packageNameDialog.get_input().replace(' ', '').replace(
+                                    '\t', '').replace('\n', '').replace('\r', '')
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    if len(selectedName) > 0:
+        savePackageRootName = timestamp + "_" + selectedName
+    else:
+        selectedName = "results"
+        savePackageRootName = timestamp + "_" + selectedName
+
+    savePackageRootPath = os.path.join(direcotry_selected, savePackageRootName)
+    os.mkdir(savePackageRootPath)
+
+    pathToSpectrumCSV = os.path.join(savePackageRootPath, "spectrum.csv")
+    pathToInterferogramCSV = os.path.join(savePackageRootPath, "interferogram.csv")
+    pathToSpectrumPicture = os.path.join(savePackageRootPath, "spectrum.png")
+    pathToInterferogramPicture = os.path.join(savePackageRootPath, "interferogram.png")
+
+    pathToMatlabSubDirectory = os.path.join(savePackageRootPath, "matlab")
+    saveToMATFlag = bool(settings["saveDataToMAT"])
+    if saveToMATFlag:
+        os.mkdir(pathToMatlabSubDirectory)
+
+
+
+    pathToMeasurementInfo = os.path.join(savePackageRootPath, "measurementInfo.txt")
+
+    try:
+        saveRawData = bool(settings["saveRawData"])
+    except:
+        saveRawData = False
+
+    pathToRawSpectraDirectory = os.path.join(savePackageRootPath, "raw_spectra")
+    pathToCorrectedInterferogramsDirectory = os.path.join(savePackageRootPath, "corrected_interferograms")
+    pathToRawDataDirectory = os.path.join(savePackageRootPath, "raw_data")
+
+    if saveRawData:
+        os.mkdir(pathToRawSpectraDirectory)
+        os.mkdir(pathToCorrectedInterferogramsDirectory)
+        os.mkdir(pathToRawDataDirectory)
+
+    averageSpectrumDataValid = False
+    rawSpectraDataValid = False
+    interferogramDataValid = False
+    rawDataValid = False
+
+    # save average spectrum .CSV and image
+    if (averageSpectrumX is not None and averageSpectrumY is not None and
+            len(averageSpectrumX) == len(averageSpectrumY) and len(averageSpectrumX) != 0):
+
+        averageSpectrumDataValid = True
+
+        np.savetxt(pathToSpectrumCSV, np.column_stack((averageSpectrumX, averageSpectrumY)),
+                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [a.u.]',
+                   footer='', comments='', encoding=None)
+
+        mpl.rcParams.update(mpl.rcParamsDefault)
+        plt.figure(figsize=(12.5, 7.5))
+        plt.tight_layout()
+        plt.locator_params(nbins=15)
+        plt.rc('xtick', labelsize=18)
+        plt.rc('ytick', labelsize=18)
+        plt.title("Spectrum", fontsize=20)
+        plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
+        plt.ylabel("Intensity [a.u.]", fontsize=20)
+        plt.plot(averageSpectrumX, averageSpectrumY)
+        plt.yscale('log')
+        plt.xlim((float(settings["plotSpectrumXRangeMin"]), float(settings["plotSpectrumXRangeMax"])))
+        plt.ylim((float(settings["plotSpectrumYRangeMin"]), float(settings["plotSpectrumYRangeMax"])))
+        plt.grid(alpha=0.3)
+        plt.savefig(pathToSpectrumPicture)
+
+    # save example interferogram .CSV and image
+    if (correctedInterferogramsX[0] is not None and correctedInterferogramsY[0] is not None and
+            len(correctedInterferogramsX[0]) == len(correctedInterferogramsY[0]) and
+            len(correctedInterferogramsX[0]) != 0):
+
+        np.savetxt(pathToInterferogramCSV, np.column_stack((correctedInterferogramsX[0], correctedInterferogramsY[0])),
+                   fmt='%.6e', delimiter=',', newline='\n', header='Position [um],Voltage [V]',
+                   footer='', comments='', encoding=None)
+
+        mpl.rcParams.update(mpl.rcParamsDefault)
+        plt.figure(figsize=(12.5, 7.5))
+        plt.tight_layout()
+        plt.locator_params(nbins=15)
+        plt.rc('xtick', labelsize=18)
+        plt.rc('ytick', labelsize=18)
+        plt.title("Interferogram no. 0", fontsize=20)
+        plt.xlabel("Position [\u03BCm]", fontsize=20)
+        plt.ylabel("Detector voltage [V]", fontsize=20)
+        plt.plot(correctedInterferogramsX[0], correctedInterferogramsY[0])
+        plt.xlim((min(correctedInterferogramsX[0]), max(correctedInterferogramsX[0])))
+        plt.grid(alpha=0.3)
+        plt.savefig(pathToInterferogramPicture)
+
+    # save raw spectra to .CSV files
+    if (saveRawData and
+            len(rawSpectraX) == len(rawSpectraY) and
+            len(rawSpectraX) != 0):
+
+        rawSpectraDataValid = True
+
+        for i in range(0, len(rawSpectraX)):
+            pathToRawSpectrum = os.path.join(pathToRawSpectraDirectory, f"spectrum_{i}.csv")
+
+            np.savetxt(pathToRawSpectrum, np.column_stack((rawSpectraX[i], rawSpectraY[i])),
+                       fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [a.u.]',
+                       footer='', comments='', encoding=None)
+
+    # save corrected interferograms to .CSV files
+    if (saveRawData and
+        len(correctedInterferogramsX) == len(correctedInterferogramsY) and
+        len(correctedInterferogramsX) != 0):
+
+        interferogramDataValid = True
+
+        for i in range(0, len(correctedInterferogramsX)):
+            pathToRawInterferogram = os.path.join(pathToCorrectedInterferogramsDirectory, f"interferogram_{i}.csv")
+
+            np.savetxt(pathToRawInterferogram, np.column_stack((correctedInterferogramsX[i], correctedInterferogramsY[i])),
+                        fmt='%.6e', delimiter=',', newline='\n', header='Position [um],Voltage [V]',
+                        footer='', comments='', encoding=None)
+
+    # save raw data to .CSV files
+    if (saveRawData and
+        len(referenceSignalsRaw) == len(interferogramsRaw) and
+        len(referenceSignalsRaw) != 0):
+
+        rawDataValid = True
+
+        for i in range(0, len(referenceSignalsRaw)):
+            pathToRaw = os.path.join(pathToRawDataDirectory, f"raw_{i}.csv")
+
+            np.savetxt(pathToRaw, np.column_stack((referenceSignalsRaw[i], interferogramsRaw[i])),
+                        fmt='%.6e', delimiter=',', newline='\n', header='Reference detector [V],Primary detector [V]',
+                        footer='', comments='', encoding=None)
+
+    # export everything as .mat files
+    # .mat average spectrum
+    if averageSpectrumDataValid and saveToMATFlag:
+        pathToAverageSpectrumMat = os.path.join(pathToMatlabSubDirectory, f"spectrumAverage.mat")
+        spectrum_structure = np.array([averageSpectrumX, averageSpectrumY], dtype=[('Wavelength', 'f'), ('Intensity', 'f')])
+        scipy.io.savemat(pathToAverageSpectrumMat, {"Average spectrum":spectrum_structure})
+
+    # .mat corrected interferograms
+    if interferogramDataValid and saveRawData and saveToMATFlag:
+        pathToCorrectedInterferogramsMat = os.path.join(pathToMatlabSubDirectory, f"correctedInterferograms.mat")
+        mdic = {}
+
+        for i in range(0, len(correctedInterferogramsX)):
+            interferogram_struct = np.array([correctedInterferogramsX[i], correctedInterferogramsY[i]],
+                                            dtype=[('Position', 'f'), ('Voltage', 'f')])
+
+            mdic[f"interferogram_{i}"] = interferogram_struct
+
+        scipy.io.savemat(pathToCorrectedInterferogramsMat, mdic)
+
+    # .mat raw spectra
+    if rawSpectraDataValid and saveRawData and saveToMATFlag:
+        pathToRawSpectraMat = os.path.join(pathToMatlabSubDirectory, f"rawSpectra.mat")
+        mdic = {}
+
+        for i in range(0, len(rawSpectraX)):
+            spectrum_struct = np.array([rawSpectraX[i], rawSpectraY[i]],
+                                            dtype=[('Wavelength', 'f'), ('Intensity', 'f')])
+
+            mdic[f"spectrum_{i}"] = spectrum_struct
+
+        scipy.io.savemat(pathToRawSpectraMat, mdic)
+
+    # .mat raw data
+    if rawDataValid and saveRawData and saveToMATFlag:
+        pathToRawDataMat = os.path.join(pathToMatlabSubDirectory, f"rawData.mat")
+        mdic = {}
+
+        for i in range(0, len(referenceSignalsRaw)):
+            spectrum_struct = np.array([referenceSignalsRaw[i], interferogramsRaw[i]],
+                                            dtype=[('Reference detector', 'f'), ('Primary detector', 'f')])
+
+            mdic[f"raw_{i}"] = spectrum_struct
+
+        scipy.io.savemat(pathToRawDataMat, mdic)
+
+    # save measurement info and settings
+    if settings is not None:
+        with open(pathToMeasurementInfo, 'w') as f:
+
+            f.write(f"instrument:Experimental THz FTS\n")
+            f.write(f"data_type:Basic FTS spectrum\n")
+            f.write(f"average_spectrum_data_included:{averageSpectrumDataValid}\n")
+            f.write(f"raw_spectra_data_included:{rawSpectraDataValid}\n")
+            f.write(f"interferogram_data_included:{interferogramDataValid}\n")
+            f.write(f"raw_data_included:{rawDataValid}\n")
+            f.write(f"name:{selectedName}\n")
+            f.write(f"timestamp:{timestamp}\n")
+
+            for key in settings.keys():
+                f.write(f"{key}:{settings[key]}\n")
+
+    logging.info(f"Data export finished. Location: {savePackageRootPath}")
+
 def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interferogramRaw, referenceSignalRaw, settings):
 
     direcotry_selected = filedialog.askdirectory()
