@@ -848,6 +848,10 @@ class FTSApp:
         DataExportTool.exportSpectrumAsCSV(self.currentSpectrumX, self.currentSpectrumY)
 
     def onCmdSaveFull(self):
+
+        self.settingsUsedForCurrentMeasurement["saveDataToMAT"] = self.appSettings["saveDataToMAT"]
+        self.settingsUsedForCurrentMeasurement["saveRawData"] = self.appSettings["saveRawData"]
+
         DataExportTool.exportAllDataMultipleMeasurements(
             averageSpectrumX            = self.currentAverageSpectrumX,
             averageSpectrumY            = self.currentAverageSpectrumY,

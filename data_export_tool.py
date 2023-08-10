@@ -52,19 +52,21 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
     pathToInterferogramPicture = os.path.join(savePackageRootPath, "interferogram.png")
 
     pathToMatlabSubDirectory = os.path.join(savePackageRootPath, "matlab")
-    saveToMATFlag = bool(settings["saveDataToMAT"])
+
+    if settings["saveDataToMAT"] == 'True':
+        saveToMATFlag = True
+    else:
+        saveToMATFlag = False
+
+    if settings["saveRawData"] == 'True':
+        saveRawData = True
+    else:
+        saveRawData = False
+
     if saveToMATFlag:
         os.mkdir(pathToMatlabSubDirectory)
 
-
-
     pathToMeasurementInfo = os.path.join(savePackageRootPath, "measurementInfo.txt")
-
-    try:
-        saveRawData = bool(settings["saveRawData"])
-    except:
-        saveRawData = False
-
     pathToRawSpectraDirectory = os.path.join(savePackageRootPath, "raw_spectra")
     pathToCorrectedInterferogramsDirectory = os.path.join(savePackageRootPath, "corrected_interferograms")
     pathToRawDataDirectory = os.path.join(savePackageRootPath, "raw_data")
