@@ -13,6 +13,8 @@ class BackgroundController:
 
     def __init__(self, mfliDrv, zaberDrv):
         print("Background controller created")
+        self.stopRequestFlag = False
+
         self.DataAnalyzer = DataProcessor()
         self.orderedMeasurementsCount = 0
         self.mfliFrequencyIndex = 0
@@ -45,6 +47,9 @@ class BackgroundController:
 
     def setZaberPort(self, port):
         self.ZaberPort = port
+
+    def requestStop(self):
+        self.stopRequestFlag = True
 
     def setMFLIDeviceName(self, mfliName):
         self.MFLIDeviceName = mfliName
@@ -101,23 +106,37 @@ class BackgroundController:
         self.scanLength = scanLength
         self.scanSpeed = scanSpeed
 
+        self.stopRequestFlag = False
+
         # start the actual measurement thread
         t = Thread(target=self.measurementsWork, daemon=True)
         t.start()
 
     def measurementsWork(self):
         self.SetStatusMessageMethod("Preparing...")
+
+        if self.stopRequestFlag:
+            self.stopRequestFlag = False
+            self.SetStatusMessageMethod("Measurement stopped")
+            return
+
         self.ZaberDriver.waitUntilIdle()
         mfliSamplingFrequency = MFLIDriver.MFLISamplingRates[self.mfliFrequencyIndex]
         self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
 
+        # configure MFLI
+        self.MFLIDriver.configureForMeasurement(self.mfliFrequencyIndex, self.mfliSamplesCount)
 
+        # acquire all data
         for i in range(0, self.orderedMeasurementsCount):
-            # send the delay line to the starting position
-            self.ZaberDriver.setPosition(position=self.scanStartPosition, speed=ZaberDriver.MaxSpeed)
 
-            # configure MFLI
-            self.MFLIDriver.configureForMeasurement(self.mfliFrequencyIndex, self.mfliSamplesCount)
+            if self.stopRequestFlag:
+                self.stopRequestFlag = False
+                self.SetStatusMessageMethod("Measurement stopped")
+                return
+
+                # send the delay line to the starting position
+            self.ZaberDriver.setPosition(position=self.scanStartPosition, speed=ZaberDriver.MaxSpeed)
 
             # wait until the mirror is in position
             self.ZaberDriver.waitUntilIdle()

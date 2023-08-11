@@ -166,7 +166,7 @@ class FTSApp:
                                             width=120,
                                             height=75,
                                             corner_radius=10,
-                                            command=self.onCmdUnusedButton)
+                                            command=self.onCmdStopMeasurement)
         self.multipleMeasStopButton.grid(row=3, column=1, sticky="N", padx=5, pady=5)
 
         self.multipleMeasLabel = ctk.CTkLabel(master=self.frameButtonsTop,
@@ -659,6 +659,9 @@ class FTSApp:
                                                        scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
                                                        scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
                                                        scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]))
+
+    def onCmdStopMeasurement(self):
+        self.ApplicationController.requestStop()
 
     def onCmdUpdateScanLengthFromSlider(self, other):
         sliderSetting = self.scanLengthSlider.get()
