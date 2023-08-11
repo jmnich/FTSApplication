@@ -45,10 +45,7 @@ class AbsorbanceTool:
         self.absorbanceRoot.rowconfigure(1, weight=1)
         self.absorbanceRoot.rowconfigure(2, weight=1)
 
-        # create button frames
-        
-
-        # create plots
+        # create plot frames
         self.frameReferencePlot = ctk.CTkFrame(master=self.absorbanceRoot,
                                          fg_color="darkblue")
 
@@ -65,6 +62,124 @@ class AbsorbanceTool:
         self.frameAbsorbancePlot.grid(row=2, column=1, padx=(5, 5), pady=0)#, sticky="N")
 
 
+        # create button frames
+        self.frameButtonsReference = ctk.CTkFrame(master=self.absorbanceRoot,
+                                               height=60,
+                                               width=120,
+                                               fg_color="dimgrey",
+                                               corner_radius=10)
+        self.frameButtonsReference.grid(row=0, column=0, sticky="NSEW", padx=5, pady=5)
+
+        self.frameButtonsSample = ctk.CTkFrame(master=self.absorbanceRoot,
+                                               height=60,
+                                               width=120,
+                                               fg_color="dimgrey",
+                                               corner_radius=10)
+        self.frameButtonsSample.grid(row=1, column=0, sticky="NSEW", padx=5, pady=5)
+
+        self.frameButtonsAbsorbance = ctk.CTkFrame(master=self.absorbanceRoot,
+                                               height=60,
+                                               width=120,
+                                               fg_color="dimgrey",
+                                               corner_radius=10)
+        self.frameButtonsAbsorbance.grid(row=2, column=0, sticky="NSEW", padx=5, pady=5)
+
+        # reference spectrum interface
+        # ==============================================================================================================
+        self.frameButtonsReference.columnconfigure(0, weight=1)
+        self.frameButtonsReference.rowconfigure(0, weight=1)
+        self.frameButtonsReference.rowconfigure(1, weight=1)
+        self.frameButtonsReference.rowconfigure(2, weight=1)
+        self.frameButtonsReference.rowconfigure(3, weight=1)
+
+        self.referenceLabel = ctk.CTkLabel(master=self.frameButtonsReference,
+                                        text="Reference",
+                                        font=ctk.CTkFont(size=16, weight="bold"))
+        self.referenceLabel.grid(row=0, column=0, sticky="NSEW", padx=5, pady=5)
+
+        self.buttonLoadRefLast = ctk.CTkButton(master=self.frameButtonsReference,
+                                            text="Last\nspectrum",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=None)
+        self.buttonLoadRefLast.grid(row=1, column=0, sticky="N", padx=5, pady=5)
+
+        self.buttonLoadRefAvg = ctk.CTkButton(master=self.frameButtonsReference,
+                                            text="Average\nspectrum",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=None)
+        self.buttonLoadRefAvg.grid(row=2, column=0, sticky="N", padx=5, pady=5)
+
+        self.buttonLoadRefFile = ctk.CTkButton(master=self.frameButtonsReference,
+                                            text="Spectrum\nfrom file",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=None)
+        self.buttonLoadRefFile.grid(row=3, column=0, sticky="N", padx=5, pady=5)
+
+        # sample spectrum interface
+        # ==============================================================================================================
+        self.frameButtonsSample.columnconfigure(0, weight=1)
+        self.frameButtonsSample.rowconfigure(0, weight=1)
+        self.frameButtonsSample.rowconfigure(1, weight=1)
+        self.frameButtonsSample.rowconfigure(2, weight=1)
+        self.frameButtonsSample.rowconfigure(3, weight=1)
+
+        self.sampleLabel = ctk.CTkLabel(master=self.frameButtonsSample,
+                                        text="Sample",
+                                        font=ctk.CTkFont(size=16, weight="bold"))
+        self.sampleLabel.grid(row=0, column=0, sticky="NSEW", padx=5, pady=5)
+
+        self.buttonLoadSmpLast = ctk.CTkButton(master=self.frameButtonsSample,
+                                            text="Last\nspectrum",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=None)
+        self.buttonLoadSmpLast.grid(row=1, column=0, sticky="N", padx=5, pady=5)
+
+        self.buttonLoadSmpAvg = ctk.CTkButton(master=self.frameButtonsSample,
+                                            text="Average\nspectrum",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=None)
+        self.buttonLoadSmpAvg.grid(row=2, column=0, sticky="N", padx=5, pady=5)
+
+        self.buttonLoadSmpFile = ctk.CTkButton(master=self.frameButtonsSample,
+                                            text="Spectrum\nfrom file",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=None)
+        self.buttonLoadSmpFile.grid(row=3, column=0, sticky="N", padx=5, pady=5)
+
+
+        # absorbance spectrum interface
+        self.frameButtonsAbsorbance.columnconfigure(0, weight=1)
+        self.frameButtonsAbsorbance.rowconfigure(0, weight=1)
+
+        self.settingsTabs = ctk.CTkTabview(master=self.frameButtonsAbsorbance)
+        self.settingsTabs.grid(column=0, row=0, padx=3)
+        self.settingsTabs.add("Settings")
+        self.settingsTabs.add("Export")
+
+        # configure settings 'SETTINGS' tab
+        # ==============================================================================================================
+        self.settingsTabs.tab("Settings").rowconfigure(0, weight=1)
+        self.settingsTabs.tab("Settings").rowconfigure(1, weight=1)
+
+        # configure settings 'EXPORT' tab
+        # ==============================================================================================================
+        self.settingsTabs.tab("Export").rowconfigure(0, weight=1)
+        self.settingsTabs.tab("Export").rowconfigure(1, weight=1)
+
+        # create plots
+        # ==============================================================================================================
         plt.style.use('dark_background')
         self.figRef, self.axRef = plt.subplots()
         self.figRef.suptitle("Reference spectrum")
@@ -104,3 +219,7 @@ class AbsorbanceTool:
         self.canvasAbsPlot = FigureCanvasTkAgg(self.figAbs, master=self.frameAbsorbancePlot)
         self.canvasAbsPlot.get_tk_widget().pack(side='right', fill='both', expand=True)
         self.canvasAbsPlot.draw()
+
+        self.absorbanceRoot.update()
+        self.absorbanceRoot.after(1, lambda: self.absorbanceRoot.focus_force())
+        self.absorbanceRoot.update()
