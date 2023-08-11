@@ -17,6 +17,7 @@ from tkinter.filedialog import asksaveasfilename
 from tkinter import filedialog
 from datetime import datetime
 import data_export_tool as DataExportTool
+import absorbanceTool as AbsorbanceTool
 
 class FTSApp:
 
@@ -24,6 +25,8 @@ class FTSApp:
 
         logging.basicConfig(filename='ftsapp.log', format='%(asctime)s %(message)s', level=logging.INFO)
         logging.info('========= Application started =========')
+
+        self.absorbanceToolWindow = None
 
         if SM.isSettingsFileAvailable():
             self.appSettings = SM.readSettingsFromFile()
@@ -148,10 +151,8 @@ class FTSApp:
                                             width=120,
                                             height=75,
                                             corner_radius=10,
-                                            command=self.onCmdUnusedButton)
+                                            command=self.onCmdOpenAbsorbanceTool)
         self.absorbanceToolButton.grid(row=2, column=1, sticky="N", padx=5, pady=5)
-        self.absorbanceToolButton.configure(state="disabled")
-
 
         self.multipleMeasStartButton = ctk.CTkButton(master=self.frameButtonsTop,
                                             text="Capture\nmultiple\nspectra",
@@ -755,6 +756,10 @@ class FTSApp:
 
     def onCmdUnusedButton(self):
         print("Unused button click")
+
+
+    def onCmdOpenAbsorbanceTool(self):
+        self.absorbanceToolWindow = AbsorbanceTool.AbsorbanceTool(self.root)
 
     def onCmdUpdateSpectrumPlotRanges(self, other):
         self.appSettings["plotSpectrumXRangeMin"] = self.spectrumXMinBox.get()
