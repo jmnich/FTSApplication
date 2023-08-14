@@ -28,6 +28,12 @@ class AbsorbanceTool:
         self.absorbanceSpectrumAxisX = None
         self.absorbanceSpectrumAxisY = None
 
+        # external methods for uploading data
+        self.grabReferenceSpectrumDataLast = None
+        self.grabReferenceSpectrumDataAverage = None
+        self.grabSampleSpectrumDataLast = None
+        self.grabSampleSpectrumDataAverage = None
+
         # build GUI
         ctk.set_appearance_mode("dark")
         self.absorbanceRoot = ctk.CTkToplevel(root)
@@ -253,30 +259,40 @@ class AbsorbanceTool:
 
 
     def onCmdLoadReferenceSpectrumFromFile(self):
-
         (self.referenceSpectrumAxisNameX, self.referenceSpectrumAxisNameY,
          self.referenceSpectrumAxisX, self.referenceSpectrumAxisY) = self.loadSpectrumFromCSV()
 
         self.updatePlots()
 
     def onCmdLoadReferenceSpectrumLast(self):
-        print("TODO")
+        (self.referenceSpectrumAxisNameX, self.referenceSpectrumAxisNameY,
+         self.referenceSpectrumAxisX, self.referenceSpectrumAxisY) = self.grabReferenceSpectrumDataLast()
+
+        self.updatePlots()
 
     def onCmdLoadReferenceSpectrumAverage(self):
-        print("TODO")
+        (self.referenceSpectrumAxisNameX, self.referenceSpectrumAxisNameY,
+         self.referenceSpectrumAxisX, self.referenceSpectrumAxisY) = self.grabReferenceSpectrumDataAverage()
+
+        self.updatePlots()
 
     def onCmdLoadSampleSpectrumFromFile(self):
-
         (self.sampleSpectrumAxisNameX, self.sampleSpectrumAxisNameY,
          self.sampleSpectrumAxisX, self.sampleSpectrumAxisY) = self.loadSpectrumFromCSV()
 
         self.updatePlots()
 
     def onCmdLoadSampleSpectrumLast(self):
-        print("TODO")
+        (self.sampleSpectrumAxisNameX, self.sampleSpectrumAxisNameY,
+         self.sampleSpectrumAxisX, self.sampleSpectrumAxisY) = self.grabSampleSpectrumDataLast()
+
+        self.updatePlots()
 
     def onCmdLoadSampleSpectrumAverage(self):
-        print("TODO")
+        (self.sampleSpectrumAxisNameX, self.sampleSpectrumAxisNameY,
+         self.sampleSpectrumAxisX, self.sampleSpectrumAxisY) = self.grabSampleSpectrumDataAverage()
+
+        self.updatePlots()
 
     def updatePlots(self):
         plt.style.use('dark_background')
@@ -299,10 +315,8 @@ class AbsorbanceTool:
             self.axRef.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue", alpha=0.7)
 
-            self.axRef.set_xlim(float(1),
-                                float(30))
-            self.axRef.set_ylim(float(0.01),
-                                float(1))
+            self.axRef.set_xlim(float(1), float(30))
+            self.axRef.set_ylim(float(0.01), float(1))
             self.axRef.set_yscale("log")
 
             self.axRef.set_xlabel(self.referenceSpectrumAxisNameX)
@@ -318,10 +332,8 @@ class AbsorbanceTool:
             self.axSmp.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue", alpha=0.7)
 
-            self.axSmp.set_xlim(float(1),
-                                float(30))
-            self.axSmp.set_ylim(float(0.01),
-                                float(1))
+            self.axSmp.set_xlim(float(1), float(30))
+            self.axSmp.set_ylim(float(0.01), float(1))
             self.axSmp.set_yscale("log")
 
             self.axSmp.set_xlabel(self.sampleSpectrumAxisNameX)
@@ -334,7 +346,7 @@ class AbsorbanceTool:
                 spectra_valid_for_absorbance_calculation = True
             else:
                 spectra_valid_for_absorbance_calculation = False
-                messagebox.showwarning(title="Error - can't calculate absorbance spectrum", message=validation_result)
+                messagebox.showwarning(title="Error - can't calculate absorbance", message=validation_result)
 
         if sample_loaded and reference_loaded and spectra_valid_for_absorbance_calculation:
             self.calculateAbsorbance()
@@ -342,10 +354,9 @@ class AbsorbanceTool:
             self.axAbs.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axAbs.plot(self.absorbanceSpectrumAxisX, self.absorbanceSpectrumAxisY, color="dodgerblue", alpha=0.7)
 
-            self.axAbs.set_xlim(float(1),
-                                float(30))
-            self.axAbs.set_ylim(float(0.01),
-                                float(1))
+            self.axAbs.set_xlim(float(1), float(30))
+            self.axAbs.set_ylim(float(0.01), float(1))
+
             self.axAbs.set_yscale("log")
 
             self.axAbs.set_xlabel(self.absorbanceSpectrumAxisNameX)
