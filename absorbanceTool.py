@@ -278,8 +278,53 @@ class AbsorbanceTool:
         print("TODO")
 
     def updatePlots(self):
-        print("TODO")
+        plt.style.use('dark_background')
+        # clear old data
+        self.axRef.clear()
+        self.axSmp.clear()
+        self.axAbs.clear()
 
+        # set ranges and plot new data
+        # reference spectrum
+        if (self.referenceSpectrumAxisX is not None) and (self.referenceSpectrumAxisY is not None) and \
+                (len(self.referenceSpectrumAxisY) == len(self.referenceSpectrumAxisX)) and \
+                (len(self.referenceSpectrumAxisY) != 0):
+
+            self.axRef.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
+            self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue", alpha=0.7)
+
+            self.axRef.set_xlim(float(1),
+                                float(30))
+            self.axRef.set_ylim(float(0.01),
+                                float(1))
+            self.axRef.set_yscale("log")
+
+            self.axRef.set_xlabel(self.referenceSpectrumAxisNameX)
+            self.axRef.set_ylabel(self.referenceSpectrumAxisNameY)
+
+        # sample spectrum
+        if (self.sampleSpectrumAxisX is not None) and (self.sampleSpectrumAxisY is not None) and \
+                (len(self.sampleSpectrumAxisY) == len(self.sampleSpectrumAxisX)) and \
+                (len(self.sampleSpectrumAxisY) != 0):
+
+            self.axSmp.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
+            self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue", alpha=0.7)
+
+            self.axSmp.set_xlim(float(1),
+                                float(30))
+            self.axSmp.set_ylim(float(0.01),
+                                float(1))
+            self.axSmp.set_yscale("log")
+
+            self.axSmp.set_xlabel(self.sampleSpectrumAxisNameX)
+            self.axSmp.set_ylabel(self.sampleSpectrumAxisNameY)
+
+
+        # force redraw and refresh
+        self.canvasRefPlot.draw()
+        self.canvasSmpPlot.draw()
+        self.canvasAbsPlot.draw()
+        self.absorbanceRoot.update()
 
     def loadSpectrumFromCSV(self):
         types = [(
