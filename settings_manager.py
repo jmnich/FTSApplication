@@ -55,6 +55,13 @@ def getDefaultSettings():
         
         "saveRawData":"False",
         "saveDataToMAT":"False",
+
+        "absorbanceToolRangeXMin":"1.0",
+        "absorbanceToolRangeXMax": "30.0",
+        "absorbanceToolRangeYMin": "0.001",
+        "absorbanceToolRangeYMax": "1.0",
+        "absorbanceToolAbsRangeYMin": "0.0001",
+        "absorbanceToolAbsRangeYMax": "1.0",
     }
 
     return  defaultSettings

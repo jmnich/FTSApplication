@@ -765,7 +765,7 @@ class FTSApp:
 
 
     def onCmdOpenAbsorbanceTool(self):
-        self.absorbanceToolWindow = AbsorbanceTool.AbsorbanceTool(self.root)
+        self.absorbanceToolWindow = AbsorbanceTool.AbsorbanceTool(self.root, self.appSettings)
 
         self.absorbanceToolWindow.grabSampleSpectrumDataAverage = self.giveSpectrumForAbsorbanceAverage
         self.absorbanceToolWindow.grabReferenceSpectrumDataAverage = self.giveSpectrumForAbsorbanceAverage

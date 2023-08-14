@@ -201,6 +201,6 @@ class BackgroundController:
 
             self.SendResultsToPlot(results["interferogramX"], results["interferogramY"],
                                    results["spectrumX"], results["spectrumY"],
-                                   self.averageSpectrumX, self.averageSpectrumY, i)
+                                   self.averageSpectrumX, self.averageSpectrumY, i + 1)
 
         self.SetStatusMessageMethod("Done")
