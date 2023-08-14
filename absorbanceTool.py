@@ -223,8 +223,8 @@ class AbsorbanceTool:
                                         width=80, height=30)
         self.xMinBox.insert(0, initialSettings["absorbanceToolRangeXMin"])
         self.xMinBox.grid(row=0, column=1, sticky="E", padx=5, pady=1)
-        # self.startingPosBox.bind("<FocusOut>", self.onCmdUpdateStartingPositionFromBox)
-        # self.startingPosBox.bind("<Return>", self.onCmdUpdateStartingPositionFromBox)
+        self.xMinBox.bind("<FocusOut>", self.onCmdUpdatePlotRanges)
+        self.xMinBox.bind("<Return>", self.onCmdUpdatePlotRanges)
 
         self.xMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Settings"),
                                                     text="X\nmax [\u03BCm]",
@@ -235,8 +235,8 @@ class AbsorbanceTool:
                                         width=80, height=30)
         self.xMaxBox.insert(0, initialSettings["absorbanceToolRangeXMax"])
         self.xMaxBox.grid(row=1, column=1, sticky="E", padx=5, pady=1)
-        # self.startingPosBox.bind("<FocusOut>", self.onCmdUpdateStartingPositionFromBox)
-        # self.startingPosBox.bind("<Return>", self.onCmdUpdateStartingPositionFromBox)
+        self.xMaxBox.bind("<FocusOut>", self.onCmdUpdatePlotRanges)
+        self.xMaxBox.bind("<Return>", self.onCmdUpdatePlotRanges)
 
         self.yMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Settings"),
                                                     text="Y\nmin",
@@ -247,8 +247,8 @@ class AbsorbanceTool:
                                         width=80, height=30)
         self.yMinBox.insert(0, initialSettings["absorbanceToolRangeYMin"])
         self.yMinBox.grid(row=2, column=1, sticky="E", padx=5, pady=1)
-        # self.startingPosBox.bind("<FocusOut>", self.onCmdUpdateStartingPositionFromBox)
-        # self.startingPosBox.bind("<Return>", self.onCmdUpdateStartingPositionFromBox)
+        self.yMinBox.bind("<FocusOut>", self.onCmdUpdatePlotRanges)
+        self.yMinBox.bind("<Return>", self.onCmdUpdatePlotRanges)
 
         self.yMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Settings"),
                                                     text="Y\nmax",
@@ -259,8 +259,8 @@ class AbsorbanceTool:
                                         width=80, height=30)
         self.yMaxBox.insert(0, initialSettings["absorbanceToolRangeYMax"])
         self.yMaxBox.grid(row=3, column=1, sticky="E", padx=5, pady=1)
-        # self.startingPosBox.bind("<FocusOut>", self.onCmdUpdateStartingPositionFromBox)
-        # self.startingPosBox.bind("<Return>", self.onCmdUpdateStartingPositionFromBox)
+        self.yMaxBox.bind("<FocusOut>", self.onCmdUpdatePlotRanges)
+        self.yMaxBox.bind("<Return>", self.onCmdUpdatePlotRanges)
 
         self.yAbsMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Settings"),
                                                     text="Y abs\nmin",
@@ -271,8 +271,8 @@ class AbsorbanceTool:
                                         width=80, height=30)
         self.yAbsMinBox.insert(0, initialSettings["absorbanceToolAbsRangeYMin"])
         self.yAbsMinBox.grid(row=4, column=1, sticky="E", padx=5, pady=1)
-        # self.startingPosBox.bind("<FocusOut>", self.onCmdUpdateStartingPositionFromBox)
-        # self.startingPosBox.bind("<Return>", self.onCmdUpdateStartingPositionFromBox)
+        self.yAbsMinBox.bind("<FocusOut>", self.onCmdUpdatePlotRanges)
+        self.yAbsMinBox.bind("<Return>", self.onCmdUpdatePlotRanges)
 
         self.yAbsMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Settings"),
                                                     text="Y abs\nmax",
@@ -283,9 +283,8 @@ class AbsorbanceTool:
                                         width=80, height=30)
         self.yAbsMaxBox.insert(0, initialSettings["absorbanceToolAbsRangeYMax"])
         self.yAbsMaxBox.grid(row=5, column=1, sticky="E", padx=5, pady=1)
-        # self.startingPosBox.bind("<FocusOut>", self.onCmdUpdateStartingPositionFromBox)
-        # self.startingPosBox.bind("<Return>", self.onCmdUpdateStartingPositionFromBox)
-
+        self.yAbsMaxBox.bind("<FocusOut>", self.onCmdUpdatePlotRanges)
+        self.yAbsMaxBox.bind("<Return>", self.onCmdUpdatePlotRanges)
 
         # configure settings 'EXPORT' tab
         # ==============================================================================================================
@@ -385,7 +384,7 @@ class AbsorbanceTool:
 
         self.updatePlots()
 
-    def onCmdUpdatePlotRanges(self):
+    def onCmdUpdatePlotRanges(self, other):
         settings = self.grabApplicationSettings()
 
         # read and sanitize all range settings for plots
@@ -443,7 +442,11 @@ class AbsorbanceTool:
             self.yAbsMaxBox.delete(0, "end")
             self.yAbsMaxBox.insert(0, settings["absorbanceToolAbsRangeYMax"])
 
+        # save new settings
+        self.setApplicationSettings(settings)
+
         # update plot settings
+        self.updatePlots()
 
     def updatePlots(self):
         plt.style.use('dark_background')
@@ -466,8 +469,8 @@ class AbsorbanceTool:
             self.axRef.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue")
 
-            self.axRef.set_xlim(float(1), float(30))
-            self.axRef.set_ylim(float(0.01), float(1))
+            self.axRef.set_xlim(self.plotsXMin, self.plotsXMax)
+            self.axRef.set_ylim(self.plotsYMin, self.plotsYMax)
             self.axRef.set_yscale("log")
 
             self.axRef.set_xlabel(self.referenceSpectrumAxisNameX)
@@ -483,8 +486,8 @@ class AbsorbanceTool:
             self.axSmp.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue")
 
-            self.axSmp.set_xlim(float(1), float(30))
-            self.axSmp.set_ylim(float(0.01), float(1))
+            self.axSmp.set_xlim(self.plotsXMin, self.plotsXMax)
+            self.axSmp.set_ylim(self.plotsYMin, self.plotsYMax)
             self.axSmp.set_yscale("log")
 
             self.axSmp.set_xlabel(self.sampleSpectrumAxisNameX)
@@ -505,8 +508,8 @@ class AbsorbanceTool:
             self.axAbs.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axAbs.plot(self.absorbanceSpectrumAxisX, self.absorbanceSpectrumAxisY, color="dodgerblue")
 
-            self.axAbs.set_xlim(float(1), float(30))
-            self.axAbs.set_ylim(float(0.01), float(1))
+            self.axAbs.set_xlim(self.plotsXMin, self.plotsXMax)
+            self.axAbs.set_ylim(self.plotsAbsYMin, self.plotsAbsYMax)
             self.axAbs.set_yscale("log")
 
             self.axAbs.set_xlabel(self.absorbanceSpectrumAxisNameX)
@@ -522,7 +525,7 @@ class AbsorbanceTool:
         self.absorbanceSpectrumAxisX = self.referenceSpectrumAxisX
         self.absorbanceSpectrumAxisY = self.referenceSpectrumAxisY - self.sampleSpectrumAxisY
         self.absorbanceSpectrumAxisNameX = self.referenceSpectrumAxisNameX
-        self.absorbanceSpectrumAxisNameY = self.referenceSpectrumAxisNameY
+        self.absorbanceSpectrumAxisNameY = "Absorbance"
 
     def validateSpectraForAbsorbanceCalculation(self):
         msg = ""
