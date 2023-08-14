@@ -34,6 +34,10 @@ class AbsorbanceTool:
         self.grabSampleSpectrumDataLast = None
         self.grabSampleSpectrumDataAverage = None
 
+        # external methods for handling settings
+        self.grabApplicationSettings = None
+        self.setApplicationSettings = None
+
         # build GUI
         ctk.set_appearance_mode("dark")
         self.absorbanceRoot = ctk.CTkToplevel(root)
@@ -313,7 +317,7 @@ class AbsorbanceTool:
             reference_loaded = True
 
             self.axRef.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
-            self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue", alpha=0.7)
+            self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue")
 
             self.axRef.set_xlim(float(1), float(30))
             self.axRef.set_ylim(float(0.01), float(1))
@@ -330,7 +334,7 @@ class AbsorbanceTool:
             sample_loaded = True
 
             self.axSmp.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
-            self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue", alpha=0.7)
+            self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue")
 
             self.axSmp.set_xlim(float(1), float(30))
             self.axSmp.set_ylim(float(0.01), float(1))
@@ -352,7 +356,7 @@ class AbsorbanceTool:
             self.calculateAbsorbance()
 
             self.axAbs.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
-            self.axAbs.plot(self.absorbanceSpectrumAxisX, self.absorbanceSpectrumAxisY, color="dodgerblue", alpha=0.7)
+            self.axAbs.plot(self.absorbanceSpectrumAxisX, self.absorbanceSpectrumAxisY, color="dodgerblue")
 
             self.axAbs.set_xlim(float(1), float(30))
             self.axAbs.set_ylim(float(0.01), float(1))

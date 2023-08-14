@@ -567,6 +567,12 @@ class FTSApp:
         logging.info(f"Status bar message set to: {message}")
         self.root.update()
 
+    def getApplicationSettings(self):
+        return self.appSettings
+
+    def setApplicationSettings(self, settings):
+        self.appSettings = settings
+
     def setGeneralReadyFlag(self, isReady):
         if isReady:
             self.hardwareStatusLabel.configure(text="READY", text_color="lightgreen")
@@ -765,6 +771,8 @@ class FTSApp:
         self.absorbanceToolWindow.grabReferenceSpectrumDataAverage = self.giveSpectrumForAbsorbanceAverage
         self.absorbanceToolWindow.grabSampleSpectrumDataLast = self.giveSpectrumForAbsorbanceLast
         self.absorbanceToolWindow.grabReferenceSpectrumDataLast = self.giveSpectrumForAbsorbanceLast
+        self.absorbanceToolWindow.grabApplicationSettings = self.getApplicationSettings
+        self.absorbanceToolWindow.setApplicationSettings = self.setApplicationSettings
 
     def onCmdUpdateSpectrumPlotRanges(self, other):
         self.appSettings["plotSpectrumXRangeMin"] = self.spectrumXMinBox.get()
@@ -891,10 +899,12 @@ class FTSApp:
                              self.currentAverageSpectrumX, self.currentAverageSpectrumY, 0)
 
     def giveSpectrumForAbsorbanceLast(self):
-        return 'Wavelength [\u03BCm]', 'Intensity [a.u.]', self.currentSpectrumX, self.currentSpectrumY
+        return ('Wavelength [\u03BCm]', 'Intensity [a.u.]',
+                self.currentSpectrumX.copy(), self.currentSpectrumY.copy())
 
     def giveSpectrumForAbsorbanceAverage(self):
-        return 'Wavelength [\u03BCm]', 'Intensity [a.u.]', self.currentAverageSpectrumX, self.currentAverageSpectrumY
+        return ('Wavelength [\u03BCm]', 'Intensity [a.u.]',
+                self.currentAverageSpectrumX.copy(), self.currentAverageSpectrumY.copy())
     def loadDataToPlots(self, interferogramX, interferogramY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
                         completedMeasurements):
 
