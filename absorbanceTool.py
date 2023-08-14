@@ -7,6 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sys
 from tkinter.filedialog import asksaveasfilename
 from tkinter import filedialog
+from tkinter import messagebox
 
 class AbsorbanceTool:
 
@@ -285,10 +286,15 @@ class AbsorbanceTool:
         self.axAbs.clear()
 
         # set ranges and plot new data
+        reference_loaded = False
+        sample_loaded = False
+        spectra_valid_for_absorbance_calculation = False
         # reference spectrum
         if (self.referenceSpectrumAxisX is not None) and (self.referenceSpectrumAxisY is not None) and \
                 (len(self.referenceSpectrumAxisY) == len(self.referenceSpectrumAxisX)) and \
                 (len(self.referenceSpectrumAxisY) != 0):
+
+            reference_loaded = True
 
             self.axRef.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue", alpha=0.7)
@@ -307,6 +313,8 @@ class AbsorbanceTool:
                 (len(self.sampleSpectrumAxisY) == len(self.sampleSpectrumAxisX)) and \
                 (len(self.sampleSpectrumAxisY) != 0):
 
+            sample_loaded = True
+
             self.axSmp.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue", alpha=0.7)
 
@@ -319,12 +327,57 @@ class AbsorbanceTool:
             self.axSmp.set_xlabel(self.sampleSpectrumAxisNameX)
             self.axSmp.set_ylabel(self.sampleSpectrumAxisNameY)
 
+        if sample_loaded and reference_loaded:
+            validation_result = self.validateSpectraForAbsorbanceCalculation()
+
+            if validation_result == "OK":
+                spectra_valid_for_absorbance_calculation = True
+            else:
+                spectra_valid_for_absorbance_calculation = False
+                messagebox.showwarning(title="Error - can't calculate absorbance spectrum", message=validation_result)
+
+        if sample_loaded and reference_loaded and spectra_valid_for_absorbance_calculation:
+            self.calculateAbsorbance()
+
+            self.axAbs.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
+            self.axAbs.plot(self.absorbanceSpectrumAxisX, self.absorbanceSpectrumAxisY, color="dodgerblue", alpha=0.7)
+
+            self.axAbs.set_xlim(float(1),
+                                float(30))
+            self.axAbs.set_ylim(float(0.01),
+                                float(1))
+            self.axAbs.set_yscale("log")
+
+            self.axAbs.set_xlabel(self.absorbanceSpectrumAxisNameX)
+            self.axAbs.set_ylabel(self.absorbanceSpectrumAxisNameY)
 
         # force redraw and refresh
         self.canvasRefPlot.draw()
         self.canvasSmpPlot.draw()
         self.canvasAbsPlot.draw()
         self.absorbanceRoot.update()
+
+    def calculateAbsorbance(self):
+        self.absorbanceSpectrumAxisX = self.referenceSpectrumAxisX
+        self.absorbanceSpectrumAxisY = self.referenceSpectrumAxisY - self.sampleSpectrumAxisY
+        self.absorbanceSpectrumAxisNameX = self.referenceSpectrumAxisNameX
+        self.absorbanceSpectrumAxisNameY = self.referenceSpectrumAxisNameY
+
+    def validateSpectraForAbsorbanceCalculation(self):
+        msg = ""
+
+        if self.referenceSpectrumAxisY is None or self.referenceSpectrumAxisX is None:
+            return "Error - reference spectrum uninitialized"
+
+        if self.sampleSpectrumAxisY is None or self.sampleSpectrumAxisX is None:
+            return "Error - sample spectrum uninitialized"
+
+        if len(self.sampleSpectrumAxisX) != len(self.referenceSpectrumAxisX) != len(self.sampleSpectrumAxisY) != len(self.referenceSpectrumAxisY):
+            return (f"Error - axes lengths not equal.\n"
+                    f"Ref X = {len(self.referenceSpectrumAxisX)} Ref Y = {len(self.referenceSpectrumAxisY)}\n"
+                    f"Sample X = {len(self.sampleSpectrumAxisX)} Sample Y = {len(self.sampleSpectrumAxisY)}")
+
+        return "OK"
 
     def loadSpectrumFromCSV(self):
         types = [(
