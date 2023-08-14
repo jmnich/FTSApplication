@@ -356,7 +356,6 @@ class AbsorbanceTool:
 
             self.axAbs.set_xlim(float(1), float(30))
             self.axAbs.set_ylim(float(0.01), float(1))
-
             self.axAbs.set_yscale("log")
 
             self.axAbs.set_xlabel(self.absorbanceSpectrumAxisNameX)

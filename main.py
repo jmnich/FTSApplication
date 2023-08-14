@@ -761,6 +761,11 @@ class FTSApp:
     def onCmdOpenAbsorbanceTool(self):
         self.absorbanceToolWindow = AbsorbanceTool.AbsorbanceTool(self.root)
 
+        self.absorbanceToolWindow.grabSampleSpectrumDataAverage = self.giveSpectrumForAbsorbanceAverage
+        self.absorbanceToolWindow.grabReferenceSpectrumDataAverage = self.giveSpectrumForAbsorbanceAverage
+        self.absorbanceToolWindow.grabSampleSpectrumDataLast = self.giveSpectrumForAbsorbanceLast
+        self.absorbanceToolWindow.grabReferenceSpectrumDataLast = self.giveSpectrumForAbsorbanceLast
+
     def onCmdUpdateSpectrumPlotRanges(self, other):
         self.appSettings["plotSpectrumXRangeMin"] = self.spectrumXMinBox.get()
         self.appSettings["plotSpectrumXRangeMax"] = self.spectrumXMaxBox.get()
@@ -885,6 +890,11 @@ class FTSApp:
                              self.currentSpectrumX, self.currentSpectrumY,
                              self.currentAverageSpectrumX, self.currentAverageSpectrumY, 0)
 
+    def giveSpectrumForAbsorbanceLast(self):
+        return 'Wavelength [\u03BCm]', 'Intensity [a.u.]', self.currentSpectrumX, self.currentSpectrumY
+
+    def giveSpectrumForAbsorbanceAverage(self):
+        return 'Wavelength [\u03BCm]', 'Intensity [a.u.]', self.currentAverageSpectrumX, self.currentAverageSpectrumY
     def loadDataToPlots(self, interferogramX, interferogramY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
                         completedMeasurements):
 
