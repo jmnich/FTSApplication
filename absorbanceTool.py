@@ -11,6 +11,23 @@ from tkinter import filedialog
 class AbsorbanceTool:
 
     def __init__(self, root):
+        # important fields
+        self.referenceSpectrumAxisNameX = None
+        self.referenceSpectrumAxisNameY = None
+        self.referenceSpectrumAxisX = None
+        self.referenceSpectrumAxisY = None
+
+        self.sampleSpectrumAxisNameX = None
+        self.sampleSpectrumAxisNameY = None
+        self.sampleSpectrumAxisX = None
+        self.sampleSpectrumAxisY = None
+
+        self.absorbanceSpectrumAxisNameX = None
+        self.absorbanceSpectrumAxisNameY = None
+        self.absorbanceSpectrumAxisX = None
+        self.absorbanceSpectrumAxisY = None
+
+        # build GUI
         ctk.set_appearance_mode("dark")
         self.absorbanceRoot = ctk.CTkToplevel(root)
         self.absorbanceRoot.geometry("1200x800")
@@ -102,7 +119,7 @@ class AbsorbanceTool:
                                             width=120,
                                             height=80,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCmdLoadReferenceSpectrumLast)
         self.buttonLoadRefLast.grid(row=1, column=0, sticky="N", padx=5, pady=5)
 
         self.buttonLoadRefAvg = ctk.CTkButton(master=self.frameButtonsReference,
@@ -110,7 +127,7 @@ class AbsorbanceTool:
                                             width=120,
                                             height=80,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCmdLoadReferenceSpectrumAverage)
         self.buttonLoadRefAvg.grid(row=2, column=0, sticky="N", padx=5, pady=5)
 
         self.buttonLoadRefFile = ctk.CTkButton(master=self.frameButtonsReference,
@@ -118,7 +135,7 @@ class AbsorbanceTool:
                                             width=120,
                                             height=80,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCmdLoadReferenceSpectrumFromFile)
         self.buttonLoadRefFile.grid(row=3, column=0, sticky="N", padx=5, pady=5)
 
         # sample spectrum interface
@@ -139,7 +156,7 @@ class AbsorbanceTool:
                                             width=120,
                                             height=80,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCmdLoadSampleSpectrumLast)
         self.buttonLoadSmpLast.grid(row=1, column=0, sticky="N", padx=5, pady=5)
 
         self.buttonLoadSmpAvg = ctk.CTkButton(master=self.frameButtonsSample,
@@ -147,7 +164,7 @@ class AbsorbanceTool:
                                             width=120,
                                             height=80,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCmdLoadSampleSpectrumAverage)
         self.buttonLoadSmpAvg.grid(row=2, column=0, sticky="N", padx=5, pady=5)
 
         self.buttonLoadSmpFile = ctk.CTkButton(master=self.frameButtonsSample,
@@ -155,9 +172,8 @@ class AbsorbanceTool:
                                             width=120,
                                             height=80,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCmdLoadSampleSpectrumFromFile)
         self.buttonLoadSmpFile.grid(row=3, column=0, sticky="N", padx=5, pady=5)
-
 
         # absorbance spectrum interface
         self.frameButtonsAbsorbance.columnconfigure(0, weight=1)
@@ -177,6 +193,16 @@ class AbsorbanceTool:
         # ==============================================================================================================
         self.settingsTabs.tab("Export").rowconfigure(0, weight=1)
         self.settingsTabs.tab("Export").rowconfigure(1, weight=1)
+        self.settingsTabs.tab("Export").rowconfigure(2, weight=1)
+        self.settingsTabs.tab("Export").rowconfigure(3, weight=1)
+
+        self.saveAbsorbanceToCSVButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+                                            text="Save absorbance\nto .CSV",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=None)
+        self.saveAbsorbanceToCSVButton.grid(row=1, column=0, sticky="N", padx=5, pady=5)
 
         # create plots
         # ==============================================================================================================
@@ -223,3 +249,55 @@ class AbsorbanceTool:
         self.absorbanceRoot.update()
         self.absorbanceRoot.after(1, lambda: self.absorbanceRoot.focus_force())
         self.absorbanceRoot.update()
+
+
+    def onCmdLoadReferenceSpectrumFromFile(self):
+
+        (self.referenceSpectrumAxisNameX, self.referenceSpectrumAxisNameY,
+         self.referenceSpectrumAxisX, self.referenceSpectrumAxisY) = self.loadSpectrumFromCSV()
+
+        self.updatePlots()
+
+    def onCmdLoadReferenceSpectrumLast(self):
+        print("TODO")
+
+    def onCmdLoadReferenceSpectrumAverage(self):
+        print("TODO")
+
+    def onCmdLoadSampleSpectrumFromFile(self):
+
+        (self.sampleSpectrumAxisNameX, self.sampleSpectrumAxisNameY,
+         self.sampleSpectrumAxisX, self.sampleSpectrumAxisY) = self.loadSpectrumFromCSV()
+
+        self.updatePlots()
+
+    def onCmdLoadSampleSpectrumLast(self):
+        print("TODO")
+
+    def onCmdLoadSampleSpectrumAverage(self):
+        print("TODO")
+
+    def updatePlots(self):
+        print("TODO")
+
+
+    def loadSpectrumFromCSV(self):
+        types = [(
+        ('.CSV spectrum', '*.csv')
+        )]
+
+        filename = filedialog.askopenfilename(title="Open .CSV spectrum file", filetypes=types)
+
+        data = np.genfromtxt(filename, delimiter=",", dtype=float, names=True)
+
+        axisNameX = data.dtype.names[0].split('_')[0] + " [" + data.dtype.names[0].split('_')[1] + "]"
+        axisNameY = data.dtype.names[1].split('_')[0] + " [" + data.dtype.names[1].split('_')[1] + "]"
+
+        npAxisX = np.zeros(len(data))
+        npAxisY = np.zeros(len(data))
+
+        for i in range(0, len(data)):
+            npAxisX[i] = data[i][0]
+            npAxisY[i] = data[i][1]
+
+        return axisNameX, axisNameY, npAxisX, npAxisY
