@@ -10,6 +10,7 @@ import sys
 from tkinter.filedialog import asksaveasfilename
 from tkinter import filedialog
 from tkinter import messagebox
+import data_export_tool as DET
 
 class AbsorbanceTool:
 
@@ -307,7 +308,7 @@ class AbsorbanceTool:
                                             width=100,
                                             height=80,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCmdSaveAbsorptionToCSV)
         self.saveAbsorbanceToCSVButton.grid(row=0, column=1, sticky="N", padx=5, pady=5)
 
         self.saveResultsButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
@@ -315,7 +316,7 @@ class AbsorbanceTool:
                                             width=100,
                                             height=80,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCmdSaveAll)
         self.saveResultsButton.grid(row=0, column=0, sticky="N", padx=5, pady=5)
 
         self.inspectAbsorbanceButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
@@ -706,3 +707,16 @@ class AbsorbanceTool:
             plt.ioff()
         except:
             messagebox.showwarning(title="Error - can't inspect spectrum", message="Can't plot the data")
+
+    def onCmdSaveAbsorptionToCSV(self):
+        DET.exportAbsorbanceAsCSV(absorbanceX=self.absorbanceSpectrumAxisX, absorbanceY=self.absorbanceSpectrumAxisY,
+                                  axisNameX="Wavelength_um", axisNameY="Absorbance")
+
+    def onCmdSaveAll(self):
+        DET.exportAllDataAbsorbance(refX=self.referenceSpectrumAxisX,   refY=self.referenceSpectrumAxisY,
+                                    sampleX=self.sampleSpectrumAxisX,   sampleY=self.sampleSpectrumAxisY,
+                                    absX=self.absorbanceSpectrumAxisX,  absY=self.absorbanceSpectrumAxisY,
+                                    absXTitle="Wavelength [\u03BCm]",   absYTitle="Absorbance", absTitle="Absorption",
+                                    rngXMin=self.plotsXMin,             rngXMax=self.plotsXMax,
+                                    rngYMin=self.plotsYMin,             rngYMax=self.plotsYMax,
+                                    rngAbsYMin=self.plotsAbsYMin,       rngAbsYMax=self.plotsAbsYMax)

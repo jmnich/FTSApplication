@@ -8,6 +8,130 @@ import os
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scipy
+import math
+
+def find_nearest(array,value):
+    idx = np.searchsorted(array, value, side="left")
+    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) < math.fabs(value - array[idx])):
+        return array[idx-1]
+    else:
+        return array[idx]
+
+def exportAllDataAbsorbance(refX, refY, sampleX, sampleY, absX, absY,
+                            absXTitle, absYTitle, absTitle,
+                            rngXMin, rngXMax, rngYMin, rngYMax, rngAbsYMin, rngAbsYMax):
+
+    direcotry_selected = filedialog.askdirectory()
+    packageNameDialog = ctk.CTkInputDialog(text="Type in a short name for the data package", title="Name your results")
+    selectedName = packageNameDialog.get_input().replace(' ', '').replace(
+                                    '\t', '').replace('\n', '').replace('\r', '')
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    if len(selectedName) > 0:
+        savePackageRootName = timestamp + "_" + selectedName
+    else:
+        selectedName = "results"
+        savePackageRootName = timestamp + "_" + selectedName
+
+    savePackageRootPath = os.path.join(direcotry_selected, savePackageRootName)
+    os.mkdir(savePackageRootPath)
+
+    pathToAbsorptionCSV = os.path.join(savePackageRootPath, "absorption.csv")
+    pathToReferenceCSV = os.path.join(savePackageRootPath, "reference.csv")
+    pathToSampleCSV = os.path.join(savePackageRootPath, "sample.csv")
+
+    pathToAbsorptionPicture = os.path.join(savePackageRootPath, "absorption.png")
+    pathToBothPicture = os.path.join(savePackageRootPath, "ref_and_sample.png")
+
+    # save absorption CSV and image
+    if (absX is not None and absY is not None and
+            len(absX) == len(absY) and len(absX) != 0):
+
+        csvFriendlyXTitle = absXTitle.replace("\u03BC", "u")
+
+        np.savetxt(pathToAbsorptionCSV, np.column_stack((absX, absY)),
+                   fmt='%.6e', delimiter=',', newline='\n', header=f'{csvFriendlyXTitle},{absYTitle}',
+                   footer='', comments='', encoding=None)
+
+        mpl.rcParams.update(mpl.rcParamsDefault)
+        plt.figure(figsize=(12.5, 7.5))
+        plt.tight_layout()
+        plt.locator_params(nbins=15)
+        plt.rc('xtick', labelsize=18)
+        plt.rc('ytick', labelsize=18)
+        plt.title(f"{absTitle}", fontsize=20)
+        plt.xlabel(f"{absXTitle}", fontsize=20)
+        plt.ylabel(f"{absYTitle}", fontsize=20)
+        plt.plot(absX, absY)
+        plt.xlim((float(rngXMin), float(rngXMax)))
+        plt.ylim((float(rngAbsYMin), float(rngAbsYMax)))
+        plt.grid(alpha=0.3)
+        plt.savefig(pathToAbsorptionPicture)
+
+
+    # save reference CSV
+    refValid = False
+
+    if (refX is not None and refY is not None and
+            len(refX) == len(refY) and len(refX) != 0):
+
+        refValid = True
+
+        np.savetxt(pathToReferenceCSV, np.column_stack((refX, refY)),
+                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
+                   footer='', comments='', encoding=None)
+
+
+    # save sample CSV
+    sampleValid = False
+
+    if (sampleX is not None and sampleY is not None and
+            len(sampleX) == len(sampleY) and len(sampleX) != 0):
+
+        sampleValid = True
+
+        np.savetxt(pathToSampleCSV, np.column_stack((sampleX, sampleY)),
+                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
+                   footer='', comments='', encoding=None)
+
+    # make a picture for reference and sample
+    if sampleValid and refValid:
+
+        mpl.rcParams.update(mpl.rcParamsDefault)
+        plt.figure(figsize=(12.5, 7.5))
+        plt.tight_layout()
+        plt.locator_params(nbins=15)
+        plt.rc('xtick', labelsize=18)
+        plt.rc('ytick', labelsize=18)
+        plt.title(f"Source spectra", fontsize=20)
+        plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
+        plt.ylabel("Intensity [dBm]", fontsize=20)
+        plt.plot(refX, refY, label="Reference")
+        plt.plot(sampleX, sampleY, label="Sample")
+        plt.legend()
+        plt.xlim((float(rngXMin), float(rngXMax)))
+        plt.ylim((float(rngYMin), float(rngYMax)))
+        plt.grid(alpha=0.3)
+        plt.savefig(pathToBothPicture)
+
+
+def exportAbsorbanceAsCSV(absorbanceX, absorbanceY, axisNameX, axisNameY):
+    if len(absorbanceX) == len(absorbanceY) and len(absorbanceX) != 0:
+        initial_file_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_absorption.csv")
+
+        f = asksaveasfilename(initialfile=initial_file_name,
+                              defaultextension=".csv", filetypes=[("CSV", "*.csv"), ("CSV Files", "*.csv")])
+
+        np.savetxt(f, np.column_stack((absorbanceX, absorbanceY)),
+                   fmt='%.6e', delimiter=',', newline='\n', header=f'{axisNameX},{axisNameY}',
+                   footer='', comments='', encoding=None)
+
+        logging.info(f"Absorption plot saved as a .CSV file: " + str(f))
+
+    else:
+        logging.info(f"Failed to save absorption plot as a .CSV file")
+
 def exportSpectrumAsCSV(spectrumX, spectrumY):
 
     if len(spectrumX) == len(spectrumY) and len(spectrumX) != 0:
