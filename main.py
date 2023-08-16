@@ -22,7 +22,6 @@ import absorbanceTool as AbsorbanceTool
 class FTSApp:
 
     def __init__(self):
-
         logging.basicConfig(filename='ftsapp.log', format='%(asctime)s %(message)s', level=logging.INFO)
         logging.info('========= Application started =========')
 
@@ -54,10 +53,9 @@ class FTSApp:
         self.root.minsize(800, 800)
         self.root.title("FTS App")
         self.root.iconbitmap(default='icon.ico')
-        # self.root.attributes('-fullscreen',True)
-
         self.root.resizable(True, True)
         self.root.state('zoomed')
+        self.root.withdraw()
 
         self.screen_geometry = self.root.winfo_geometry()
         scr_width = int(self.screen_geometry.split('x')[0])
@@ -566,6 +564,7 @@ class FTSApp:
         # self.ApplicationController.performInitialization()
         # run the app
         self.root.update()
+        self.root.deiconify()   # show the window after it's loaded
         self.root.mainloop()
 
     def updateStatusMessage(self, message):

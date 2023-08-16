@@ -1,4 +1,6 @@
 import os
+import time
+
 import customtkinter as ctk
 import numpy as np
 import matplotlib as mpl
@@ -293,13 +295,52 @@ class AbsorbanceTool:
         self.settingsTabs.tab("Export").rowconfigure(2, weight=1)
         self.settingsTabs.tab("Export").rowconfigure(3, weight=1)
 
+        self.settingsTabs.tab("Export").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Export").columnconfigure(1, weight=1)
+
         self.saveAbsorbanceToCSVButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
-                                            text="Save absorbance\nto .CSV",
-                                            width=120,
+                                            text="Save\nabsorb.\nas .CSV",
+                                            width=100,
                                             height=80,
                                             corner_radius=10,
                                             command=None)
-        self.saveAbsorbanceToCSVButton.grid(row=1, column=0, sticky="N", padx=5, pady=5)
+        self.saveAbsorbanceToCSVButton.grid(row=0, column=1, sticky="N", padx=5, pady=5)
+
+        self.saveResultsButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+                                            text="Save\nresults",
+                                            width=100,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=None)
+        self.saveResultsButton.grid(row=0, column=0, sticky="N", padx=5, pady=5)
+
+        self.inspectAbsorbanceButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+                                            text="Inspect\nabsorb.",
+                                            width=100,
+                                            height=80,
+                                            corner_radius=10,
+                                            fg_color="darkgreen",
+                                            command=None)
+        self.inspectAbsorbanceButton.grid(row=1, column=0, sticky="N", padx=5, pady=5)
+
+        self.inspectRefButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+                                            text="Inspect\nreference",
+                                            width=100,
+                                            height=80,
+                                            corner_radius=10,
+                                            fg_color="darkgreen",
+                                            command=None)
+        self.inspectRefButton.grid(row=2, column=0, sticky="N", padx=5, pady=5)
+
+        self.inspectSampleButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+                                            text="Inspect\nsample",
+                                            width=100,
+                                            height=80,
+                                            corner_radius=10,
+                                            fg_color="darkgreen",
+                                            command=None)
+        self.inspectSampleButton.grid(row=2, column=1, sticky="N", padx=5, pady=5)
+
 
         # create plots
         # ==============================================================================================================
@@ -343,13 +384,18 @@ class AbsorbanceTool:
         self.canvasAbsPlot.get_tk_widget().pack(side='right', fill='both', expand=True)
         self.canvasAbsPlot.draw()
 
-        self.absorbanceRoot.update()
-        self.absorbanceRoot.after(1, lambda: self.absorbanceRoot.focus_force())
-        self.absorbanceRoot.update()
+        plt.close()
+        plt.close()
+        plt.close()
 
-        plt.close()
-        plt.close()
-        plt.close()
+        self.absorbanceRoot.update()
+        # self.absorbanceRoot.grab_set()
+        # # self.absorbanceRoot.attributes('-topmost', 'true')
+        # # self.absorbanceRoot.after(1, lambda: self.absorbanceRoot.focus_force())
+        # self.absorbanceRoot.update()
+        # time.sleep(1)
+        #
+        # self.absorbanceRoot.grab_release()
 
     def onCmdLoadReferenceSpectrumFromFile(self):
         (self.referenceSpectrumAxisNameX, self.referenceSpectrumAxisNameY,
