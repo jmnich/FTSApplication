@@ -30,6 +30,10 @@ class AbsorbanceTool:
         self.absorbanceSpectrumAxisX = None
         self.absorbanceSpectrumAxisY = None
 
+        self.reference_loaded = False
+        self.sample_loaded = False
+        self.spectra_valid_for_absorbance_calculation = False
+
         # external methods for uploading data
         self.grabReferenceSpectrumDataLast = None
         self.grabReferenceSpectrumDataAverage = None
@@ -50,7 +54,7 @@ class AbsorbanceTool:
 
         # build GUI
         ctk.set_appearance_mode("dark")
-        self.absorbanceRoot = ctk.CTkToplevel(root)
+        self.absorbanceRoot = ctk.CTk()
         self.absorbanceRoot.geometry("1200x800")
         self.absorbanceRoot.minsize(width=1200, height=800)
         self.absorbanceRoot.title("Absorbance tool")
@@ -320,8 +324,9 @@ class AbsorbanceTool:
                                             height=80,
                                             corner_radius=10,
                                             fg_color="darkgreen",
-                                            command=None)
+                                            command=self.onCmdInspectAbsorbance)
         self.inspectAbsorbanceButton.grid(row=1, column=0, sticky="N", padx=5, pady=5)
+        self.inspectAbsorbanceButton.configure(state="disabled")
 
         self.inspectRefButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
                                             text="Inspect\nreference",
@@ -329,8 +334,9 @@ class AbsorbanceTool:
                                             height=80,
                                             corner_radius=10,
                                             fg_color="darkgreen",
-                                            command=None)
+                                            command=self.onCmdInspectReference)
         self.inspectRefButton.grid(row=2, column=0, sticky="N", padx=5, pady=5)
+        self.inspectRefButton.configure(state="disabled")
 
         self.inspectSampleButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
                                             text="Inspect\nsample",
@@ -338,9 +344,9 @@ class AbsorbanceTool:
                                             height=80,
                                             corner_radius=10,
                                             fg_color="darkgreen",
-                                            command=None)
+                                            command=self.onCmdInspectSample)
         self.inspectSampleButton.grid(row=2, column=1, sticky="N", padx=5, pady=5)
-
+        self.inspectSampleButton.configure(state="disabled")
 
         # create plots
         # ==============================================================================================================
@@ -372,9 +378,9 @@ class AbsorbanceTool:
         self.canvasSmpPlot.draw()
 
         self.figAbs, self.axAbs = plt.subplots()
-        self.figAbs.suptitle("Absorbance spectrum")
+        self.figAbs.suptitle("Absorption spectrum")
         self.axAbs.set_xlabel('Wavelength [\u03BCm]')
-        self.axAbs.set_ylabel('[dBm]')
+        self.axAbs.set_ylabel('Absorbance')
         self.figAbs.set_facecolor(self.backgroundGray)
         self.figAbs.set_size_inches(100, 100)
         self.figAbs.subplots_adjust(left=0.1, right=0.99, bottom=0.1, top=0.97, wspace=0, hspace=0)
@@ -505,15 +511,14 @@ class AbsorbanceTool:
         self.axAbs.clear()
 
         # set ranges and plot new data
-        reference_loaded = False
-        sample_loaded = False
-        spectra_valid_for_absorbance_calculation = False
+
         # reference spectrum
         if (self.referenceSpectrumAxisX is not None) and (self.referenceSpectrumAxisY is not None) and \
                 (len(self.referenceSpectrumAxisY) == len(self.referenceSpectrumAxisX)) and \
                 (len(self.referenceSpectrumAxisY) != 0):
 
-            reference_loaded = True
+            self.reference_loaded = True
+            self.inspectRefButton.configure(state="enabled")
 
             self.axRef.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue")
@@ -530,7 +535,8 @@ class AbsorbanceTool:
                 (len(self.sampleSpectrumAxisY) == len(self.sampleSpectrumAxisX)) and \
                 (len(self.sampleSpectrumAxisY) != 0):
 
-            sample_loaded = True
+            self.sample_loaded = True
+            self.inspectSampleButton.configure(state="enabled")
 
             self.axSmp.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue")
@@ -542,16 +548,16 @@ class AbsorbanceTool:
             self.axSmp.set_xlabel(self.sampleSpectrumAxisNameX)
             self.axSmp.set_ylabel(self.sampleSpectrumAxisNameY)
 
-        if sample_loaded and reference_loaded:
+        if self.sample_loaded and self.reference_loaded:
             validation_result = self.validateSpectraForAbsorbanceCalculation()
 
             if validation_result == "OK":
-                spectra_valid_for_absorbance_calculation = True
+                self.spectra_valid_for_absorbance_calculation = True
             else:
-                spectra_valid_for_absorbance_calculation = False
+                self.spectra_valid_for_absorbance_calculation = False
                 messagebox.showwarning(title="Error - can't calculate absorbance", message=validation_result)
 
-        if sample_loaded and reference_loaded and spectra_valid_for_absorbance_calculation:
+        if self.sample_loaded and self.reference_loaded and self.spectra_valid_for_absorbance_calculation:
             self.calculateAbsorbance()
 
             self.axAbs.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
@@ -563,6 +569,8 @@ class AbsorbanceTool:
 
             self.axAbs.set_xlabel(self.absorbanceSpectrumAxisNameX)
             self.axAbs.set_ylabel(self.absorbanceSpectrumAxisNameY)
+
+            self.inspectAbsorbanceButton.configure(state="enabled")
 
         # force redraw and refresh
         self.canvasRefPlot.draw()
@@ -615,3 +623,81 @@ class AbsorbanceTool:
             npAxisY[i] = data[i][1]
 
         return axisNameX, axisNameY, npAxisX, npAxisY
+
+    def onCmdInspectReference(self):
+
+        if not self.reference_loaded:
+            return
+
+        try:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            plt.figure()
+            plt.locator_params(nbins=15)
+            plt.rc('xtick', labelsize=18)
+            plt.rc('ytick', labelsize=18)
+            plt.title("Reference spectrum", fontsize=20)
+            plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
+            plt.ylabel("Intensity [dBm]", fontsize=20)
+            plt.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue")
+            plt.xlim((float(self.plotsXMin), float(self.plotsXMax)))
+            plt.ylim((float(self.plotsYMin), float(self.plotsYMax)))
+            plt.grid(alpha=0.3)
+            plt.ion()
+            plt.pause(1.0)
+            plt.show()
+            plt.pause(1.0)
+            plt.ioff()
+        except:
+            messagebox.showwarning(title="Error - can't inspect spectrum", message="Can't plot the data")
+
+    def onCmdInspectSample(self):
+
+        if not self.sample_loaded:
+            return
+
+        try:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            plt.figure()
+            plt.locator_params(nbins=15)
+            plt.rc('xtick', labelsize=18)
+            plt.rc('ytick', labelsize=18)
+            plt.title("Sample spectrum", fontsize=20)
+            plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
+            plt.ylabel("Intensity [dBm]", fontsize=20)
+            plt.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue")
+            plt.xlim((float(self.plotsXMin), float(self.plotsXMax)))
+            plt.ylim((float(self.plotsYMin), float(self.plotsYMax)))
+            plt.grid(alpha=0.3)
+            plt.ion()
+            plt.pause(1.0)
+            plt.show()
+            plt.pause(1.0)
+            plt.ioff()
+        except:
+            messagebox.showwarning(title="Error - can't inspect spectrum", message="Can't plot the data")
+
+    def onCmdInspectAbsorbance(self):
+
+        if not self.spectra_valid_for_absorbance_calculation:
+            return
+
+        try:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            plt.figure()
+            plt.locator_params(nbins=15)
+            plt.rc('xtick', labelsize=18)
+            plt.rc('ytick', labelsize=18)
+            plt.title("Absorption spectrum", fontsize=20)
+            plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
+            plt.ylabel("Absorbance", fontsize=20)
+            plt.plot(self.absorbanceSpectrumAxisX, self.absorbanceSpectrumAxisY, color="dodgerblue")
+            plt.xlim((float(self.plotsXMin), float(self.plotsXMax)))
+            plt.ylim((float(self.plotsAbsYMin), float(self.plotsAbsYMax)))
+            plt.grid(alpha=0.3)
+            plt.ion()
+            plt.pause(1.0)
+            plt.show()
+            plt.pause(1.0)
+            plt.ioff()
+        except:
+            messagebox.showwarning(title="Error - can't inspect spectrum", message="Can't plot the data")
