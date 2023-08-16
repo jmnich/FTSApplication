@@ -579,8 +579,13 @@ class AbsorbanceTool:
         self.absorbanceRoot.update()
 
     def calculateAbsorbance(self):
+        # in order to calculate absorbance, spectra must be first converted from [dBm] to [W]
+        refInWatts = np.power(10, (self.referenceSpectrumAxisY - 30) / 10)
+        sampleInWatts = np.power(10, (self.sampleSpectrumAxisY - 30) / 10)
+
         self.absorbanceSpectrumAxisX = self.referenceSpectrumAxisX
-        self.absorbanceSpectrumAxisY = self.referenceSpectrumAxisY - self.sampleSpectrumAxisY
+        # self.absorbanceSpectrumAxisY = self.referenceSpectrumAxisY - self.sampleSpectrumAxisY
+        self.absorbanceSpectrumAxisY = np.log10(refInWatts / sampleInWatts)
         self.absorbanceSpectrumAxisNameX = self.referenceSpectrumAxisNameX
         self.absorbanceSpectrumAxisNameY = "Absorbance"
 

@@ -137,8 +137,21 @@ class BackgroundController:
                 self.SetStatusMessageMethod("Measurement stopped")
                 return
 
-                # send the delay line to the starting position
-            self.ZaberDriver.setPosition(position=self.scanStartPosition, speed=ZaberDriver.MaxSpeed)
+            # calculate start and stop positions for the delay line
+            # note: direction of scan from zaber motor to the other end
+            preferred_margin = self.scanSpeed * 1000 * 0.5
+            startPosition = self.scanStartPosition - self.scanLength - preferred_margin
+            endPosition = self.scanStartPosition + preferred_margin
+
+            # clamp the values
+            if startPosition < 0:
+                startPosition = 0
+
+            if endPosition > self.ZaberDriver.DelayLineNominalLength:
+                endPosition = self.ZaberDriver.DelayLineNominalLength
+
+            # send the delay line to the starting position
+            self.ZaberDriver.setPosition(position=startPosition, speed=ZaberDriver.MaxSpeed)
 
             # wait until the mirror is in position
             self.ZaberDriver.waitUntilIdle()
@@ -147,13 +160,15 @@ class BackgroundController:
             self.SetStatusMessageMethod("Acquisition...")
             # acquire data (note: zaber uses us/s, interface uses mm/s)
             # prepare scanning trajectory with a 0.1 sec marging if possible
-            preferred_margin = self.scanSpeed * 1000 * 0.1
-            if self.scanStartPosition-self.scanLength > preferred_margin:
-                self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength - preferred_margin,
-                                             speed=self.scanSpeed * 1000)
-            else:
-                self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength,
-                                             speed=self.scanSpeed * 1000)
+
+            self.ZaberDriver.setPosition(endPosition, speed=self.scanSpeed * 1000)
+
+            # if self.scanStartPosition-self.scanLength > preferred_margin:
+            #     self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength - preferred_margin,
+            #                                  speed=self.scanSpeed * 1000)
+            # else:
+            #     self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength,
+            #                                  speed=self.scanSpeed * 1000)
 
             self.MFLIDriver.measureData()
             self.ZaberDriver.waitUntilIdle()

@@ -17,7 +17,7 @@ def exportSpectrumAsCSV(spectrumX, spectrumY):
                               defaultextension=".csv", filetypes=[("CSV", "*.csv"), ("CSV Files", "*.csv")])
 
         np.savetxt(f, np.column_stack((spectrumX, spectrumY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [a.u.]',
+                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
                    footer='', comments='', encoding=None)
 
         logging.info(f"Spectrum saved as a .CSV file: " + str(f))
@@ -88,7 +88,7 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
         averageSpectrumDataValid = True
 
         np.savetxt(pathToSpectrumCSV, np.column_stack((averageSpectrumX, averageSpectrumY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [a.u.]',
+                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
                    footer='', comments='', encoding=None)
 
         mpl.rcParams.update(mpl.rcParamsDefault)
@@ -99,9 +99,9 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
         plt.rc('ytick', labelsize=18)
         plt.title("Spectrum", fontsize=20)
         plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
-        plt.ylabel("Intensity [a.u.]", fontsize=20)
+        plt.ylabel("Intensity [dBm]", fontsize=20)
         plt.plot(averageSpectrumX, averageSpectrumY)
-        plt.yscale('log')
+        # plt.yscale('log')
         plt.xlim((float(settings["plotSpectrumXRangeMin"]), float(settings["plotSpectrumXRangeMax"])))
         plt.ylim((float(settings["plotSpectrumYRangeMin"]), float(settings["plotSpectrumYRangeMax"])))
         plt.grid(alpha=0.3)
@@ -141,7 +141,7 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
             pathToRawSpectrum = os.path.join(pathToRawSpectraDirectory, f"spectrum_{i}.csv")
 
             np.savetxt(pathToRawSpectrum, np.column_stack((rawSpectraX[i], rawSpectraY[i])),
-                       fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [a.u.]',
+                       fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
                        footer='', comments='', encoding=None)
 
     # save corrected interferograms to .CSV files
@@ -272,7 +272,7 @@ def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interfer
         spectrumDataValid = True
 
         np.savetxt(pathToSpectrumCSV, np.column_stack((spectrumX, spectrumY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [a.u.]',
+                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
                    footer='', comments='', encoding=None)
 
         mpl.rcParams.update(mpl.rcParamsDefault)
@@ -283,9 +283,9 @@ def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interfer
         plt.rc('ytick', labelsize=18)
         plt.title("Spectrum", fontsize=20)
         plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
-        plt.ylabel("Intensity [a.u.]", fontsize=20)
+        plt.ylabel("Intensity [dBm]", fontsize=20)
         plt.plot(spectrumX, spectrumY)
-        plt.yscale('log')
+        # plt.yscale('log')
         plt.xlim((float(settings["plotSpectrumXRangeMin"]), float(settings["plotSpectrumXRangeMax"])))
         plt.ylim((float(settings["plotSpectrumYRangeMin"]), float(settings["plotSpectrumYRangeMax"])))
         plt.grid(alpha=0.3)
