@@ -505,7 +505,7 @@ class FTSApp:
         self.figBot, self.axBot = plt.subplots()
         self.figBot.suptitle("Spectrum")
         self.axBot.set_xlabel('Wavelength [\u03BCm]')
-        self.axBot.set_ylabel('[a.u.]')
+        self.axBot.set_ylabel('[dBm]')
         self.figBot.set_facecolor(self.backgroundGray)
         self.figBot.set_size_inches(100, 100)
         self.figBot.subplots_adjust(left=0.1, right=0.99, bottom=0.1, top=0.97, wspace=0, hspace=0)
@@ -522,7 +522,7 @@ class FTSApp:
                             float(self.appSettings["plotSpectrumXRangeMax"]))
         self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),
                             float(self.appSettings["plotSpectrumYRangeMax"]))
-        self.axBot.set_yscale("log")
+        # self.axBot.set_yscale("log")
 
         self.settingsTabs.set("Hardware")
 
@@ -815,9 +815,9 @@ class FTSApp:
         plt.rc('ytick', labelsize=18)
         plt.title("Spectrum", fontsize=20)
         plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
-        plt.ylabel("Intensity [a.u.]", fontsize=20)
+        plt.ylabel("Intensity [dBm]", fontsize=20)
         plt.plot(self.currentAverageSpectrumX, self.currentAverageSpectrumY, color="dodgerblue")
-        plt.yscale('log')
+        # plt.yscale('log')
         plt.xlim((float(self.appSettings["plotSpectrumXRangeMin"]), float(self.appSettings["plotSpectrumXRangeMax"])))
         plt.ylim((float(self.appSettings["plotSpectrumYRangeMin"]), float(self.appSettings["plotSpectrumYRangeMax"])))
         plt.grid(alpha=0.3)
@@ -899,11 +899,11 @@ class FTSApp:
                              self.currentAverageSpectrumX, self.currentAverageSpectrumY, 0)
 
     def giveSpectrumForAbsorbanceLast(self):
-        return ('Wavelength [\u03BCm]', 'Intensity [a.u.]',
+        return ('Wavelength [\u03BCm]', 'Intensity [dBm]',
                 self.currentSpectrumX.copy(), self.currentSpectrumY.copy())
 
     def giveSpectrumForAbsorbanceAverage(self):
-        return ('Wavelength [\u03BCm]', 'Intensity [a.u.]',
+        return ('Wavelength [\u03BCm]', 'Intensity [dBm]',
                 self.currentAverageSpectrumX.copy(), self.currentAverageSpectrumY.copy())
     def loadDataToPlots(self, interferogramX, interferogramY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
                         completedMeasurements):
@@ -933,10 +933,10 @@ class FTSApp:
                                 float(self.appSettings["plotSpectrumXRangeMax"]))
             self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),
                                 float(self.appSettings["plotSpectrumYRangeMax"]))
-            self.axBot.set_yscale("log")
+            # self.axBot.set_yscale("log")
 
             self.axBot.set_xlabel('Wavelength [\u03BCm]')
-            self.axBot.set_ylabel('[a.u.]')
+            self.axBot.set_ylabel('[dBm]')
 
 
         if len(interferogramX) == len(interferogramY) and len(interferogramX) > 0:

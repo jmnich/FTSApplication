@@ -12,6 +12,7 @@ class DataProcessor:
 
     def analyzeData(self, rawReferenceSignal, rawInterferogram):
         print("Analyzing data")
+        detector_sensitivity = 7.0E4 # [V/W]
 
         ref_volt = rawReferenceSignal - np.mean(rawReferenceSignal)
         meas_volt = rawInterferogram - np.mean(rawInterferogram)
@@ -69,7 +70,12 @@ class DataProcessor:
         spectrum_abs = np.abs(spectrum)
 
         #normalize
-        spectrum_abs = (spectrum_abs-np.min(spectrum_abs))/(np.max(spectrum_abs)-np.min(spectrum_abs))
+        # spectrum_abs = (spectrum_abs-np.min(spectrum_abs))/(np.max(spectrum_abs)-np.min(spectrum_abs))
+        spectrum_abs = spectrum_abs / (len(spectrum_abs) / 2)
+        # convert Y axis from volts to watts
+        spectrum_abs = spectrum_abs / detector_sensitivity
+        # conver Y axis from watts to dBm
+        spectrum_abs = 10.0 * np.log10(1.0E3 * spectrum_abs)
 
         # convert k to wavelength in um
         spectrum_x_recalc = np.zeros(len(spectrum_abs))
