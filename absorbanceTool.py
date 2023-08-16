@@ -325,9 +325,21 @@ class AbsorbanceTool:
                                             height=80,
                                             corner_radius=10,
                                             fg_color="darkgreen",
+                                            # hover_color="darkolivegreen",
                                             command=self.onCmdInspectAbsorbance)
         self.inspectAbsorbanceButton.grid(row=1, column=0, sticky="N", padx=5, pady=5)
         self.inspectAbsorbanceButton.configure(state="disabled")
+
+        self.inspectSourceSpectraButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+                                            text="Inspect\nboth",
+                                            width=100,
+                                            height=80,
+                                            corner_radius=10,
+                                            fg_color="darkgreen",
+                                            command=self.onCmdInspectBoth)
+        self.inspectSourceSpectraButton.grid(row=1, column=1, sticky="N", padx=5, pady=5)
+        self.inspectSourceSpectraButton.configure(state="disabled")
+
 
         self.inspectRefButton = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
                                             text="Inspect\nreference",
@@ -519,7 +531,11 @@ class AbsorbanceTool:
                 (len(self.referenceSpectrumAxisY) != 0):
 
             self.reference_loaded = True
-            self.inspectRefButton.configure(state="enabled")
+            self.inspectRefButton.configure(state="normal")
+
+            if self.reference_loaded and self.sample_loaded:
+                self.inspectSourceSpectraButton.configure(state="normal")
+
 
             self.axRef.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue")
@@ -537,7 +553,10 @@ class AbsorbanceTool:
                 (len(self.sampleSpectrumAxisY) != 0):
 
             self.sample_loaded = True
-            self.inspectSampleButton.configure(state="enabled")
+            self.inspectSampleButton.configure(state="normal")
+
+            if self.reference_loaded and self.sample_loaded:
+                self.inspectSourceSpectraButton.configure(state="normal")
 
             self.axSmp.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
             self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue")
@@ -571,7 +590,7 @@ class AbsorbanceTool:
             self.axAbs.set_xlabel(self.absorbanceSpectrumAxisNameX)
             self.axAbs.set_ylabel(self.absorbanceSpectrumAxisNameY)
 
-            self.inspectAbsorbanceButton.configure(state="enabled")
+            self.inspectAbsorbanceButton.configure(state="normal")
 
         # force redraw and refresh
         self.canvasRefPlot.draw()
@@ -699,6 +718,34 @@ class AbsorbanceTool:
             plt.plot(self.absorbanceSpectrumAxisX, self.absorbanceSpectrumAxisY, color="dodgerblue")
             plt.xlim((float(self.plotsXMin), float(self.plotsXMax)))
             plt.ylim((float(self.plotsAbsYMin), float(self.plotsAbsYMax)))
+            plt.grid(alpha=0.3)
+            plt.ion()
+            plt.pause(1.0)
+            plt.show()
+            plt.pause(1.0)
+            plt.ioff()
+        except:
+            messagebox.showwarning(title="Error - can't inspect spectrum", message="Can't plot the data")
+
+    def onCmdInspectBoth(self):
+
+        if not (self.sample_loaded and self.reference_loaded):
+            return
+
+        try:
+            mpl.rcParams.update(mpl.rcParamsDefault)
+            plt.figure()
+            plt.locator_params(nbins=15)
+            plt.rc('xtick', labelsize=18)
+            plt.rc('ytick', labelsize=18)
+            plt.title("Source spectra", fontsize=20)
+            plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
+            plt.ylabel("Intensity [dBm]", fontsize=20)
+            plt.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, label="Reference")
+            plt.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, label="Sample")
+            plt.xlim((float(self.plotsXMin), float(self.plotsXMax)))
+            plt.ylim((float(self.plotsYMin), float(self.plotsYMax)))
+            plt.legend()
             plt.grid(alpha=0.3)
             plt.ion()
             plt.pause(1.0)
