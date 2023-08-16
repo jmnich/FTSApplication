@@ -101,9 +101,10 @@ class FTSApp:
 
         self.frameButtonsTop.rowconfigure(0, weight=1)
         self.frameButtonsTop.rowconfigure(1, weight=1)
-        self.frameButtonsTop.rowconfigure(2, weight=1)
+        self.frameButtonsTop.rowconfigure(2, weight=1, minsize=40)
         self.frameButtonsTop.rowconfigure(3, weight=1)
         self.frameButtonsTop.rowconfigure(4, weight=1)
+        self.frameButtonsTop.rowconfigure(5, weight=1)
 
         self.buttonSingle = ctk.CTkButton(master=self.frameButtonsTop,
                                           text="Single\ncapture",
@@ -113,54 +114,13 @@ class FTSApp:
                                           command=self.onCmdSingleCapture)
         self.buttonSingle.grid(row=0, column=0, sticky="N", padx=5, pady=5)
 
-        self.buttonArchive = ctk.CTkButton(master=self.frameButtonsTop,
-                                           text="Archive\nviewer",
-                                           width=120,
-                                           height=75,
-                                           corner_radius=10,
-                                           command=self.onCmdUnusedButton)
-        self.buttonArchive.grid(row=0, column=1, sticky="N", padx=5, pady=5)
-        self.buttonArchive.configure(state="disabled")
-
-        self.buttonInterferogram = ctk.CTkButton(master=self.frameButtonsTop,
-                                                 text="Plot\ninterferogram",
-                                                 width=120,
-                                                 height=75,
-                                                 corner_radius=10,
-                                                 command=self.onCmdOpenInterferogramPlot)
-        self.buttonInterferogram.grid(row=1, column=0, sticky="N", padx=5, pady=5)
-
-        self.buttonSpectrum = ctk.CTkButton(master=self.frameButtonsTop,
-                                            text="Plot\nspectrum",
-                                            width=120,
-                                            height=75,
-                                            corner_radius=10,
-                                            command=self.onCmdOpenSpectrumPlot)
-        self.buttonSpectrum.grid(row=1, column=1, sticky="N", padx=5, pady=5)
-
-        self.referenceSignalButton = ctk.CTkButton(master=self.frameButtonsTop,
-                                            text="Plot\nreference\nsignal",
-                                            width=120,
-                                            height=75,
-                                            corner_radius=10,
-                                            command=self.onCmdReferencePlot)
-        self.referenceSignalButton.grid(row=2, column=0, sticky="N", padx=5, pady=5)
-
-        self.absorbanceToolButton = ctk.CTkButton(master=self.frameButtonsTop,
-                                            text="Absorbance\ntool",
-                                            width=120,
-                                            height=75,
-                                            corner_radius=10,
-                                            command=self.onCmdOpenAbsorbanceTool)
-        self.absorbanceToolButton.grid(row=2, column=1, sticky="N", padx=5, pady=5)
-
         self.multipleMeasStartButton = ctk.CTkButton(master=self.frameButtonsTop,
-                                            text="Capture\nmultiple\nspectra",
+                                            text="Capture\nmultiple",
                                             width=120,
                                             height=75,
                                             corner_radius=10,
                                             command=self.onCmdMultipleCapture)
-        self.multipleMeasStartButton.grid(row=3, column=0, sticky="N", padx=5, pady=5)
+        self.multipleMeasStartButton.grid(row=1, column=0, sticky="N", padx=5, pady=5)
 
         self.multipleMeasStopButton = ctk.CTkButton(master=self.frameButtonsTop,
                                             text="Stop",
@@ -168,19 +128,60 @@ class FTSApp:
                                             height=75,
                                             corner_radius=10,
                                             command=self.onCmdStopMeasurement)
-        self.multipleMeasStopButton.grid(row=3, column=1, sticky="N", padx=5, pady=5)
+        self.multipleMeasStopButton.grid(row=1, column=1, sticky="N", padx=5, pady=5)
 
         self.multipleMeasLabel = ctk.CTkLabel(master=self.frameButtonsTop,
                                                     text="Number of\naverages",
                                                     font=ctk.CTkFont(size=12))
-        self.multipleMeasLabel.grid(row=4, column=0, sticky="N", padx=5, pady=5)
+        self.multipleMeasLabel.grid(row=2, column=0, sticky="N", padx=5, pady=5)
 
         self.multipleMeasBox = ctk.CTkEntry(master=self.frameButtonsTop,
                                         width=120, height=30)
         self.multipleMeasBox.insert(0, self.appSettings["averagingCount"])
-        self.multipleMeasBox.grid(row=4, column=1, sticky="N", padx=5, pady=5)
+        self.multipleMeasBox.grid(row=2, column=1, sticky="N", padx=5, pady=5)
         self.multipleMeasBox.bind("<FocusOut>", self.onCmdUpdateAveragingCount)
         self.multipleMeasBox.bind("<Return>", self.onCmdUpdateAveragingCount)
+
+        self.buttonInterferogram = ctk.CTkButton(master=self.frameButtonsTop,
+                                                 text="Inspect\ninterferogram",
+                                                 width=120,
+                                                 height=75,
+                                                 corner_radius=10,
+                                                 command=self.onCmdOpenInterferogramPlot)
+        self.buttonInterferogram.grid(row=3, column=0, sticky="N", padx=5, pady=5)
+
+        self.buttonSpectrum = ctk.CTkButton(master=self.frameButtonsTop,
+                                            text="Inspect\nspectrum",
+                                            width=120,
+                                            height=75,
+                                            corner_radius=10,
+                                            command=self.onCmdOpenSpectrumPlot)
+        self.buttonSpectrum.grid(row=3, column=1, sticky="N", padx=5, pady=5)
+
+        self.referenceSignalButton = ctk.CTkButton(master=self.frameButtonsTop,
+                                            text="Inspect\nref. signal",
+                                            width=120,
+                                            height=75,
+                                            corner_radius=10,
+                                            command=self.onCmdReferencePlot)
+        self.referenceSignalButton.grid(row=4, column=0, sticky="N", padx=5, pady=5)
+
+        self.absorbanceToolButton = ctk.CTkButton(master=self.frameButtonsTop,
+                                            text="Absorbance\ntool",
+                                            width=120,
+                                            height=75,
+                                            corner_radius=10,
+                                            command=self.onCmdOpenAbsorbanceTool)
+        self.absorbanceToolButton.grid(row=5, column=0, sticky="N", padx=5, pady=5)
+
+        self.buttonArchive = ctk.CTkButton(master=self.frameButtonsTop,
+                                           text="Archive\nviewer",
+                                           width=120,
+                                           height=75,
+                                           corner_radius=10,
+                                           command=self.onCmdUnusedButton)
+        self.buttonArchive.grid(row=5, column=1, sticky="N", padx=5, pady=5)
+        self.buttonArchive.configure(state="disabled")
 
         # create a frame to hold all the controls related to settings and configuration
         # ==============================================================================================================
