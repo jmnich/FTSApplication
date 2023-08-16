@@ -127,6 +127,7 @@ class FTSApp:
                                             width=120,
                                             height=75,
                                             corner_radius=10,
+                                            fg_color="darkred",
                                             command=self.onCmdStopMeasurement)
         self.multipleMeasStopButton.grid(row=1, column=1, sticky="N", padx=5, pady=5)
 
@@ -147,6 +148,7 @@ class FTSApp:
                                                  width=120,
                                                  height=75,
                                                  corner_radius=10,
+                                                 fg_color="darkgreen",
                                                  command=self.onCmdOpenInterferogramPlot)
         self.buttonInterferogram.grid(row=3, column=0, sticky="N", padx=5, pady=5)
 
@@ -155,6 +157,7 @@ class FTSApp:
                                             width=120,
                                             height=75,
                                             corner_radius=10,
+                                            fg_color="darkgreen",
                                             command=self.onCmdOpenSpectrumPlot)
         self.buttonSpectrum.grid(row=3, column=1, sticky="N", padx=5, pady=5)
 
@@ -163,6 +166,7 @@ class FTSApp:
                                             width=120,
                                             height=75,
                                             corner_radius=10,
+                                            fg_color="darkgreen",
                                             command=self.onCmdReferencePlot)
         self.referenceSignalButton.grid(row=4, column=0, sticky="N", padx=5, pady=5)
 

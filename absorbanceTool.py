@@ -548,9 +548,12 @@ class AbsorbanceTool:
         ('.CSV spectrum', '*.csv')
         )]
 
-        filename = filedialog.askopenfilename(title="Open .CSV spectrum file", filetypes=types)
-
-        data = np.genfromtxt(filename, delimiter=",", dtype=float, names=True)
+        try:
+            filename = filedialog.askopenfilename(title="Open .CSV spectrum file", filetypes=types)
+            data = np.genfromtxt(filename, delimiter=",", dtype=float, names=True)
+        except:
+            messagebox.showwarning(title="Error - can't load spectrum file", message="Invalid spectrum file format")
+            return None,None,None,None
 
         axisNameX = data.dtype.names[0].split('_')[0] + " [" + data.dtype.names[0].split('_')[1] + "]"
         axisNameY = data.dtype.names[1].split('_')[0] + " [" + data.dtype.names[1].split('_')[1] + "]"
