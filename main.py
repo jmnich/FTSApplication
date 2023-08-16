@@ -556,6 +556,7 @@ class FTSApp:
         self.ApplicationController.SetDAQReadyFlagMethod = self.setDAQReadyFlag
         self.ApplicationController.SetDelayLineReadyFlagMethod = self.setDelayLineReadyFlag
         self.ApplicationController.SendResultsToPlot = self.receiveMeasurementResults
+        self.ApplicationController.NotifyAllMeasurementsDone = self.receiveNotificationAllMeasurementsDone
 
         # try to connect to all the hardware with some default settings
         self.ApplicationController.MFLIDeviceName = self.mfliIDBox.get("0.0", "end")
@@ -616,12 +617,16 @@ class FTSApp:
 
         self.multipleMeasBox.delete(0, "end")
 
-        if completedMeasurements + 1 == self.ApplicationController.orderedMeasurementsCount:
+        if completedMeasurements == self.ApplicationController.orderedMeasurementsCount:
             self.multipleMeasBox.insert(0,f"{self.ApplicationController.orderedMeasurementsCount}")
         else:
             self.multipleMeasBox.insert(0,
-                                        f"{completedMeasurements + 1}/{self.ApplicationController.orderedMeasurementsCount}")
+                                        f"{completedMeasurements}/{self.ApplicationController.orderedMeasurementsCount}")
         self.updatePlot()
+
+    def receiveNotificationAllMeasurementsDone(self):
+        logging.info("All ordered measurements done")
+        self.updateStatusMessage("Done")
 
     def onCmdRefreshCOMPorts(self):
         ports = serial.tools.list_ports.comports()

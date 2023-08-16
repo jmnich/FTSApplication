@@ -347,6 +347,9 @@ class AbsorbanceTool:
         self.absorbanceRoot.after(1, lambda: self.absorbanceRoot.focus_force())
         self.absorbanceRoot.update()
 
+        plt.close()
+        plt.close()
+        plt.close()
 
     def onCmdLoadReferenceSpectrumFromFile(self):
         (self.referenceSpectrumAxisNameX, self.referenceSpectrumAxisNameY,

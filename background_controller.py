@@ -26,12 +26,14 @@ class BackgroundController:
         self.MFLIDriver     = mfliDrv
         self.ZaberDriver    = zaberDrv
 
+        # external methods used for communication between the background controller and the GUI
         self.SetStatusMessageMethod         = None
         self.SetGeneralReadyFlagMethod      = None
         self.SetDAQReadyFlagMethod          = None
         self.SetDelayLineReadyFlagMethod    = None
         self.UploadNewDataMethod            = None
         self.SendResultsToPlot              = None
+        self.NotifyAllMeasurementsDone      = None
 
         self.ZaberPort                      = None
         self.MFLIDeviceName                 = None
@@ -203,4 +205,8 @@ class BackgroundController:
                                    results["spectrumX"], results["spectrumY"],
                                    self.averageSpectrumX, self.averageSpectrumY, i + 1)
 
-        self.SetStatusMessageMethod("Done")
+        self.allMeasurementsDone() # all ordered measurements are completed, terminate gracefully
+
+    def allMeasurementsDone(self):
+        self.NotifyAllMeasurementsDone()
+        # self.SetStatusMessageMethod("Done")
