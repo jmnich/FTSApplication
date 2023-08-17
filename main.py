@@ -765,13 +765,22 @@ class FTSApp:
 
         logging.info(f"Multiple captures with averaging started. Count = {measCount}")
         self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
-        self.ApplicationController.performMeasurements(measurementsCount=measCount,
-                                                       samplingFrequency=self.MFLIFreqneuenciesAsStrings.
-                                                                                index(self.samplingFreqCombo.get()),
-                                                       scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
-                                                       scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
-                                                       scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]))
 
+        if self.appSettings["triggerModeEnabled"] == "True":
+            trgMode = True
+        else:
+            trgMode = False
+
+        self.ApplicationController.performMeasurements(measurementsCount=measCount,
+                                                    samplingFrequency=self.MFLIFreqneuenciesAsStrings.
+                                                                                index(self.samplingFreqCombo.get()),
+                                                    scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
+                                                    scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
+                                                    scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]),
+                                                    trigModeEnabled=trgMode,
+                                                    trigLevel=float(self.appSettings["triggerLevel"]),
+                                                    trigHysteresis=float(self.appSettings["triggerHysteresis"]),
+                                                    trigDelay=float(self.appSettings["triggerDelay"]))
     def onCmdStopMeasurement(self):
         self.ApplicationController.requestStop()
 
@@ -1047,14 +1056,23 @@ class FTSApp:
         if len(interferogramX) == len(interferogramY) and len(interferogramX) > 0:
             self.axTop.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
 
-            # draw the trigger coursor
+            # draw trigger and hysteresis cursors
             if self.appSettings["triggerModeEnabled"] == 'True':
-                markerX = [np.min(interferogramX), np.max(interferogramX)]
-                markerY = [float(self.appSettings["triggerLevel"]) / 1000.0,
+                triggerMarkerX = [np.min(interferogramX), np.max(interferogramX)]
+                triggerMarkerY = [float(self.appSettings["triggerLevel"]) / 1000.0,
                            float(self.appSettings["triggerLevel"]) / 1000.0]
 
-                self.axTop.plot(markerX, markerY, color="red", alpha=0.75)
+                self.axTop.plot(triggerMarkerX, triggerMarkerY, color="red", alpha=0.75)
 
+                hysteresisMarkerX = [np.min(interferogramX), np.max(interferogramX)]
+
+                hysteresisMarkerYVal = (float(self.appSettings["triggerLevel"]) -
+                                        (float(self.appSettings["triggerHysteresis"]) / 1000.0))
+
+                hysteresisMarkerY = [hysteresisMarkerYVal, hysteresisMarkerYVal]
+                self.axTop.plot(hysteresisMarkerX, hysteresisMarkerY, color="red", alpha=0.75)
+
+            # plot the interferogram itself
             self.axTop.plot(interferogramX, interferogramY, color="dodgerblue")
             self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
 

@@ -41,13 +41,13 @@ def getDefaultSettings():
         "delayLineConfiguredScanLength": "5000",
         "delayLineMinimalScanLength":"1000",
 
-        "mfliSelectedFrequencyIndex":"9",
+        "mfliSelectedFrequencyIndex":"7",
         "mfliDeviceID":"dev6285",
 
         "plotSpectrumXRangeMin":"1",
         "plotSpectrumXRangeMax": "30",
-        "plotSpectrumYRangeMin": "0.0001",
-        "plotSpectrumYRangeMax": "1",
+        "plotSpectrumYRangeMin": "-80",
+        "plotSpectrumYRangeMax": "-30",
 
         "plotEngine":"matplotlib",
 
@@ -58,10 +58,10 @@ def getDefaultSettings():
 
         "absorbanceToolRangeXMin":"1.0",
         "absorbanceToolRangeXMax": "30.0",
-        "absorbanceToolRangeYMin": "0.001",
-        "absorbanceToolRangeYMax": "1.0",
-        "absorbanceToolAbsRangeYMin": "0.0001",
-        "absorbanceToolAbsRangeYMax": "1.0",
+        "absorbanceToolRangeYMin": "-80",
+        "absorbanceToolRangeYMax": "-30",
+        "absorbanceToolAbsRangeYMin": "0",
+        "absorbanceToolAbsRangeYMax": "2.0",
 
         "triggerModeEnabled": "False",
         "triggerLevel": "100.0",

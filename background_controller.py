@@ -142,7 +142,7 @@ class BackgroundController:
         self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
 
         # configure MFLI
-        self.MFLIDriver.configureForMeasurement(mfliSamplingFrequency=self.mfliFrequencyIndex,
+        self.MFLIDriver.configureForMeasurement(samplingFreqIndex=self.mfliFrequencyIndex,
                                                 sampleLength=self.mfliSamplesCount,
                                                 triggerEnabled=self.triggerModeEnabled,
                                                 triggerLevel=self.triggerLevel,

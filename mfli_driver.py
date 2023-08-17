@@ -89,9 +89,9 @@ class MFLIDriver:
 
         # configure the trigger
         if triggerEnabled:
-            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigdelay', triggerDelay / 1000.0) # convert from [ms] to [s]
-            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/triglevel', triggerLevel / 1000.0) # convert from [mV] to [V]
-            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trighysteresis/absolute', triggerHysteresis / 1000.0) # as above
+            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigdelay', triggerDelay / 1000.0) # convert from [ms] to [s]
+            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/triglevel', triggerLevel / 1000.0) # convert from [mV] to [V]
+            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trighysteresis/absolute', triggerHysteresis / 1000.0) # as above
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
 
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
