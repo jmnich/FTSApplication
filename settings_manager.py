@@ -62,6 +62,11 @@ def getDefaultSettings():
         "absorbanceToolRangeYMax": "1.0",
         "absorbanceToolAbsRangeYMin": "0.0001",
         "absorbanceToolAbsRangeYMax": "1.0",
+
+        "triggerModeEnabled": "False",
+        "triggerLevel": "100.0",
+        "triggerDelay": "100.0",
+        "triggerHysteresis": "10.0"
     }
 
     return  defaultSettings

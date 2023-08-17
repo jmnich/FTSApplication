@@ -212,9 +212,10 @@ class FTSApp:
         self.settingsTabs = ctk.CTkTabview(master=self.frameButtonsBottom)
         self.settingsTabs.grid(row=4, column=0, columnspan=2, sticky="NSEW", padx=2, pady=2)
         self.settingsTabs.add("Scan")
+        self.settingsTabs.add("Trig")
         self.settingsTabs.add("Hardware")
         self.settingsTabs.add("Plots")
-        self.settingsTabs.add("Export")
+        self.settingsTabs.add("Save")
 
         # configure settings 'SCAN' tab
         # ==============================================================================================================
@@ -297,6 +298,63 @@ class FTSApp:
                                               command=self.onCmdScanSpeedUpdateFromSlider)
         self.scanSpeedSlider.grid(row=5, column=0, columnspan=2, sticky="N", padx=5, pady=5)
         self.scanSpeedSlider.set(float(self.appSettings["delayLineConfiguredScanSpeed"]))
+
+        # configure settings 'TRIG' tab
+        # ==============================================================================================================
+        self.settingsTabs.tab("Trig").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Trig").columnconfigure(1, weight=1)
+
+        self.settingsTabs.tab("Trig").rowconfigure(0, weight=1)
+        self.settingsTabs.tab("Trig").rowconfigure(1, weight=1)
+        self.settingsTabs.tab("Trig").rowconfigure(2, weight=1)
+        self.settingsTabs.tab("Trig").rowconfigure(3, weight=1)
+
+        self.triggerEnableSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Trig"),
+                                                    text="Triggered acquisition mode",
+                                                    command=self.onCmdTriggerSwitchModified,
+                                                    onvalue="True", offvalue="False")
+        self.triggerEnableSwitch.grid(row=0, column=0, columnspan=2, padx=5, pady=5, sticky="W")
+
+        if self.appSettings["triggerModeEnabled"] == "True":
+            self.triggerEnableSwitch.select()
+        else:
+            self.triggerEnableSwitch.deselect()
+
+        self.triggerLevelLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trig"),
+                                                    text="Trigger\nlevel [mV]",
+                                                    font=ctk.CTkFont(size=12))
+        self.triggerLevelLabel.grid(row=1, column=0, sticky="E", padx=5, pady=5)
+
+        self.triggerLevelBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trig"),
+                                        width=120, height=30)
+        self.triggerLevelBox.insert(0, self.appSettings["triggerLevel"])
+        self.triggerLevelBox.grid(row=1, column=1, sticky="E", padx=5, pady=5)
+        self.triggerLevelBox.bind("<FocusOut>", self.onCmdRefreshTriggerSettings)
+        self.triggerLevelBox.bind("<Return>", self.onCmdRefreshTriggerSettings)
+
+        self.triggerHysteresisLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trig"),
+                                                    text="Trigger\nhysteresis [mV]",
+                                                    font=ctk.CTkFont(size=12))
+        self.triggerHysteresisLabel.grid(row=2, column=0, sticky="E", padx=5, pady=5)
+
+        self.triggerHysteresisBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trig"),
+                                        width=120, height=30)
+        self.triggerHysteresisBox.insert(0, self.appSettings["triggerHysteresis"])
+        self.triggerHysteresisBox.grid(row=2, column=1, sticky="E", padx=5, pady=5)
+        self.triggerHysteresisBox.bind("<FocusOut>", self.onCmdRefreshTriggerSettings)
+        self.triggerHysteresisBox.bind("<Return>", self.onCmdRefreshTriggerSettings)
+
+        self.triggerDelayLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trig"),
+                                                    text="Trigger\ndelay [ms]",
+                                                    font=ctk.CTkFont(size=12))
+        self.triggerDelayLabel.grid(row=3, column=0, sticky="E", padx=5, pady=5)
+
+        self.triggerDelayBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trig"),
+                                        width=120, height=30)
+        self.triggerDelayBox.insert(0, self.appSettings["triggerDelay"])
+        self.triggerDelayBox.grid(row=3, column=1, sticky="E", padx=5, pady=5)
+        self.triggerDelayBox.bind("<FocusOut>", self.onCmdRefreshTriggerSettings)
+        self.triggerDelayBox.bind("<Return>", self.onCmdRefreshTriggerSettings)
 
         # configure settings 'HARDWARE' tab
         # ==============================================================================================================
@@ -389,13 +447,13 @@ class FTSApp:
 
         # configure settings 'EXPORT' tab
         # ==============================================================================================================
-        self.settingsTabs.tab("Export").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Export").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Save").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Save").columnconfigure(1, weight=1)
 
-        self.settingsTabs.tab("Export").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Export").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Save").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Save").columnconfigure(1, weight=1)
 
-        self.buttonSaveNormal = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+        self.buttonSaveNormal = ctk.CTkButton(master=self.settingsTabs.tab("Save"),
                                             text="Save\nresults",
                                             width=120,
                                             height=80,
@@ -403,7 +461,7 @@ class FTSApp:
                                             command=self.onCmdSaveFull)
         self.buttonSaveNormal.grid(row=0, column=0, sticky="N", padx=5, pady=5)
 
-        self.buttonSaveCSV = ctk.CTkButton(master=self.settingsTabs.tab("Export"),
+        self.buttonSaveCSV = ctk.CTkButton(master=self.settingsTabs.tab("Save"),
                                             text="Save\nspectrum\nas .csv",
                                             width=120,
                                             height=80,
@@ -411,7 +469,7 @@ class FTSApp:
                                             command=self.onCmdSaveCSVOnly)
         self.buttonSaveCSV.grid(row=0, column=1, sticky="N", padx=5, pady=5)
 
-        self.exportRawDataSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Export"),
+        self.exportRawDataSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Save"),
                                                     text="Export raw data", command=self.onExportSwitchModified,
                                                     onvalue="True", offvalue="False")
         self.exportRawDataSwitch.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="W")
@@ -421,7 +479,7 @@ class FTSApp:
         else:
             self.exportRawDataSwitch.deselect()
 
-        self.exportToMatSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Export"),
+        self.exportToMatSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Save"),
                                                     text="Export to .MAT", command=self.onExportSwitchModified,
                                                     onvalue="True", offvalue="False")
         self.exportToMatSwitch.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="W")
@@ -626,6 +684,40 @@ class FTSApp:
     def receiveNotificationAllMeasurementsDone(self):
         logging.info("All ordered measurements done")
         self.updateStatusMessage("Done")
+
+    def onCmdTriggerSwitchModified(self):
+        self.onCmdRefreshTriggerSettings(None)
+
+    def onCmdRefreshTriggerSettings(self, other):
+        # trigger switch
+        self.appSettings["triggerModeEnabled"] = self.triggerEnableSwitch.get()
+
+        # handle trigger delay setting
+        try:
+            newDelaySetting = float(self.triggerDelayBox.get())
+            self.appSettings["triggerDelay"] = str(newDelaySetting)
+        except:
+            newDelaySetting = float(self.appSettings["triggerDelay"])
+            self.triggerDelayBox.delete(0, "end")
+            self.triggerDelayBox.insert(0, str(newDelaySetting))
+
+        # handle trigger level setting
+        try:
+            newLevelSetting = float(self.triggerLevelBox.get())
+            self.appSettings["triggerLevel"] = str(newLevelSetting)
+        except:
+            newLevelSetting = float(self.appSettings["triggerLevel"])
+            self.triggerLevelBox.delete(0, "end")
+            self.triggerLevelBox.insert(0, str(newLevelSetting))
+
+        # handle trigger hysteresis setting
+        try:
+            newHysteresisSetting = float(self.triggerHysteresisBox.get())
+            self.appSettings["triggerHysteresis"] = str(newHysteresisSetting)
+        except:
+            newHysteresisSetting = float(self.appSettings["triggerHysteresis"])
+            self.triggerHysteresisBox.delete(0, "end")
+            self.triggerHysteresisBox.insert(0, str(newHysteresisSetting))
 
     def onCmdRefreshCOMPorts(self):
         ports = serial.tools.list_ports.comports()
