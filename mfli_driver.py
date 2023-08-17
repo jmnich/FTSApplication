@@ -117,3 +117,6 @@ class MFLIDriver:
             result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][1]
 
         self.Scope.finish()
+
+
+

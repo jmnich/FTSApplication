@@ -497,7 +497,7 @@ class FTSApp:
         self.settingsTabs.tab("Plots").columnconfigure(1, weight=1)
 
         self.spectrumXMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
-                                                    text="Spectrum plot\nrng X MIN [\u03BCm]",
+                                                    text="Spectrum plot\nX MIN [\u03BCm]",
                                                     font=ctk.CTkFont(size=12))
         self.spectrumXMinLabel.grid(row=0, column=0, sticky="E", padx=5, pady=5)
 
@@ -510,7 +510,7 @@ class FTSApp:
         self.spectrumXMinBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
 
         self.spectrumXMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
-                                                    text="Spectrum plot\nrng X MAX [\u03BCm]",
+                                                    text="Spectrum plot\nX MAX [\u03BCm]",
                                                     font=ctk.CTkFont(size=12))
         self.spectrumXMaxLabel.grid(row=1, column=0, sticky="E", padx=5, pady=5)
 
@@ -523,7 +523,7 @@ class FTSApp:
         self.spectrumXMaxBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
 
         self.spectrumYMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
-                                                    text="Spectrum plot\nrng Y MIN [\u03BCm]",
+                                                    text="Spectrum plot\nY MIN [dBm]",
                                                     font=ctk.CTkFont(size=12))
         self.spectrumYMinLabel.grid(row=2, column=0, sticky="E", padx=5, pady=5)
 
@@ -536,7 +536,7 @@ class FTSApp:
         self.spectrumYMinBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
 
         self.spectrumYMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
-                                                    text="Spectrum plot\nrng Y MAX [\u03BCm]",
+                                                    text="Spectrum plot\nY MAX [dBm]",
                                                     font=ctk.CTkFont(size=12))
         self.spectrumYMaxLabel.grid(row=3, column=0, sticky="E", padx=5, pady=5)
 
@@ -931,7 +931,6 @@ class FTSApp:
         plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
         plt.ylabel("Intensity [dBm]", fontsize=20)
         plt.plot(self.currentAverageSpectrumX, self.currentAverageSpectrumY, color="dodgerblue")
-        # plt.yscale('log')
         plt.xlim((float(self.appSettings["plotSpectrumXRangeMin"]), float(self.appSettings["plotSpectrumXRangeMax"])))
         plt.ylim((float(self.appSettings["plotSpectrumYRangeMin"]), float(self.appSettings["plotSpectrumYRangeMax"])))
         plt.grid(alpha=0.3)
@@ -971,7 +970,7 @@ class FTSApp:
         plt.rc('ytick', labelsize=18)
         plt.title("Raw data with reference signal", fontsize=20)
         plt.xlabel("Sample num", fontsize=20)
-        plt.ylabel("Signal", fontsize=20)
+        plt.ylabel("Detector voltage [V]", fontsize=20)
         plt.plot(self.MFLIDrv.lastReferenceData, alpha=0.75)
         plt.plot(self.MFLIDrv.lastInterferogramData)
         plt.grid(alpha=0.3)
@@ -1022,12 +1021,12 @@ class FTSApp:
     def loadDataToPlots(self, interferogramX, interferogramY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
                         completedMeasurements):
 
-        self.currentInterferogramX = interferogramX
-        self.currentInterferogramY = interferogramY
-        self.currentSpectrumX = spectrumX
-        self.currentSpectrumY = spectrumY
-        self.currentAverageSpectrumX = averageSpectrumX
-        self.currentAverageSpectrumY = averageSpectrumY
+        # self.currentInterferogramX = interferogramX
+        # self.currentInterferogramY = interferogramY
+        # self.currentSpectrumX = spectrumX
+        # self.currentSpectrumY = spectrumY
+        # self.currentAverageSpectrumX = averageSpectrumX
+        # self.currentAverageSpectrumY = averageSpectrumY
 
         if completedMeasurements != 0:
             self.multipleMeasBox.delete(0, "end")
@@ -1038,46 +1037,69 @@ class FTSApp:
         self.axBot.clear()
         self.axTop.clear()
 
-        if len(spectrumX) == len(spectrumY) and len(spectrumX) > 0:
-            self.axBot.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
+        # plot spectrum
+        self.axBot.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
+
+        if ((spectrumX is not None) and (spectrumY is not None) and
+                (len(spectrumX) == len(spectrumY)) and (len(spectrumX) > 0)):
+
             self.axBot.plot(spectrumX, spectrumY, color="grey", alpha=0.7)
+
+        if ((averageSpectrumX is not None) and (averageSpectrumY is not None) and
+                (len(averageSpectrumX) == len(averageSpectrumY)) and (len(averageSpectrumX) > 0)):
+
             self.axBot.plot(averageSpectrumX, averageSpectrumY, color="dodgerblue")
 
-            self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
-                                float(self.appSettings["plotSpectrumXRangeMax"]))
-            self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),
-                                float(self.appSettings["plotSpectrumYRangeMax"]))
-            # self.axBot.set_yscale("log")
 
-            self.axBot.set_xlabel('Wavelength [\u03BCm]')
-            self.axBot.set_ylabel('[dBm]')
+        self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
+                            float(self.appSettings["plotSpectrumXRangeMax"]))
+        self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),
+                            float(self.appSettings["plotSpectrumYRangeMax"]))
 
+        self.axBot.set_xlabel('Wavelength [\u03BCm]')
+        self.axBot.set_ylabel('[dBm]')
 
-        if len(interferogramX) == len(interferogramY) and len(interferogramX) > 0:
-            self.axTop.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
+        # plot interferogram
+        self.axTop.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
 
-            # draw trigger and hysteresis cursors
-            if self.appSettings["triggerModeEnabled"] == 'True':
+        interferogramValidForDisplay = False
+        if (interferogramX is not None and interferogramY is not None and
+                len(interferogramX) == len(interferogramY) and len(interferogramX) > 0):
+
+            interferogramValidForDisplay = True
+
+        # draw trigger and hysteresis cursors
+        if self.appSettings["triggerModeEnabled"] == 'True':
+            # make sure the markers will be displayed correctly even if there is no interferogram loaded
+            if interferogramValidForDisplay:
                 triggerMarkerX = [np.min(interferogramX), np.max(interferogramX)]
-                triggerMarkerY = [float(self.appSettings["triggerLevel"]) / 1000.0,
-                           float(self.appSettings["triggerLevel"]) / 1000.0]
-
-                self.axTop.plot(triggerMarkerX, triggerMarkerY, color="red", alpha=0.75)
-
                 hysteresisMarkerX = [np.min(interferogramX), np.max(interferogramX)]
+            else:
+                triggerMarkerX = [0.0, 1.0]
+                hysteresisMarkerX = [0.0, 1.0]
+                self.axTop.set_xlim(0.0, 1.0)
+                self.axTop.set_ylim(- float(self.appSettings["triggerLevel"]) / 1000.0 - 0.1,
+                                    float(self.appSettings["triggerLevel"]) / 1000.0 + 0.1)
 
-                hysteresisMarkerYVal = (float(self.appSettings["triggerLevel"]) -
-                                        (float(self.appSettings["triggerHysteresis"]) / 1000.0))
+            triggerMarkerY = [float(self.appSettings["triggerLevel"]) / 1000.0,
+                       float(self.appSettings["triggerLevel"]) / 1000.0]
 
-                hysteresisMarkerY = [hysteresisMarkerYVal, hysteresisMarkerYVal]
-                self.axTop.plot(hysteresisMarkerX, hysteresisMarkerY, color="red", alpha=0.75)
+            self.axTop.plot(triggerMarkerX, triggerMarkerY, color="red", alpha=0.75, label="Trigger")
 
-            # plot the interferogram itself
-            self.axTop.plot(interferogramX, interferogramY, color="dodgerblue")
-            self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
+            hysteresisMarkerYVal = ((float(self.appSettings["triggerLevel"]) / 1000.0) -
+                                    (float(self.appSettings["triggerHysteresis"]) / 1000.0))
 
+            hysteresisMarkerY = [hysteresisMarkerYVal, hysteresisMarkerYVal]
+            self.axTop.plot(hysteresisMarkerX, hysteresisMarkerY, color="green", alpha=0.75, label="Hysteresis")
             self.axTop.set_xlabel('Mirror position [\u03BCm]')
             self.axTop.set_ylabel('Detector voltage [V]')
+
+            self.axTop.legend()
+
+        # plot the interferogram itself
+        if interferogramValidForDisplay:
+            self.axTop.plot(interferogramX, interferogramY, color="dodgerblue", label="Signal")
+            self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
 
         self.canvasTopPlot.draw()
         self.canvasBotPlot.draw()
