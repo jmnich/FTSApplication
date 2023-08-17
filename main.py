@@ -594,16 +594,8 @@ class FTSApp:
         self.statusLabel.grid(row=0, column=1, columnspan=2, sticky="NE", padx=15, pady=5)
 
         # create drivers
-        # self.updateStatusMessage("Connecting to MFLI...")
         self.MFLIDrv = MFLIDriver(self.mfliIDBox.get("0.0", "end"))
-
-        # self.updateStatusMessage("Connecting to Zaber...")
         self.ZaberDrv = ZaberDriver()
-
-        # if self.MFLIDrv.isConnected and self.ZaberDrv.isConnected:
-        #     self.updateStatusMessage("Automatic hardware\nconnection successful")
-        # else:
-        #     self.updateStatusMessage("One or more hardware components\nfailed to connect")
 
         # set up the background application controller
         self.ApplicationController = BackgroundController(self.MFLIDrv, self.ZaberDrv)
@@ -719,6 +711,8 @@ class FTSApp:
             self.triggerHysteresisBox.delete(0, "end")
             self.triggerHysteresisBox.insert(0, str(newHysteresisSetting))
 
+        self.updatePlot() # update plots to redraw the trigger cursor
+
     def onCmdRefreshCOMPorts(self):
         ports = serial.tools.list_ports.comports()
         self.currentlyAvailableCOMPorts.clear()
@@ -740,12 +734,22 @@ class FTSApp:
         logging.info(f"Single capture started")
         self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
         self.settingsUsedForCurrentMeasurement["averagingCount"] = 1
+
+        if self.appSettings["triggerModeEnabled"] == "True":
+            trgMode = True
+        else:
+            trgMode = False
+
         self.ApplicationController.performMeasurements(measurementsCount=1,
-                                                       samplingFrequency=self.MFLIFreqneuenciesAsStrings.
-                                                                                index(self.samplingFreqCombo.get()),
-                                                       scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
-                                                       scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
-                                                       scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]))
+                                                    samplingFrequency=self.MFLIFreqneuenciesAsStrings.
+                                                                            index(self.samplingFreqCombo.get()),
+                                                    scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
+                                                    scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
+                                                    scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]),
+                                                    trigModeEnabled=trgMode,
+                                                    trigLevel=float(self.appSettings["triggerLevel"]),
+                                                    trigHysteresis=float(self.appSettings["triggerHysteresis"]),
+                                                    trigDelay=float(self.appSettings["triggerDelay"]))
 
     def onCmdMultipleCapture(self):
 
@@ -1042,6 +1046,15 @@ class FTSApp:
 
         if len(interferogramX) == len(interferogramY) and len(interferogramX) > 0:
             self.axTop.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
+
+            # draw the trigger coursor
+            if self.appSettings["triggerModeEnabled"] == 'True':
+                markerX = [np.min(interferogramX), np.max(interferogramX)]
+                markerY = [float(self.appSettings["triggerLevel"]) / 1000.0,
+                           float(self.appSettings["triggerLevel"]) / 1000.0]
+
+                self.axTop.plot(markerX, markerY, color="red", alpha=0.75)
+
             self.axTop.plot(interferogramX, interferogramY, color="dodgerblue")
             self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
 

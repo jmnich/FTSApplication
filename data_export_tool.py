@@ -115,7 +115,6 @@ def exportAllDataAbsorbance(refX, refY, sampleX, sampleY, absX, absY,
         plt.grid(alpha=0.3)
         plt.savefig(pathToBothPicture)
 
-
 def exportAbsorbanceAsCSV(absorbanceX, absorbanceY, axisNameX, axisNameY):
     if len(absorbanceX) == len(absorbanceY) and len(absorbanceX) != 0:
         initial_file_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_absorption.csv")

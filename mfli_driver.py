@@ -53,8 +53,12 @@ class MFLIDriver:
         self.isConnected = True
         return True
 
-    def configureForMeasurement(self, samplingFreqIndex, sampleLength):
-        logging.info(f"MFLI driver: configuration for measurement. Freq index: {samplingFreqIndex}, sample length: {sampleLength}")
+    def configureForMeasurement(self, samplingFreqIndex, sampleLength, triggerEnabled, triggerLevel, triggerHysteresis,
+                                triggerDelay):
+        logging.info(f"MFLI driver: configuration for measurement. Freq index: {samplingFreqIndex}, "
+                     f"sample length: {sampleLength}, triggered acqusition enabled: {triggerEnabled}, "
+                     f"trigger level: {triggerLevel} mV, trigger hysteresis: {triggerHysteresis} mV, "
+                     f"trigger delay: {triggerDelay} ms")
 
         zhinst.utils.disable_everything(self.DAQ, self.deviceID)
 
@@ -82,6 +86,13 @@ class MFLIDriver:
         self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/single', 1)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channel', 3) # '3' - both channels active
+
+        # configure the trigger
+        if triggerEnabled:
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigdelay', triggerDelay / 1000.0) # convert from [ms] to [s]
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/triglevel', triggerLevel / 1000.0) # convert from [mV] to [V]
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trighysteresis/absolute', triggerHysteresis / 1000.0) # as above
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
 
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
 
