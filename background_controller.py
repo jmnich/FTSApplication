@@ -152,6 +152,9 @@ class BackgroundController:
         # acquire all data
         for i in range(0, self.orderedMeasurementsCount):
 
+            self.ZaberDriver.waitUntilIdle()
+            time.sleep(0.25)  # wait to let the mirror settle
+
             if self.stopRequestFlag:
                 self.stopRequestFlag = False
                 self.SetStatusMessageMethod("Measurement stopped")
@@ -160,15 +163,15 @@ class BackgroundController:
             # calculate start and stop positions for the delay line
             # note: direction of scan from zaber motor to the other end
             preferred_margin = self.scanSpeed * 1000 * 0.5
-            startPosition = self.scanStartPosition - self.scanLength - preferred_margin
-            endPosition = self.scanStartPosition + preferred_margin
+            startPosition = self.scanStartPosition + preferred_margin
+            endPosition = self.scanStartPosition - self.scanLength - preferred_margin
 
             # clamp the values
-            if startPosition < 0:
-                startPosition = 0
+            if endPosition < 0:
+                endPosition = 0
 
-            if endPosition > self.ZaberDriver.DelayLineNominalLength:
-                endPosition = self.ZaberDriver.DelayLineNominalLength
+            if startPosition > self.ZaberDriver.DelayLineNominalLength:
+                startPosition = self.ZaberDriver.DelayLineNominalLength
 
             # send the delay line to the starting position
             self.ZaberDriver.setPosition(position=startPosition, speed=ZaberDriver.MaxSpeed)
