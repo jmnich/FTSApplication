@@ -120,7 +120,7 @@ class MFLIDriver:
             self.DAQ.sync()
             result = None
             # perform acquisition and terminate when done or when a timeout occurs
-            while  self.Scope.progress() < 1.0 and not self.Scope.finished():
+            while  self.Scope.progress()[0] < 1.0:   # should [0] be here...?
                 if (datetime.now() - startTime).total_seconds() > expectedMeasDuration:
                     status = "acquisition timeout"
                     break
