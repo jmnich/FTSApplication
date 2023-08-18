@@ -2,8 +2,7 @@ import time
 import zhinst.core
 import zhinst.utils
 import logging
-
-
+from datetime import datetime
 
 class MFLIDriver:
 
@@ -21,6 +20,8 @@ class MFLIDriver:
         self.lastInterferogramData = []
         self.lastReferenceData = []
         self.deviceID = devID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
+        self.currentMeasurementFrequency = None
+        self.currentMeasurementPointsCount = None
         # self.tryConnect(self.deviceID)
 
     def tryConnect(self, deviceID):
@@ -60,6 +61,9 @@ class MFLIDriver:
                      f"trigger level: {triggerLevel} mV, trigger hysteresis: {triggerHysteresis} mV, "
                      f"trigger delay: {triggerDelay} ms")
 
+        self.currentMeasurementFrequency = MFLIDriver.MFLISamplingRates[samplingFreqIndex]
+        self.currentMeasurementPointsCount = sampleLength
+
         zhinst.utils.disable_everything(self.DAQ, self.deviceID)
 
         self.DAQ.setInt(f'/{self.deviceID}/auxouts/2/demodselect', 0)
@@ -92,6 +96,8 @@ class MFLIDriver:
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigdelay', triggerDelay / 1000.0) # convert from [ms] to [s]
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/triglevel', triggerLevel / 1000.0) # convert from [mV] to [V]
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trighysteresis/absolute', triggerHysteresis / 1000.0) # as above
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigholdoffmode', 0) # holdoff mode: time
+            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigholdoff', 0.5) # set holdoff time [s]
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
 
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
@@ -100,23 +106,39 @@ class MFLIDriver:
         self.DAQ.sync()
 
     def measureData(self):
+
+        startTime = datetime.now()
+        expectedMeasDuration = (self.currentMeasurementPointsCount / self.currentMeasurementFrequency) + 1.0
+
         self.Scope.execute()
-        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 1)
-        result = 0
-        while self.Scope.progress() < 1.0 and not self.Scope.finished():
-            time.sleep(0.01)
-            #print(f"Progress {float(self.Scope.progress()) * 100:.2f} %\r")
 
-        result = self.Scope.read()
+        try:
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 1)
+            result = None
+            # perform acquisition and terminate when done or when a timeout occurs
+            while ((not self.Scope.finished()) and
+                   ((datetime.now() - startTime).total_seconds() < expectedMeasDuration)):
 
-        # dig the data vectors out of the confusing maze dumped by the MFLI
-        self.lastInterferogramData = \
-            result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][0]
+                time.sleep(0.05)
 
-        self.lastReferenceData = \
-            result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][1]
+            result = self.Scope.read()
 
-        self.Scope.finish()
+            # dig the data vectors out of the confusing maze dumped by the MFLI
+            self.lastInterferogramData = \
+                result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][0]
+
+            self.lastReferenceData = \
+                result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][1]
+
+        except:
+            self.lastReferenceData = None
+            self.lastInterferogramData = None
+            print(f"MFLI acquisition failed")
+
+        finally:
+            # finish gracefully regardless of the measurement results to prevent random crashes
+            self.Scope.finish()
+
 
 
 

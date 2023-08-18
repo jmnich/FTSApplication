@@ -68,6 +68,7 @@ def exportAllDataAbsorbance(refX, refY, sampleX, sampleY, absX, absY,
         plt.ylim((float(rngAbsYMin), float(rngAbsYMax)))
         plt.grid(alpha=0.3)
         plt.savefig(pathToAbsorptionPicture)
+        plt.close()
 
 
     # save reference CSV
@@ -114,6 +115,7 @@ def exportAllDataAbsorbance(refX, refY, sampleX, sampleY, absX, absY,
         plt.ylim((float(rngYMin), float(rngYMax)))
         plt.grid(alpha=0.3)
         plt.savefig(pathToBothPicture)
+        plt.close()
 
 def exportAbsorbanceAsCSV(absorbanceX, absorbanceY, axisNameX, axisNameY):
     if len(absorbanceX) == len(absorbanceY) and len(absorbanceX) != 0:
@@ -229,6 +231,7 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
         plt.ylim((float(settings["plotSpectrumYRangeMin"]), float(settings["plotSpectrumYRangeMax"])))
         plt.grid(alpha=0.3)
         plt.savefig(pathToSpectrumPicture)
+        plt.close()
 
     # save example interferogram .CSV and image
     if (correctedInterferogramsX[0] is not None and correctedInterferogramsY[0] is not None and
@@ -252,6 +255,7 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
         plt.xlim((min(correctedInterferogramsX[0]), max(correctedInterferogramsX[0])))
         plt.grid(alpha=0.3)
         plt.savefig(pathToInterferogramPicture)
+        plt.close()
 
     # save raw spectra to .CSV files
     if (saveRawData and
@@ -359,6 +363,7 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
 
     logging.info(f"Data export finished. Location: {savePackageRootPath}")
 
+
 def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interferogramRaw, referenceSignalRaw, settings):
 
     direcotry_selected = filedialog.askdirectory()
@@ -413,6 +418,7 @@ def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interfer
         plt.ylim((float(settings["plotSpectrumYRangeMin"]), float(settings["plotSpectrumYRangeMax"])))
         plt.grid(alpha=0.3)
         plt.savefig(pathToSpectrumPicture)
+        plt.close()
 
     if (interferogramX is not None and interferogramY is not None and
             len(interferogramX) == len(interferogramY) and len(interferogramX) != 0):
@@ -436,6 +442,7 @@ def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interfer
         plt.xlim((min(interferogramX), max(interferogramX)))
         plt.grid(alpha=0.3)
         plt.savefig(pathToInterferogramPicture)
+        plt.close()
 
     if (referenceSignalRaw is not None and interferogramRaw is not None and
             len(referenceSignalRaw) == len(interferogramRaw) and len(interferogramRaw) != 0):
