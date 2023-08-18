@@ -1094,12 +1094,13 @@ class FTSApp:
             self.axTop.set_xlabel('Mirror position [\u03BCm]')
             self.axTop.set_ylabel('Detector voltage [V]')
 
-            self.axTop.legend()
-
         # plot the interferogram itself
         if interferogramValidForDisplay:
             self.axTop.plot(interferogramX, interferogramY, color="dodgerblue", label="Signal")
             self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
+
+        if self.appSettings["triggerModeEnabled"] == 'True':
+            self.axTop.legend()
 
         self.canvasTopPlot.draw()
         self.canvasBotPlot.draw()

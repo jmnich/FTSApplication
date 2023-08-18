@@ -132,17 +132,27 @@ class BackgroundController:
             self.SetStatusMessageMethod("Measurement stopped")
             return
 
-        self.performAcqusition()
+        status = self.performAcqusition()
 
-        self.allMeasurementsDone() # all ordered measurements are completed, terminate gracefully
+        if status == "ok":
+            self.allMeasurementsDone()  # all ordered measurements are completed, terminate gracefully
+        elif status == "stop":
+            self.SetStatusMessageMethod("Measurement stopped")
+        else:
+            self.SetStatusMessageMethod("Measurement failed")
 
     def performAcqusition(self):
         self.ZaberDriver.waitUntilIdle()
         mfliSamplingFrequency = MFLIDriver.MFLISamplingRates[self.mfliFrequencyIndex]
         self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
 
+        failedAcquisitionsCount = 0
+
         # acquire all data
         for i in range(0, self.orderedMeasurementsCount):
+
+            if failedAcquisitionsCount >= 10:
+                return "fail"
 
             # configure MFLI
             self.MFLIDriver.configureForMeasurement(samplingFreqIndex=self.mfliFrequencyIndex,
@@ -158,7 +168,7 @@ class BackgroundController:
             if self.stopRequestFlag:
                 self.stopRequestFlag = False
                 self.SetStatusMessageMethod("Measurement stopped")
-                return
+                return "stop"
 
             # calculate start and stop positions for the delay line
             # note: direction of scan from zaber motor to the other end
@@ -193,8 +203,14 @@ class BackgroundController:
             #     self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength,
             #                                  speed=self.scanSpeed * 1000)
 
-            self.MFLIDriver.measureData()
+            measStatus = self.MFLIDriver.measureData()
             self.ZaberDriver.waitUntilIdle()
+
+            # try to complete the measurement even if acquisition fails a few times
+            if measStatus != "ok":
+                failedAcquisitionsCount += 1
+                i -= 1
+                continue
 
             # synchronization delay
             # time.sleep(0.1)
@@ -204,7 +220,7 @@ class BackgroundController:
                                                         rawInterferogram=self.MFLIDriver.lastInterferogramData)
             except:
                 self.SetStatusMessageMethod("Data acquisition or analysis failed")
-                return
+                return "Data analysis failed"
 
             self.rawInterferograms.append(np.copy(self.MFLIDriver.lastInterferogramData))
             self.rawReferenceSignals.append(np.copy(self.MFLIDriver.lastReferenceData))
@@ -238,6 +254,8 @@ class BackgroundController:
             self.SendResultsToPlot(results["interferogramX"], results["interferogramY"],
                                    results["spectrumX"], results["spectrumY"],
                                    self.averageSpectrumX, self.averageSpectrumY, i + 1)
+
+        return "ok"
 
 
     def allMeasurementsDone(self):

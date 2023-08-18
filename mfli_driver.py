@@ -112,12 +112,16 @@ class MFLIDriver:
 
         self.Scope.execute()
 
+        status = "ok"
+
         try:
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 1)
             result = None
             # perform acquisition and terminate when done or when a timeout occurs
-            while ((not self.Scope.finished()) and
-                   ((datetime.now() - startTime).total_seconds() < expectedMeasDuration)):
+            while not self.Scope.finished():
+                if (datetime.now() - startTime).total_seconds() > expectedMeasDuration:
+                    status = "acquisition timeout"
+                    break
 
                 time.sleep(0.05)
 
@@ -134,10 +138,12 @@ class MFLIDriver:
             self.lastReferenceData = None
             self.lastInterferogramData = None
             print(f"MFLI acquisition failed")
+            status = "fail"
 
         finally:
             # finish gracefully regardless of the measurement results to prevent random crashes
             self.Scope.finish()
+            return status
 
 
 
