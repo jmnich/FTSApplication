@@ -10,6 +10,8 @@ import logging
 import numpy as np
 import math
 
+from tkinter import messagebox
+
 class BackgroundController:
 
     def __init__(self, mfliDrv, zaberDrv):
@@ -141,6 +143,7 @@ class BackgroundController:
             self.SetStatusMessageMethod("Measurement stopped")
         else:
             self.SetStatusMessageMethod("Measurement failed")
+            messagebox.showerror('Measurement failed', status)
 
     def performAcqusition(self):
         self.ZaberDriver.waitUntilIdle()
@@ -158,6 +161,7 @@ class BackgroundController:
         time.sleep(1)
 
         failedAcquisitionsCount = 0
+        failMessages = []
 
         # acquire all data
         i = 0
@@ -165,7 +169,13 @@ class BackgroundController:
             i += 1
         # for i in range(0, self.orderedMeasurementsCount):
             if failedAcquisitionsCount >= math.ceil(self.orderedMeasurementsCount * 0.2):
-                return "fail"
+
+                errstatus = "Too many failed measurements: "
+
+                for msg in failMessages:
+                    errstatus += "\n" + msg
+
+                return errstatus
 
             self.ZaberDriver.waitUntilIdle()
             time.sleep(0.25)  # wait to let the mirror settle
@@ -215,6 +225,7 @@ class BackgroundController:
             if measStatus != "ok":
                 failedAcquisitionsCount += 1
                 i -= 1
+                print("Measurement cycle skipped due to error: " + measStatus)
                 continue
 
             # send the delay line to the starting position while the calculations are running
@@ -229,7 +240,10 @@ class BackgroundController:
                                                         rawInterferogram=self.MFLIDriver.lastInterferogramData)
             except:
                 self.SetStatusMessageMethod("Data acquisition or analysis failed")
-                return "Data analysis failed"
+                failedAcquisitionsCount += 1
+                i -= 1
+                print("Data acquisition or analysis failed due to exception")
+                continue
 
             self.rawInterferograms.append(np.copy(self.MFLIDriver.lastInterferogramData))
             self.rawReferenceSignals.append(np.copy(self.MFLIDriver.lastReferenceData))

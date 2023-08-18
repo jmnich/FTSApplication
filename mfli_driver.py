@@ -110,8 +110,8 @@ class MFLIDriver:
     def measureData(self):
 
         startTime = datetime.now()
-        expectedMeasDuration = (self.currentMeasurementPointsCount / self.currentMeasurementFrequency) + 1.0
-        print(f"Expected measurement duration: {expectedMeasDuration}s")
+        expectedMeasDuration = (self.currentMeasurementPointsCount / self.currentMeasurementFrequency) + 2.0
+        print(f"Max allowed measurement duration: {expectedMeasDuration}s")
         status = "ok"
 
         try:
