@@ -141,16 +141,16 @@ class BackgroundController:
         mfliSamplingFrequency = MFLIDriver.MFLISamplingRates[self.mfliFrequencyIndex]
         self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
 
-        # configure MFLI
-        self.MFLIDriver.configureForMeasurement(samplingFreqIndex=self.mfliFrequencyIndex,
-                                                sampleLength=self.mfliSamplesCount,
-                                                triggerEnabled=self.triggerModeEnabled,
-                                                triggerLevel=self.triggerLevel,
-                                                triggerDelay=self.triggerDelay,
-                                                triggerHysteresis=self.triggerHysteresis)
-
         # acquire all data
         for i in range(0, self.orderedMeasurementsCount):
+
+            # configure MFLI
+            self.MFLIDriver.configureForMeasurement(samplingFreqIndex=self.mfliFrequencyIndex,
+                                                    sampleLength=self.mfliSamplesCount,
+                                                    triggerEnabled=self.triggerModeEnabled,
+                                                    triggerLevel=self.triggerLevel,
+                                                    triggerDelay=self.triggerDelay,
+                                                    triggerHysteresis=self.triggerHysteresis)
 
             self.ZaberDriver.waitUntilIdle()
             time.sleep(0.25)  # wait to let the mirror settle
