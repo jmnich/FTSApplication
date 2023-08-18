@@ -147,6 +147,16 @@ class BackgroundController:
         mfliSamplingFrequency = MFLIDriver.MFLISamplingRates[self.mfliFrequencyIndex]
         self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
 
+        # configure MFLI
+        self.MFLIDriver.configureForMeasurement(samplingFreqIndex=self.mfliFrequencyIndex,
+                                                sampleLength=self.mfliSamplesCount,
+                                                triggerEnabled=self.triggerModeEnabled,
+                                                triggerLevel=self.triggerLevel,
+                                                triggerDelay=self.triggerDelay,
+                                                triggerHysteresis=self.triggerHysteresis)
+
+        time.sleep(1)
+
         failedAcquisitionsCount = 0
 
         # acquire all data
@@ -156,14 +166,6 @@ class BackgroundController:
         # for i in range(0, self.orderedMeasurementsCount):
             if failedAcquisitionsCount >= math.ceil(self.orderedMeasurementsCount * 0.2):
                 return "fail"
-
-            # configure MFLI
-            self.MFLIDriver.configureForMeasurement(samplingFreqIndex=self.mfliFrequencyIndex,
-                                                    sampleLength=self.mfliSamplesCount,
-                                                    triggerEnabled=self.triggerModeEnabled,
-                                                    triggerLevel=self.triggerLevel,
-                                                    triggerDelay=self.triggerDelay,
-                                                    triggerHysteresis=self.triggerHysteresis)
 
             self.ZaberDriver.waitUntilIdle()
             time.sleep(0.25)  # wait to let the mirror settle
@@ -191,7 +193,7 @@ class BackgroundController:
 
             # wait until the mirror is in position
             self.ZaberDriver.waitUntilIdle()
-            time.sleep(0.25)  # wait to let the mirror settle
+            time.sleep(1.0)  # wait to let the mirror settle
 
             self.SetStatusMessageMethod("Acquisition...")
             # acquire data (note: zaber uses us/s, interface uses mm/s)
@@ -214,6 +216,9 @@ class BackgroundController:
                 failedAcquisitionsCount += 1
                 i -= 1
                 continue
+
+            # send the delay line to the starting position while the calculations are running
+            self.ZaberDriver.setPosition(position=startPosition, speed=ZaberDriver.MaxSpeed)
 
             self.SetStatusMessageMethod("Calculations...")
             # synchronization delay

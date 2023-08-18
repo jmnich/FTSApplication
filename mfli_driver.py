@@ -66,40 +66,42 @@ class MFLIDriver:
 
         zhinst.utils.disable_everything(self.DAQ, self.deviceID)
 
+        self.DAQ.sync()
+
         self.DAQ.setInt(f'/{self.deviceID}/auxouts/2/demodselect', 0)
         self.DAQ.setInt(f'/{self.deviceID}/auxouts/2/demodselect', 0)
         self.DAQ.setInt(f'/{self.deviceID}/auxouts/3/demodselect', 0)
         self.DAQ.setInt(f'/{self.deviceID}/auxouts/3/demodselect', 0)
 
-        self.Scope = self.DAQ.scopeModule()
-        self.Scope.set('lastreplace', 1)
-        self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
-        self.Scope.set('averager/weight', 1)
-        self.Scope.set('averager/restart', 0)
-        self.Scope.set('averager/weight', 1)
-        self.Scope.set('averager/restart', 0)
-        self.Scope.set('fft/power', 0)
-        self.Scope.unsubscribe('*')
-        self.Scope.set('mode', 1)
-        self.Scope.set('fft/spectraldensity', 0)
-        self.Scope.set('fft/window', 1)
-        # scope.set('save/directory', 'C:\\Users\\JakubMnich\\Documents\\Zurich Instruments\\LabOne\\WebServer')
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/time', int(samplingFreqIndex))
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/length', int(sampleLength))
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channels/1/inputselect', 8) # '8' - Ref 0
         self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
-        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/single', 1)
+        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/single', 0)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channel', 3) # '3' - both channels active
+        self.DAQ.setInt(f'/{self.deviceID}/scopes/0/segments/enable', 0)
 
         # configure the trigger
         if triggerEnabled:
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigdelay', triggerDelay / 1000.0) # convert from [ms] to [s]
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/triglevel', triggerLevel / 1000.0) # convert from [mV] to [V]
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trighysteresis/absolute', triggerHysteresis / 1000.0) # as above
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigholdoffmode', 0) # holdoff mode: time
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigholdoff', 0.5) # set holdoff time [s]
-            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigrising', 1)
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigfalling', 0)
 
+
+        self.DAQ.sync()
+
+        self.Scope = self.DAQ.scopeModule()
+        self.Scope.set('mode', 1)
+        self.Scope.set('lastreplace', 1)
+        self.Scope.set('averager/weight', 1)
+        self.Scope.set('averager/restart', 0)
+        self.Scope.set("historylength", 1)
+        self.Scope.unsubscribe('*')
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
 
         # force global synchronization between the device and the data server
@@ -135,11 +137,11 @@ class MFLIDriver:
             self.lastReferenceData = \
                 result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][1]
 
-        except:
+        except Exception as err:
             self.lastReferenceData = None
             self.lastInterferogramData = None
-            print(f"MFLI acquisition failed")
-            status = "fail"
+            print(f"MFLI acquisition failed: ", err)
+            status = "acquisition failed"
 
         finally:
             # finish gracefully regardless of the measurement results to prevent random crashes
