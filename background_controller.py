@@ -150,8 +150,10 @@ class BackgroundController:
         failedAcquisitionsCount = 0
 
         # acquire all data
-        for i in range(0, self.orderedMeasurementsCount):
-
+        i = 0
+        while i < self.orderedMeasurementsCount:
+            i += 1
+        # for i in range(0, self.orderedMeasurementsCount):
             if failedAcquisitionsCount >= math.ceil(self.orderedMeasurementsCount * 0.2):
                 return "fail"
 
@@ -213,6 +215,7 @@ class BackgroundController:
                 i -= 1
                 continue
 
+            self.SetStatusMessageMethod("Calculations...")
             # synchronization delay
             # time.sleep(0.1)
 

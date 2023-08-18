@@ -109,22 +109,23 @@ class MFLIDriver:
 
         startTime = datetime.now()
         expectedMeasDuration = (self.currentMeasurementPointsCount / self.currentMeasurementFrequency) + 1.0
-
-        self.Scope.execute()
-
+        print(f"Expected measurement duration: {expectedMeasDuration}s")
         status = "ok"
 
         try:
+            self.Scope.execute()
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 1)
+            self.DAQ.sync()
             result = None
             # perform acquisition and terminate when done or when a timeout occurs
-            while not self.Scope.finished():
+            while  self.Scope.progress() < 1.0 and not self.Scope.finished():
                 if (datetime.now() - startTime).total_seconds() > expectedMeasDuration:
                     status = "acquisition timeout"
                     break
 
-                time.sleep(0.05)
+                time.sleep(0.5)
 
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 0)
             result = self.Scope.read()
 
             # dig the data vectors out of the confusing maze dumped by the MFLI
