@@ -8,6 +8,7 @@ from zaber_driver import ZaberDriver
 from data_processor import DataProcessor
 import logging
 import numpy as np
+import math
 
 class BackgroundController:
 
@@ -151,7 +152,7 @@ class BackgroundController:
         # acquire all data
         for i in range(0, self.orderedMeasurementsCount):
 
-            if failedAcquisitionsCount >= 10:
+            if failedAcquisitionsCount >= math.ceil(self.orderedMeasurementsCount * 0.2):
                 return "fail"
 
             # configure MFLI
