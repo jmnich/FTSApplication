@@ -74,13 +74,11 @@ class FTSApp:
         self.root.protocol("WM_DELETE_WINDOW", self.onClosing)
 
         # build GUI elements
-        self.frameTopPlot = ctk.CTkFrame(master=self.root,
-                                         fg_color="darkblue")
+        self.frameTopPlot = ctk.CTkFrame(master=self.root, fg_color="darkblue")
 
         self.frameTopPlot.grid(row=0, column=1, padx=(5, 5), pady=0)#, sticky="N")
 
-        self.frameBottomPlot = ctk.CTkFrame(master=self.root,
-                                            fg_color="darkblue")
+        self.frameBottomPlot = ctk.CTkFrame(master=self.root, fg_color="darkblue")
         # self.frame.place(relx=0.33, rely=0.025)
         self.frameBottomPlot.grid(row=1, column=1, padx=(5, 5), pady=0)#, sticky="N")
 

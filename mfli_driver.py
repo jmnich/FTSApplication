@@ -22,6 +22,7 @@ class MFLIDriver:
         self.deviceID = devID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
         self.currentMeasurementFrequency = None
         self.currentMeasurementPointsCount = None
+        self.triggerEnabled = False
         # self.tryConnect(self.deviceID)
 
     def tryConnect(self, deviceID):
@@ -40,6 +41,7 @@ class MFLIDriver:
 
             # restore the base configuration
             zhinst.utils.disable_everything(self.DAQ, self.deviceID)
+            self.Scope = self.DAQ.scopeModule()
 
 
         except Exception as e:
@@ -60,6 +62,8 @@ class MFLIDriver:
                      f"sample length: {sampleLength}, triggered acqusition enabled: {triggerEnabled}, "
                      f"trigger level: {triggerLevel} mV, trigger hysteresis: {triggerHysteresis} mV, "
                      f"trigger delay: {triggerDelay} ms")
+
+        self.triggerEnabled = triggerEnabled
 
         self.currentMeasurementFrequency = MFLIDriver.MFLISamplingRates[samplingFreqIndex]
         self.currentMeasurementPointsCount = sampleLength
@@ -82,8 +86,8 @@ class MFLIDriver:
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/segments/enable', 0)
 
         # configure the trigger
-        if triggerEnabled:
-            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
+        if self.triggerEnabled:
+            # self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigdelay', triggerDelay / 1000.0) # convert from [ms] to [s]
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/triglevel', triggerLevel / 1000.0) # convert from [mV] to [V]
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trighysteresis/absolute', triggerHysteresis / 1000.0) # as above
@@ -95,12 +99,12 @@ class MFLIDriver:
 
         self.DAQ.sync()
 
-        self.Scope = self.DAQ.scopeModule()
+        # self.Scope = self.DAQ.scopeModule()
         self.Scope.set('mode', 1)
         self.Scope.set('lastreplace', 1)
         self.Scope.set('averager/weight', 1)
         self.Scope.set('averager/restart', 0)
-        self.Scope.set("historylength", 1)
+        # self.Scope.set("historylength", 1)
         self.Scope.unsubscribe('*')
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
 
@@ -115,6 +119,9 @@ class MFLIDriver:
         status = "ok"
 
         try:
+            if self.triggerEnabled:
+                self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
+
             self.Scope.execute()
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 1)
             self.DAQ.sync()
@@ -126,6 +133,9 @@ class MFLIDriver:
                     break
 
                 time.sleep(0.5)
+
+            if self.triggerEnabled:
+                self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 0)
 
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 0)
             result = self.Scope.read()
@@ -146,6 +156,7 @@ class MFLIDriver:
         finally:
             # finish gracefully regardless of the measurement results to prevent random crashes
             self.Scope.finish()
+            self.DAQ.sync()
             return status
 
 
