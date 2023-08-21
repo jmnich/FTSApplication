@@ -14,8 +14,10 @@ import data_export_tool as DET
 
 class AbsorbanceTool:
 
-    def __init__(self, root, initialSettings):
+    def __init__(self, root, initialSettings, plotLineColor):
         # important fields
+        self.plotLineColor = plotLineColor
+
         self.referenceSpectrumAxisNameX = None
         self.referenceSpectrumAxisNameY = None
         self.referenceSpectrumAxisX = None
@@ -559,7 +561,7 @@ class AbsorbanceTool:
                 self.inspectSourceSpectraButton.configure(state="normal")
 
             self.axSmp.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
-            self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color="dodgerblue")
+            self.axSmp.plot(self.sampleSpectrumAxisX, self.sampleSpectrumAxisY, color=self.plotLineColor)
 
             self.axSmp.set_xlim(self.plotsXMin, self.plotsXMax)
             self.axSmp.set_ylim(self.plotsYMin, self.plotsYMax)
@@ -581,7 +583,7 @@ class AbsorbanceTool:
             self.calculateAbsorbance()
 
             self.axAbs.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
-            self.axAbs.plot(self.absorbanceSpectrumAxisX, self.absorbanceSpectrumAxisY, color="dodgerblue")
+            self.axAbs.plot(self.absorbanceSpectrumAxisX, self.absorbanceSpectrumAxisY, color=self.plotLineColor)
 
             self.axAbs.set_xlim(self.plotsXMin, self.plotsXMax)
             self.axAbs.set_ylim(self.plotsAbsYMin, self.plotsAbsYMax)
@@ -663,7 +665,7 @@ class AbsorbanceTool:
             plt.title("Reference spectrum", fontsize=20)
             plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
             plt.ylabel("Intensity [dBm]", fontsize=20)
-            plt.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue")
+            plt.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color=self.plotLineColor)
             plt.xlim((float(self.plotsXMin), float(self.plotsXMax)))
             plt.ylim((float(self.plotsYMin), float(self.plotsYMax)))
             plt.grid(alpha=0.3)

@@ -111,7 +111,7 @@ class MFLIDriver:
         self.Scope.set('lastreplace', 1)
         self.Scope.set('averager/weight', 1)
         self.Scope.set('averager/restart', 0)
-        # self.Scope.set("historylength", 1)
+        self.Scope.set("historylength", 1)
         self.Scope.unsubscribe('*')
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
 

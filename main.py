@@ -37,6 +37,7 @@ class FTSApp:
 
         # constants
         self.backgroundGray = "#242424"
+        self.plotLineColor = "gold" # dodgerblue
         self.currentSpectrumX = []
         self.currentSpectrumY = []
         self.currentInterferogramX = []
@@ -877,7 +878,7 @@ class FTSApp:
 
 
     def onCmdOpenAbsorbanceTool(self):
-        self.absorbanceToolWindow = AbsorbanceTool.AbsorbanceTool(self.root, self.appSettings)
+        self.absorbanceToolWindow = AbsorbanceTool.AbsorbanceTool(self.root, self.appSettings, self.plotLineColor)
 
         self.absorbanceToolWindow.grabSampleSpectrumDataAverage = self.giveSpectrumForAbsorbanceAverage
         self.absorbanceToolWindow.grabReferenceSpectrumDataAverage = self.giveSpectrumForAbsorbanceAverage
@@ -1046,7 +1047,7 @@ class FTSApp:
         if ((averageSpectrumX is not None) and (averageSpectrumY is not None) and
                 (len(averageSpectrumX) == len(averageSpectrumY)) and (len(averageSpectrumX) > 0)):
 
-            self.axBot.plot(averageSpectrumX, averageSpectrumY, color="dodgerblue")
+            self.axBot.plot(averageSpectrumX, averageSpectrumY, color=self.plotLineColor)
 
 
         self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
@@ -1094,7 +1095,7 @@ class FTSApp:
 
         # plot the interferogram itself
         if interferogramValidForDisplay:
-            self.axTop.plot(interferogramX, interferogramY, color="dodgerblue", label="Signal")
+            self.axTop.plot(interferogramX, interferogramY, color=self.plotLineColor, label="Signal")
             self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
 
         if self.appSettings["triggerModeEnabled"] == 'True':
