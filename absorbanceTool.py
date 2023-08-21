@@ -540,7 +540,7 @@ class AbsorbanceTool:
 
 
             self.axRef.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
-            self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue")
+            self.axRef.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, self.plotLineColor)
 
             self.axRef.set_xlim(self.plotsXMin, self.plotsXMax)
             self.axRef.set_ylim(self.plotsYMin, self.plotsYMax)
@@ -665,7 +665,7 @@ class AbsorbanceTool:
             plt.title("Reference spectrum", fontsize=20)
             plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
             plt.ylabel("Intensity [dBm]", fontsize=20)
-            plt.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color=self.plotLineColor)
+            plt.plot(self.referenceSpectrumAxisX, self.referenceSpectrumAxisY, color="dodgerblue")
             plt.xlim((float(self.plotsXMin), float(self.plotsXMax)))
             plt.ylim((float(self.plotsYMin), float(self.plotsYMax)))
             plt.grid(alpha=0.3)
