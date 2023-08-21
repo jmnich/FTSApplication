@@ -100,9 +100,8 @@ class MFLIDriver:
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trighysteresis/mode', 0) # use absolute hysteresis
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trighysteresis/absolute', triggerHysteresis / 1000.0) # as above
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigholdoffmode', 0) # holdoff mode: time
-            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigholdoff', 0.5) # set holdoff time [s]
-            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigrising', 1)
-            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigfalling', 0)
+            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigholdoff', 0) # set holdoff time [s]
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigslope', 1)  # 1 = rising, 2 = falling
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/triggate/enable', 0)
 
         self.DAQ.sync()
@@ -135,7 +134,7 @@ class MFLIDriver:
             self.DAQ.sync()
             result = None
             # perform acquisition and terminate when done or when a timeout occurs
-            while  self.Scope.progress()[0] < 1.0:   # should [0] be here...?
+            while  self.Scope.progress()[0] < 1.0 and not self.Scope.finished():   # should [0] be here...?
                 if (datetime.now() - startTime).total_seconds() > expectedMeasDuration:
                     status = "acquisition timeout"
                     break
