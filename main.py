@@ -1083,13 +1083,17 @@ class FTSApp:
             triggerMarkerY = [float(self.appSettings["triggerLevel"]) / 1000.0,
                        float(self.appSettings["triggerLevel"]) / 1000.0]
 
-            self.axTop.plot(triggerMarkerX, triggerMarkerY, color="red", alpha=0.75, label="Trigger")
+            self.axTop.plot(triggerMarkerX, triggerMarkerY, color="red", alpha=0.75,
+                            label="Trigger", linestyle="dashed")
 
             hysteresisMarkerYVal = ((float(self.appSettings["triggerLevel"]) / 1000.0) -
                                     (float(self.appSettings["triggerHysteresis"]) / 1000.0))
 
             hysteresisMarkerY = [hysteresisMarkerYVal, hysteresisMarkerYVal]
-            self.axTop.plot(hysteresisMarkerX, hysteresisMarkerY, color="green", alpha=0.75, label="Hysteresis")
+
+            self.axTop.plot(hysteresisMarkerX, hysteresisMarkerY, color="lime", alpha=0.75,
+                            label="Hysteresis", linestyle="dashed")
+
             self.axTop.set_xlabel('Mirror position [\u03BCm]')
             self.axTop.set_ylabel('Detector voltage [V]')
 
