@@ -276,7 +276,7 @@ class BackgroundController:
 
             self.SendResultsToPlot(results["interferogramX"], results["interferogramY"],
                                    results["spectrumX"], results["spectrumY"],
-                                   self.averageSpectrumX, self.averageSpectrumY, i + 1)
+                                   self.averageSpectrumX, self.averageSpectrumY, i)
 
         return "ok"
 

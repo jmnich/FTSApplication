@@ -96,7 +96,6 @@ class MFLIDriver:
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigrising', 1)
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigfalling', 0)
 
-
         self.DAQ.sync()
 
         # self.Scope = self.DAQ.scopeModule()
