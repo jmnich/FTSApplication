@@ -72,15 +72,16 @@ class MFLIDriver:
 
         self.DAQ.sync()
 
-        self.DAQ.setInt(f'/{self.deviceID}/auxouts/2/demodselect', 0)
-        self.DAQ.setInt(f'/{self.deviceID}/auxouts/2/demodselect', 0)
-        self.DAQ.setInt(f'/{self.deviceID}/auxouts/3/demodselect', 0)
-        self.DAQ.setInt(f'/{self.deviceID}/auxouts/3/demodselect', 0)
+        # self.DAQ.setInt(f'/{self.deviceID}/auxouts/2/demodselect', 0)
+        # self.DAQ.setInt(f'/{self.deviceID}/auxouts/2/demodselect', 0)
+        # self.DAQ.setInt(f'/{self.deviceID}/auxouts/3/demodselect', 0)
+        # self.DAQ.setInt(f'/{self.deviceID}/auxouts/3/demodselect', 0)
+
+        self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
 
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/time', int(samplingFreqIndex))
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/length', int(sampleLength))
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channels/1/inputselect', 8) # '8' - Ref 0
-        self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/single', 0)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channel', 3) # '3' - both channels active
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/segments/enable', 0)
@@ -88,13 +89,21 @@ class MFLIDriver:
         # configure the trigger
         if self.triggerEnabled:
             # self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
-            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigdelay', triggerDelay / 1000.0) # convert from [ms] to [s]
-            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/triglevel', triggerLevel / 1000.0) # convert from [mV] to [V]
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigchannel', 0)    # 0 = sigin 1
+            triglev = triggerLevel / 1000.0     # convert from [mV] to [V]
+            trigdel = triggerDelay / 1000.0     # convert from [ms] to [s]
+
+            print(f"Trigger level = {triglev} V and delay = {trigdel} s")
+
+            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigdelay', trigdel)
+            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/triglevel', triglev)
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trighysteresis/mode', 0) # use absolute hysteresis
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trighysteresis/absolute', triggerHysteresis / 1000.0) # as above
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigholdoffmode', 0) # holdoff mode: time
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigholdoff', 0.5) # set holdoff time [s]
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigrising', 1)
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigfalling', 0)
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/triggate/enable', 0)
 
         self.DAQ.sync()
 

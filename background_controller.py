@@ -91,10 +91,12 @@ class BackgroundController:
             self.SetStatusMessageMethod("One or more hardware components\nfailed to connect")
             self.SetGeneralReadyFlagMethod(False)
 
+
     def performInitialization(self):
         logging.info(f"Application controller: hardware initialization starting")
         t = Thread(target=self.initializationWork, daemon=True)
         t.start()
+
 
     def performMeasurements(self, measurementsCount, samplingFrequency, scanStart, scanLength, scanSpeed,
                             trigModeEnabled, trigLevel, trigHysteresis, trigDelay):
@@ -127,6 +129,7 @@ class BackgroundController:
         t = Thread(target=self.measurementsWork, daemon=True)
         t.start()
 
+
     def measurementsWork(self):
         self.SetStatusMessageMethod("Preparing...")
 
@@ -144,6 +147,7 @@ class BackgroundController:
         else:
             self.SetStatusMessageMethod("Measurement failed")
             messagebox.showerror('Measurement failed', status)
+
 
     def performAcqusition(self):
         self.ZaberDriver.waitUntilIdle()
@@ -170,10 +174,10 @@ class BackgroundController:
         # for i in range(0, self.orderedMeasurementsCount):
             if failedAcquisitionsCount >= math.ceil(self.orderedMeasurementsCount * 0.2):
 
-                errstatus = "Too many failed measurements: "
-
-                for msg in failMessages:
-                    errstatus += "\n" + msg
+                if self.orderedMeasurementsCount == 1:
+                    errstatus = "Single measurement failed"
+                else:
+                    errstatus = "More than 20% of the ordered measurements failed"
 
                 return errstatus
 
