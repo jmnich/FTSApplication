@@ -108,7 +108,7 @@ class MFLIDriver:
 
         # self.Scope = self.DAQ.scopeModule()
         self.Scope.set('mode', 1)
-        self.Scope.set('lastreplace', 1)
+        # self.Scope.set('lastreplace', 1) # this shouldn't be used with the API, reserved for LabOne
         self.Scope.set('averager/weight', 1)
         self.Scope.set('averager/restart', 0)
         self.Scope.set("historylength", 1)
