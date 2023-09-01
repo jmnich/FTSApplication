@@ -240,7 +240,9 @@ class BackgroundController:
             # time.sleep(0.1)
 
             try:
-                results = self.DataAnalyzer.analyzeData(rawReferenceSignal=self.MFLIDriver.lastReferenceData,
+                # results = self.DataAnalyzer.analyzeData(rawReferenceSignal=self.MFLIDriver.lastReferenceData,
+                #                                         rawInterferogram=self.MFLIDriver.lastInterferogramData)
+                results = self.DataAnalyzer.analyzeDataHilbertInterpolation(rawReferenceSignal=self.MFLIDriver.lastReferenceData,
                                                         rawInterferogram=self.MFLIDriver.lastInterferogramData)
             except:
                 self.SetStatusMessageMethod("Data acquisition or analysis failed")
