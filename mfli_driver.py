@@ -43,6 +43,11 @@ class MFLIDriver:
             zhinst.utils.disable_everything(self.DAQ, self.deviceID)
             self.Scope = self.DAQ.scopeModule()
 
+            self.Scope.set('mode', 1)
+            # self.Scope.set('lastreplace', 1) # this shouldn't be used with the API, reserved for LabOne
+            self.Scope.set('averager/weight', 1)
+            self.Scope.set('averager/restart', 0)
+
 
         except Exception as e:
             print(f"Connection failed to MFLI device")
@@ -88,29 +93,29 @@ class MFLIDriver:
 
         # configure the trigger
         if self.triggerEnabled:
-            # self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigchannel', 0)    # 0 = sigin 1
             triglev = triggerLevel / 1000.0     # convert from [mV] to [V]
             trigdel = triggerDelay / 1000.0     # convert from [ms] to [s]
 
-            print(f"Trigger level = {triglev} V and delay = {trigdel} s")
+            print(f"Trigger level = {triglev}V hysteresis = {triggerHysteresis}V and delay = {trigdel}s")
 
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigdelay', trigdel)
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/triglevel', triglev)
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trighysteresis/mode', 0) # use absolute hysteresis
             self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trighysteresis/absolute', triggerHysteresis / 1000.0) # as above
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigholdoffmode', 0) # holdoff mode: time
-            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigholdoff', 0) # set holdoff time [s]
+            self.DAQ.setDouble(f'/{self.deviceID}/scopes/0/trigholdoff', 0.1) # set holdoff time [s]
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigslope', 1)  # 1 = rising, 2 = falling
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/triggate/enable', 0)
 
         self.DAQ.sync()
 
         # self.Scope = self.DAQ.scopeModule()
-        self.Scope.set('mode', 1)
-        # self.Scope.set('lastreplace', 1) # this shouldn't be used with the API, reserved for LabOne
-        self.Scope.set('averager/weight', 1)
-        self.Scope.set('averager/restart', 0)
+        # self.Scope.set('mode', 0)
+        # # self.Scope.set('lastreplace', 1) # this shouldn't be used with the API, reserved for LabOne
+        # # self.Scope.set('averager/weight', 1)
+        # # self.Scope.set('averager/restart', 0)
         self.Scope.set("historylength", 1)
         self.Scope.unsubscribe('*')
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
@@ -126,11 +131,12 @@ class MFLIDriver:
         status = "ok"
 
         try:
-            if self.triggerEnabled:
-                self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
+            # if self.triggerEnabled:
+                # self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
 
             self.Scope.execute()
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 1)
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
             self.DAQ.sync()
             result = None
             # perform acquisition and terminate when done or when a timeout occurs
@@ -141,8 +147,8 @@ class MFLIDriver:
 
                 time.sleep(0.5)
 
-            if self.triggerEnabled:
-                self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 0)
+            # if self.triggerEnabled:
+                # self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 0)
 
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 0)
             result = self.Scope.read()
@@ -163,6 +169,7 @@ class MFLIDriver:
         finally:
             # finish gracefully regardless of the measurement results to prevent random crashes
             self.Scope.finish()
+            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 0)
             self.DAQ.sync()
             return status
 
