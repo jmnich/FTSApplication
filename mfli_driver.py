@@ -130,35 +130,50 @@ class MFLIDriver:
         print(f"Max allowed measurement duration: {expectedMeasDuration}s")
         status = "ok"
 
-        try:
-            # if self.triggerEnabled:
-                # self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
+        print("Debug - starting DAQ")
 
+        try:
             self.Scope.execute()
+
+            if self.triggerEnabled:
+                print("Debug - enabling trigger")
+                self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
+
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 1)
-            self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 1)
+
             self.DAQ.sync()
             result = None
             # perform acquisition and terminate when done or when a timeout occurs
             while  self.Scope.progress()[0] < 1.0 and not self.Scope.finished():   # should [0] be here...?
                 if (datetime.now() - startTime).total_seconds() > expectedMeasDuration:
                     status = "acquisition timeout"
+                    print("Debug - timeout")
                     break
 
                 time.sleep(0.5)
+
+            print("Debug - data acquired")
 
             # if self.triggerEnabled:
                 # self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 0)
 
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/enable', 0)
+            self.DAQ.sync()
             result = self.Scope.read()
 
-            # dig the data vectors out of the confusing maze dumped by the MFLI
-            self.lastInterferogramData = \
-                result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][0]
+            self.Scope.finish()
 
-            self.lastReferenceData = \
-                result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][1]
+            print(f"Debug - data read, dict lenght: {len(result)}")
+
+            if len(result) > 1:
+                # dig the data vectors out of the confusing maze dumped by the MFLI
+                self.lastInterferogramData = \
+                    result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][0]
+
+                self.lastReferenceData = \
+                    result[f'{self.deviceID}']['scopes']['0']['wave'][0][0]['wave'][1]
+            else:
+                print("Error - MFLI returned an empty data structure")
 
         except Exception as err:
             self.lastReferenceData = None
@@ -168,7 +183,6 @@ class MFLIDriver:
 
         finally:
             # finish gracefully regardless of the measurement results to prevent random crashes
-            self.Scope.finish()
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 0)
             self.DAQ.sync()
             return status
