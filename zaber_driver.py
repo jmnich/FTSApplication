@@ -17,61 +17,59 @@ class ZaberDriver:
         self.serialPort = None
 
     def tryConnect(self, port):
-        # print(f"Zaber trying to connect to {port}")
-        # logging.info(f"Zaber driver trying to connect to {port}")
-        #
-        # self.serialPort = serial.Serial()
-        # self.serialPort.port = port
-        # self.serialPort.baudrate = 115200
-        #
-        # try:
-        #     self.serialPort.open()
-        # except:
-        #     pass
-        #
-        # if self.serialPort.isOpen():
-        #     print("Zaber connected")
-        #     logging.info(f"Zaber driver connected")
-        #     self.isConnected = True
-        #     return True
-        # else:
-        #     print("Zaber disconnected")
-        #     logging.info(f"Zaber driver connection failed")
-        #     self.isConnected = False
-        #     return False
+        print(f"Zaber trying to connect to {port}")
+        logging.info(f"Zaber driver trying to connect to {port}")
 
-        return True
+        self.serialPort = serial.Serial()
+        self.serialPort.port = port
+        self.serialPort.baudrate = 115200
+
+        try:
+            self.serialPort.open()
+        except:
+            pass
+
+        if self.serialPort.isOpen():
+            print("Zaber connected")
+            logging.info(f"Zaber driver connected")
+            self.isConnected = True
+            return True
+        else:
+            print("Zaber disconnected")
+            logging.info(f"Zaber driver connection failed")
+            self.isConnected = False
+            return False
 
     def home(self):
-        # self.sendCommand("/home")
+        self.sendCommand("/home")
         logging.info(f"Zaber driver: homing")
-        # self.serialPort.readline()
+        self.serialPort.readline()
 
     def sendCommand(self, command):
         dummy = command + "\r\n"
-        # if self.serialPort.isOpen():
-        #     self.serialPort.write(bytes(dummy, 'ascii'))
+        if self.serialPort.isOpen():
+            self.serialPort.write(bytes(dummy, 'ascii'))
 
     def waitUntilIdle(self):
 
-        # if not self.serialPort.isOpen():
-        #     return
-        #
-        # while True:
-        #     self.sendCommand("/")
-        #     responseascii = self.serialPort.readline()
-        #     response = ''.join(map(chr, responseascii))
-        #     if "IDLE" in response:
-        #         break
-        #     else:
+        if not self.serialPort.isOpen():
+            return
+
+        while True:
+            self.sendCommand("/")
+            responseascii = self.serialPort.readline()
+            response = ''.join(map(chr, responseascii))
+            if "IDLE" in response:
+                break
+            else:
                 time.sleep(0.05)
 
     def setPosition(self, position, speed = 10000):
         calculated_steps = round(position / self.DelayLineResolution)
-        # command = f"/move abs {calculated_steps} {self.convertVelocityFromSIToZaber(speed)} {50}"
-        # self.sendCommand(command)
-        # self.serialPort.readline()
-        # time.sleep(0.5)
+        command = f"/move abs {calculated_steps} {self.convertVelocityFromSIToZaber(speed)} {50}"
+        self.sendCommand(command)
+        self.serialPort.readline()
+        time.sleep(0.5)
 
     def convertVelocityFromSIToZaber(self, velInUmPerS):
         return round((velInUmPerS * 1.6384) / ZaberDriver.DelayLineResolution)
