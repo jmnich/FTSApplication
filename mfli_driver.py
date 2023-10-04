@@ -186,7 +186,3 @@ class MFLIDriver:
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/trigenable', 0)
             self.DAQ.sync()
             return status
-
-
-
-
