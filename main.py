@@ -547,6 +547,53 @@ class FTSApp:
         self.spectrumYMaxBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
         self.spectrumYMaxBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
 
+        self.xUnitsLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+                                                    text="Select X axis\nunit",
+                                                    font=ctk.CTkFont(size=12))
+        self.xUnitsLabel.grid(row=4, column=0, sticky="E", padx=5, pady=5)
+
+
+        self.currentXUnit = "um"
+
+        self.xUnitRadioUMVar = ctk.IntVar(value=0)
+        self.xUnitRadioUM = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plots"),
+                                                text="\u03BCm",
+                                                command=self.onCmdUnitRadioUM,
+                                                value=1,
+                                                variable=self.xUnitRadioUMVar)
+        self.xUnitRadioUM.grid(row=4, column=1, sticky="W", padx=5, pady=5)
+
+        if self.currentXUnit == "um":
+            self.xUnitRadioUM.select()
+        else:
+            self.xUnitRadioUM.deselect()
+
+        self.xUnitRadioFreqVar = ctk.IntVar(value=0)
+        self.xUnitRadioFreq = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plots"),
+                                                text="THz",
+                                                command=self.onCmdUnitRadioTHz,
+                                                value=1,
+                                                variable=self.xUnitRadioFreqVar)
+        self.xUnitRadioFreq.grid(row=5, column=1, sticky="W", padx=5, pady=5)
+
+        if self.currentXUnit == "thz":
+            self.xUnitRadioFreq.select()
+        else:
+            self.xUnitRadioFreq.deselect()
+
+        self.xUnitRadioCMVar = ctk.IntVar(value=0)
+        self.xUnitRadioCM = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plots"),
+                                                text="cm-1",
+                                                command=self.onCmdUnitRadioCM,
+                                                value=1,
+                                                variable=self.xUnitRadioCMVar)
+        self.xUnitRadioCM.grid(row=6, column=1, sticky="W", padx=5, pady=5)
+
+        if self.currentXUnit == "cm-1":
+            self.xUnitRadioCM.select()
+        else:
+            self.xUnitRadioCM.deselect()
+
         # Create plots
         # ==============================================================================================================
         plt.style.use('dark_background')
@@ -885,6 +932,38 @@ class FTSApp:
     def onCmdUnusedButton(self):
         print("Unused button click")
 
+    def onCmdUnitRadioCM(self):
+        if self.xUnitRadioCMVar.get() != 0:
+            self.currentXUnit = "cm-1"
+
+        self.xUnitRadioUM.deselect()
+        self.xUnitRadioFreq.deselect()
+
+        self.updatePlot()
+
+    def onCmdUnitRadioUM(self):
+        if self.xUnitRadioUMVar.get() != 0:
+            self.currentXUnit = "um"
+
+        self.xUnitRadioCM.deselect()
+        self.xUnitRadioFreq.deselect()
+
+        self.updatePlot()
+
+    def convertUMtoCM(self, dataInUM):
+        return (1.0 / dataInUM) * 10000.0
+
+    def convertUMtoTHz(self, dataInUM):
+        return 299.792458 / dataInUM
+
+    def onCmdUnitRadioTHz(self):
+        if self.xUnitRadioFreqVar.get() != 0:
+            self.currentXUnit = "thz"
+
+        self.xUnitRadioUM.deselect()
+        self.xUnitRadioCM.deselect()
+
+        self.updatePlot()
 
     def onCmdOpenAbsorbanceTool(self):
         self.absorbanceToolWindow = AbsorbanceTool.AbsorbanceTool(self.root, self.appSettings, self.plotLineColor)
@@ -907,13 +986,14 @@ class FTSApp:
         xmin = float(self.appSettings["plotSpectrumXRangeMin"])
         xmax = float(self.appSettings["plotSpectrumXRangeMax"])
 
-        self.axBot.set_xlim(xmin, xmax)
-        self.axBot.set_ylim(ymin, ymax)
+        # self.axBot.set_xlim(xmin, xmax)
+        # self.axBot.set_ylim(ymin, ymax)
 
         logging.info(f"Spectrum plot ranges updated to: X({xmin},{xmax}) Y({ymin},{ymax})")
 
-        self.canvasBotPlot.draw()
-        self.root.update()
+        # self.canvasBotPlot.draw()
+        # self.root.update()
+        self.updatePlot()
 
     def onCmdConnectHardware(self):
         strippedMFLIID = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace(
@@ -1029,13 +1109,6 @@ class FTSApp:
     def loadDataToPlots(self, interferogramX, interferogramY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
                         completedMeasurements):
 
-        # self.currentInterferogramX = interferogramX
-        # self.currentInterferogramY = interferogramY
-        # self.currentSpectrumX = spectrumX
-        # self.currentSpectrumY = spectrumY
-        # self.currentAverageSpectrumX = averageSpectrumX
-        # self.currentAverageSpectrumY = averageSpectrumY
-
         if completedMeasurements != 0:
             self.multipleMeasBox.delete(0, "end")
             self.multipleMeasBox.insert(0,
@@ -1048,24 +1121,66 @@ class FTSApp:
         # plot spectrum
         self.axBot.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
 
-        if ((spectrumX is not None) and (spectrumY is not None) and
-                (len(spectrumX) == len(spectrumY)) and (len(spectrumX) > 0)):
-
-            self.axBot.plot(spectrumX, spectrumY, color="grey", alpha=0.7)
-
-        if ((averageSpectrumX is not None) and (averageSpectrumY is not None) and
-                (len(averageSpectrumX) == len(averageSpectrumY)) and (len(averageSpectrumX) > 0)):
-
-            self.axBot.plot(averageSpectrumX, averageSpectrumY, color=self.plotLineColor)
-
-
-        self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
-                            float(self.appSettings["plotSpectrumXRangeMax"]))
         self.axBot.set_ylim(float(self.appSettings["plotSpectrumYRangeMin"]),
                             float(self.appSettings["plotSpectrumYRangeMax"]))
 
-        self.axBot.set_xlabel('Wavelength [\u03BCm]')
         self.axBot.set_ylabel('[dBm]')
+
+        # display X axis with units selected by the user
+        spectrumXAxisToPlotLast = None
+        spectrumXAxisToPlotAverage = None
+
+        if self.currentXUnit == "um":
+            self.axBot.set_xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
+                                float(self.appSettings["plotSpectrumXRangeMax"]))
+            self.axBot.set_xlabel('Wavelength [\u03BCm]')
+            self.axBot.set_xscale("linear")
+
+            start, end = self.axBot.get_xlim()
+            self.axBot.xaxis.set_ticks(np.linspace(start, end, 10))
+
+            spectrumXAxisToPlotLast = spectrumX
+            spectrumXAxisToPlotAverage = averageSpectrumX
+
+        elif self.currentXUnit == "thz":
+            self.axBot.set_xlim(self.convertUMtoTHz(float(self.appSettings["plotSpectrumXRangeMin"])),
+                                self.convertUMtoTHz(float(self.appSettings["plotSpectrumXRangeMax"])))
+            self.axBot.set_xlabel('Frequency [THz]')
+            self.axBot.set_xscale("log")
+
+            start, end = self.axBot.get_xlim()
+            print(f"{start}, {end}")
+            print(np.geomspace(end, start, 10))
+            self.axBot.xaxis.set_ticks(np.geomspace(end, start, 10))
+            self.axBot.xaxis.set_major_formatter(mpl.ticker.ScalarFormatter())
+
+            if spectrumX is not None and len(spectrumX) > 0:
+                spectrumXAxisToPlotLast = self.convertUMtoTHz(spectrumX)
+                spectrumXAxisToPlotAverage = self.convertUMtoTHz(averageSpectrumX)
+
+        else:
+            self.axBot.set_xlim(self.convertUMtoCM(float(self.appSettings["plotSpectrumXRangeMin"])),
+                                self.convertUMtoCM(float(self.appSettings["plotSpectrumXRangeMax"])))
+
+            self.axBot.set_xlabel('Wavenumber [cm-1]')
+            self.axBot.set_xscale("linear")
+
+            start, end = self.axBot.get_xlim()
+            self.axBot.xaxis.set_ticks(np.linspace(start, end, 10))
+
+            if spectrumX is not None and len(spectrumX) > 0:
+                spectrumXAxisToPlotLast = self.convertUMtoCM(spectrumX)
+                spectrumXAxisToPlotAverage = self.convertUMtoCM(averageSpectrumX)
+
+        if ((spectrumXAxisToPlotLast is not None) and (spectrumY is not None) and
+                (len(spectrumXAxisToPlotLast) == len(spectrumY)) and (len(spectrumXAxisToPlotLast) > 0)):
+
+            self.axBot.plot(spectrumXAxisToPlotLast, spectrumY, color="grey", alpha=0.7)
+
+        if ((spectrumXAxisToPlotAverage is not None) and (averageSpectrumY is not None) and
+                (len(spectrumXAxisToPlotAverage) == len(averageSpectrumY)) and (len(spectrumXAxisToPlotAverage) > 0)):
+
+            self.axBot.plot(spectrumXAxisToPlotAverage, averageSpectrumY, color=self.plotLineColor)
 
         # plot interferogram
         self.axTop.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
