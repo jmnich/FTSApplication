@@ -65,7 +65,7 @@ def getDefaultSettings():
 
         "triggerModeEnabled": "False",
         "triggerLevel": "100.0",
-        "triggerDelay": "100.0",
+        "triggerReference": "50.0",
         "triggerHysteresis": "10.0"
     }
 

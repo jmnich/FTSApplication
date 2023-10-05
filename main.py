@@ -343,17 +343,17 @@ class FTSApp:
         self.triggerHysteresisBox.bind("<FocusOut>", self.onCmdRefreshTriggerSettings)
         self.triggerHysteresisBox.bind("<Return>", self.onCmdRefreshTriggerSettings)
 
-        self.triggerDelayLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trig"),
-                                                    text="Trigger\ndelay [ms]",
+        self.triggerReferenceLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trig"),
+                                                    text="Trigger\nreference [%]",
                                                     font=ctk.CTkFont(size=12))
-        self.triggerDelayLabel.grid(row=3, column=0, sticky="E", padx=5, pady=5)
+        self.triggerReferenceLabel.grid(row=3, column=0, sticky="E", padx=5, pady=5)
 
-        self.triggerDelayBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trig"),
+        self.triggerReferenceBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trig"),
                                         width=120, height=30)
-        self.triggerDelayBox.insert(0, self.appSettings["triggerDelay"])
-        self.triggerDelayBox.grid(row=3, column=1, sticky="E", padx=5, pady=5)
-        self.triggerDelayBox.bind("<FocusOut>", self.onCmdRefreshTriggerSettings)
-        self.triggerDelayBox.bind("<Return>", self.onCmdRefreshTriggerSettings)
+        self.triggerReferenceBox.insert(0, self.appSettings["triggerReference"])
+        self.triggerReferenceBox.grid(row=3, column=1, sticky="E", padx=5, pady=5)
+        self.triggerReferenceBox.bind("<FocusOut>", self.onCmdRefreshTriggerSettings)
+        self.triggerReferenceBox.bind("<Return>", self.onCmdRefreshTriggerSettings)
 
         # configure settings 'HARDWARE' tab
         # ==============================================================================================================
@@ -683,14 +683,23 @@ class FTSApp:
         # trigger switch
         self.appSettings["triggerModeEnabled"] = self.triggerEnableSwitch.get()
 
-        # handle trigger delay setting
+        # handle trigger reference setting
         try:
-            newDelaySetting = float(self.triggerDelayBox.get())
-            self.appSettings["triggerDelay"] = str(newDelaySetting)
+            newReferenceSetting = float(self.triggerReferenceBox.get())
+
+            if newReferenceSetting > 99:
+                newReferenceSetting = 99
+            elif newReferenceSetting < 1:
+                newReferenceSetting = 1
+
+            self.appSettings["triggerReference"] = str(newReferenceSetting)
+
+            self.triggerReferenceBox.delete(0, "end")
+            self.triggerReferenceBox.insert(0, str(newReferenceSetting))
         except:
-            newDelaySetting = float(self.appSettings["triggerDelay"])
-            self.triggerDelayBox.delete(0, "end")
-            self.triggerDelayBox.insert(0, str(newDelaySetting))
+            newReferenceSetting = float(self.appSettings["triggerReference"])
+            self.triggerReferenceBox.delete(0, "end")
+            self.triggerReferenceBox.insert(0, str(newReferenceSetting))
 
         # handle trigger level setting
         try:
@@ -740,15 +749,15 @@ class FTSApp:
             trgMode = False
 
         self.ApplicationController.performMeasurements(measurementsCount=1,
-                                                    samplingFrequency=self.MFLIFreqneuenciesAsStrings.
-                                                                            index(self.samplingFreqCombo.get()),
-                                                    scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
-                                                    scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
-                                                    scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]),
-                                                    trigModeEnabled=trgMode,
-                                                    trigLevel=float(self.appSettings["triggerLevel"]),
-                                                    trigHysteresis=float(self.appSettings["triggerHysteresis"]),
-                                                    trigDelay=float(self.appSettings["triggerDelay"]))
+                                                       samplingFrequency=self.MFLIFreqneuenciesAsStrings.
+                                                       index(self.samplingFreqCombo.get()),
+                                                       scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
+                                                       scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
+                                                       scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]),
+                                                       trigModeEnabled=trgMode,
+                                                       trigLevel=float(self.appSettings["triggerLevel"]),
+                                                       trigHysteresis=float(self.appSettings["triggerHysteresis"]),
+                                                       trigReference=float(self.appSettings["triggerReference"]))
 
     def onCmdMultipleCapture(self):
 
@@ -771,15 +780,15 @@ class FTSApp:
             trgMode = False
 
         self.ApplicationController.performMeasurements(measurementsCount=measCount,
-                                                    samplingFrequency=self.MFLIFreqneuenciesAsStrings.
-                                                                                index(self.samplingFreqCombo.get()),
-                                                    scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
-                                                    scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
-                                                    scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]),
-                                                    trigModeEnabled=trgMode,
-                                                    trigLevel=float(self.appSettings["triggerLevel"]),
-                                                    trigHysteresis=float(self.appSettings["triggerHysteresis"]),
-                                                    trigDelay=float(self.appSettings["triggerDelay"]))
+                                                       samplingFrequency=self.MFLIFreqneuenciesAsStrings.
+                                                       index(self.samplingFreqCombo.get()),
+                                                       scanStart=int(self.appSettings["delayLineConfiguredScanStart"]),
+                                                       scanLength=int(self.appSettings["delayLineConfiguredScanLength"]),
+                                                       scanSpeed=float(self.appSettings["delayLineConfiguredScanSpeed"]),
+                                                       trigModeEnabled=trgMode,
+                                                       trigLevel=float(self.appSettings["triggerLevel"]),
+                                                       trigHysteresis=float(self.appSettings["triggerHysteresis"]),
+                                                       trigReference=float(self.appSettings["triggerReference"]))
     def onCmdStopMeasurement(self):
         self.ApplicationController.requestStop()
 
@@ -1086,8 +1095,10 @@ class FTSApp:
             self.axTop.plot(triggerMarkerX, triggerMarkerY, color="red", alpha=0.75,
                             label="Trigger", linestyle="dashed")
 
-            hysteresisMarkerYVal = ((float(self.appSettings["triggerLevel"]) / 1000.0) -
-                                    (float(self.appSettings["triggerHysteresis"]) / 1000.0))
+            # hysteresisMarkerYVal = ((float(self.appSettings["triggerLevel"]) / 1000.0) -
+            #                         (float(self.appSettings["triggerHysteresis"]) / 1000.0))
+
+            hysteresisMarkerYVal = (float(self.appSettings["triggerHysteresis"]) / 1000.0)
 
             hysteresisMarkerY = [hysteresisMarkerYVal, hysteresisMarkerYVal]
 

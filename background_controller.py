@@ -28,7 +28,7 @@ class BackgroundController:
         self.triggerModeEnabled = False
         self.triggerLevel = None
         self.triggerHysteresis = None
-        self.triggerDelay = None
+        self.triggerReference = None
 
         self.MFLIDriver     = mfliDrv
         self.ZaberDriver    = zaberDrv
@@ -99,7 +99,7 @@ class BackgroundController:
 
 
     def performMeasurements(self, measurementsCount, samplingFrequency, scanStart, scanLength, scanSpeed,
-                            trigModeEnabled, trigLevel, trigHysteresis, trigDelay):
+                            trigModeEnabled, trigLevel, trigHysteresis, trigReference):
         logging.info(f"Application controller: measurement starting")
 
         # reset and configure the backgroung controller
@@ -121,7 +121,7 @@ class BackgroundController:
         self.triggerModeEnabled         = trigModeEnabled
         self.triggerLevel               = trigLevel
         self.triggerHysteresis          = trigHysteresis
-        self.triggerDelay               = trigDelay
+        self.triggerReference           = trigReference
 
         self.stopRequestFlag            = False
 
@@ -159,7 +159,7 @@ class BackgroundController:
                                                 sampleLength=self.mfliSamplesCount,
                                                 triggerEnabled=self.triggerModeEnabled,
                                                 triggerLevel=self.triggerLevel,
-                                                triggerDelay=self.triggerDelay,
+                                                triggerReference=self.triggerReference,
                                                 triggerHysteresis=self.triggerHysteresis)
 
         time.sleep(1)
@@ -208,7 +208,7 @@ class BackgroundController:
             # if trigger mode is enabled arm the trigger and wait for a moment until it takes effect
             if self.triggerModeEnabled:
                 self.MFLIDriver.armTrigger()
-                time.sleep(1.0)
+                # time.sleep(1.0)
 
             # wait until the mirror is in position
             self.ZaberDriver.waitUntilIdle()
