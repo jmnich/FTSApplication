@@ -31,18 +31,6 @@ def save_to_csv_2columns(filePath, column1Header, column2Header, column1Data, co
         with open(filePath, 'a') as csvfile:
             csvfile.writelines(dataLines)
 
-    # data = [referenceSignalsRaw[i], interferogramsRaw[i]]
-    # header = 'Reference detector [V],Primary detector [V]'
-    # rows = ["%.f,%.f\n" % row for row in zip(*data)]
-    # rows.insert(0, header)
-    #
-    # with open(pathToRaw, 'a') as csvfile:
-    #     csvfile.writelines(rows)
-
-    # np.savetxt(pathToRaw, np.column_stack((referenceSignalsRaw[i], interferogramsRaw[i])),
-    #             fmt='%.6e', delimiter=',', newline='\n', header='Reference detector [V],Primary detector [V]',
-    #             footer='', comments='', encoding=None)
-
 
 def exportAllDataAbsorbance(refX, refY, sampleX, sampleY, absX, absY,
                             absXTitle, absYTitle, absTitle,
@@ -244,18 +232,6 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
                              "Wavelength [um]", "Intensity [dBm]",
                              averageSpectrumX, averageSpectrumY)
 
-        # data = [averageSpectrumX, averageSpectrumY]
-        # header = 'Wavelength [um],Intensity [dBm]'
-        # rows = ["%.f,%.f\n" % row for row in zip(*data)]
-        # rows.insert(0, header)
-        #
-        # with open(pathToSpectrumCSV, 'a') as csvfile:
-        #     csvfile.writelines(rows)
-
-        # np.savetxt(pathToSpectrumCSV, np.column_stack((averageSpectrumX, averageSpectrumY)),
-        #            fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
-        #            footer='', comments='', encoding=None)
-
         mpl.rcParams.update(mpl.rcParamsDefault)
         plt.figure(figsize=(12.5, 7.5))
         plt.tight_layout()
@@ -282,18 +258,6 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
         save_to_csv_2columns(pathToInterferogramCSV,
                              "Position [um]", "Voltage [V]",
                              correctedInterferogramsX[0], correctedInterferogramsY[0])
-
-        # data = [correctedInterferogramsX[0], correctedInterferogramsY[0]]
-        # header = 'Position [um],Voltage [V]'
-        # rows = ["%.f,%.f\n" % row for row in zip(*data)]
-        # rows.insert(0, header)
-        #
-        # with open(pathToInterferogramCSV, 'a') as csvfile:
-        #     csvfile.writelines(rows)
-
-        # np.savetxt(pathToInterferogramCSV, np.column_stack((correctedInterferogramsX[0], correctedInterferogramsY[0])),
-        #            fmt='%.6e', delimiter=',', newline='\n', header='Position [um],Voltage [V]',
-        #            footer='', comments='', encoding=None)
 
         mpl.rcParams.update(mpl.rcParamsDefault)
         plt.figure(figsize=(12.5, 7.5))
@@ -325,18 +289,6 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
                                  "Wavelength [um]", "Intensity [dBm]",
                                  rawSpectraX[i], rawSpectraY[i])
 
-            # data = [rawSpectraX[i], rawSpectraY[i]]
-            # header = 'Wavelength [um],Intensity [dBm]'
-            # rows = ["%.f,%.f\n" % row for row in zip(*data)]
-            # rows.insert(0, header)
-            #
-            # with open(pathToRawSpectrum, 'a') as csvfile:
-            #     csvfile.writelines(rows)
-
-            # np.savetxt(pathToRawSpectrum, np.column_stack((rawSpectraX[i], rawSpectraY[i])),
-            #            fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
-            #            footer='', comments='', encoding=None)
-
     # save corrected interferograms to .CSV files
     if (saveRawData and
         len(correctedInterferogramsX) == len(correctedInterferogramsY) and
@@ -352,18 +304,6 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
                                  "Position [um]", "Voltage [V]",
                                  correctedInterferogramsX[i], correctedInterferogramsY[i])
 
-            # data = [correctedInterferogramsX[i], correctedInterferogramsY[i]]
-            # header = 'Position [um],Voltage [V]'
-            # rows = ["%.f,%.f\n" % row for row in zip(*data)]
-            # rows.insert(0, header)
-            #
-            # with open(pathToRawInterferogram, 'a') as csvfile:
-            #     csvfile.writelines(rows)
-
-            # np.savetxt(pathToRawInterferogram, np.column_stack((correctedInterferogramsX[i], correctedInterferogramsY[i])),
-            #             fmt='%.6e', delimiter=',', newline='\n', header='Position [um],Voltage [V]',
-            #             footer='', comments='', encoding=None)
-
     # save raw data to .CSV files
     if (saveRawData and
         len(referenceSignalsRaw) == len(interferogramsRaw) and
@@ -378,18 +318,6 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
             save_to_csv_2columns(pathToRaw,
                                  "Reference detector [V]", "Primary detector [V]",
                                  referenceSignalsRaw[i], interferogramsRaw[i])
-
-            # data = [referenceSignalsRaw[i], interferogramsRaw[i]]
-            # header = 'Reference detector [V],Primary detector [V]'
-            # rows = ["%.f,%.f\n" % row for row in zip(*data)]
-            # rows.insert(0, header)
-            #
-            # with open(pathToRaw, 'a') as csvfile:
-            #     csvfile.writelines(rows)
-
-            # np.savetxt(pathToRaw, np.column_stack((referenceSignalsRaw[i], interferogramsRaw[i])),
-            #             fmt='%.6e', delimiter=',', newline='\n', header='Reference detector [V],Primary detector [V]',
-            #             footer='', comments='', encoding=None)
 
     # export everything as .mat files
     # .mat average spectrum
