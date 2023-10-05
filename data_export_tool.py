@@ -65,9 +65,9 @@ def exportAllDataAbsorbance(refX, refY, sampleX, sampleY, absX, absY,
 
         csvFriendlyXTitle = absXTitle.replace("\u03BC", "u")
 
-        np.savetxt(pathToAbsorptionCSV, np.column_stack((absX, absY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header=f'{csvFriendlyXTitle},{absYTitle}',
-                   footer='', comments='', encoding=None)
+        save_to_csv_2columns(pathToAbsorptionCSV,
+                             csvFriendlyXTitle, absYTitle,
+                             absX, absY)
 
         mpl.rcParams.update(mpl.rcParamsDefault)
         plt.figure(figsize=(12.5, 7.5))
@@ -94,10 +94,9 @@ def exportAllDataAbsorbance(refX, refY, sampleX, sampleY, absX, absY,
 
         refValid = True
 
-        np.savetxt(pathToReferenceCSV, np.column_stack((refX, refY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
-                   footer='', comments='', encoding=None)
-
+        save_to_csv_2columns(pathToReferenceCSV,
+                             "Wavelength [um]", "Intensity [dBm]",
+                             refX, refY)
 
     # save sample CSV
     sampleValid = False
@@ -107,9 +106,9 @@ def exportAllDataAbsorbance(refX, refY, sampleX, sampleY, absX, absY,
 
         sampleValid = True
 
-        np.savetxt(pathToSampleCSV, np.column_stack((sampleX, sampleY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
-                   footer='', comments='', encoding=None)
+        save_to_csv_2columns(pathToSampleCSV,
+                             "Wavelength [um]", "Intensity [dBm]",
+                             sampleX, sampleY)
 
     # make a picture for reference and sample
     if sampleValid and refValid:
@@ -139,9 +138,9 @@ def exportAbsorbanceAsCSV(absorbanceX, absorbanceY, axisNameX, axisNameY):
         f = asksaveasfilename(initialfile=initial_file_name,
                               defaultextension=".csv", filetypes=[("CSV", "*.csv"), ("CSV Files", "*.csv")])
 
-        np.savetxt(f, np.column_stack((absorbanceX, absorbanceY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header=f'{axisNameX},{axisNameY}',
-                   footer='', comments='', encoding=None)
+        save_to_csv_2columns(f,
+                             axisNameX, axisNameY,
+                             absorbanceX, absorbanceY)
 
         logging.info(f"Absorption plot saved as a .CSV file: " + str(f))
 
@@ -156,9 +155,10 @@ def exportSpectrumAsCSV(spectrumX, spectrumY):
         f = asksaveasfilename(initialfile=initial_file_name,
                               defaultextension=".csv", filetypes=[("CSV", "*.csv"), ("CSV Files", "*.csv")])
 
-        np.savetxt(f, np.column_stack((spectrumX, spectrumY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
-                   footer='', comments='', encoding=None)
+        # save to .csv
+        save_to_csv_2columns(f,
+                             "Wavelength [um]", "Intensity [dBm]",
+                             spectrumX, spectrumY)
 
         logging.info(f"Spectrum saved as a .CSV file: " + str(f))
 
@@ -419,9 +419,9 @@ def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interfer
 
         spectrumDataValid = True
 
-        np.savetxt(pathToSpectrumCSV, np.column_stack((spectrumX, spectrumY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header='Wavelength [um],Intensity [dBm]',
-                   footer='', comments='', encoding=None)
+        save_to_csv_2columns(pathToSpectrumCSV,
+                             "Wavelength [um]", "Intensity [dBm]",
+                             spectrumX, spectrumY)
 
         mpl.rcParams.update(mpl.rcParamsDefault)
         plt.figure(figsize=(12.5, 7.5))
@@ -445,9 +445,9 @@ def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interfer
 
         interferogramDataValid = True
 
-        np.savetxt(pathToInterferogramCSV, np.column_stack((interferogramX, interferogramY)),
-                   fmt='%.6e', delimiter=',', newline='\n', header='Position [um],Voltage [V]',
-                   footer='', comments='', encoding=None)
+        save_to_csv_2columns(pathToInterferogramCSV,
+                             "Position [um]", "Voltage [V]",
+                             interferogramX, interferogramY)
 
         mpl.rcParams.update(mpl.rcParamsDefault)
         plt.figure(figsize=(12.5, 7.5))
@@ -469,10 +469,9 @@ def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interfer
 
         rawDataValid = True
 
-        np.savetxt(pathToRawData, np.column_stack((referenceSignalRaw, interferogramRaw)),
-                   fmt='%.6e', delimiter=',', newline='\n', header='Reference detector signal [V],Main detector signal [V]',
-                   footer='', comments='', encoding=None)
-
+        save_to_csv_2columns(pathToRawData,
+                             "Reference detector signal [V]", "Main detector signal [V]",
+                              referenceSignalRaw, interferogramRaw)
 
     if spectrumDataValid and interferogramDataValid and rawDataValid:
             spectrum_structure = np.array([spectrumX, spectrumY], dtype=[('Wavelength', 'f'), ('Intensity', 'f')])
