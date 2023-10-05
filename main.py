@@ -1016,11 +1016,32 @@ class FTSApp:
         plt.rc('xtick', labelsize=18)
         plt.rc('ytick', labelsize=18)
         plt.title("Spectrum", fontsize=20)
-        plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
+
+        # display X axis with units selected by the user
+        if self.currentXUnit == "um":
+
+            plt.xlim(float(self.appSettings["plotSpectrumXRangeMin"]),
+                                float(self.appSettings["plotSpectrumXRangeMax"]))
+            plt.xlabel('Wavelength [\u03BCm]', fontsize=20)
+            plt.xscale("linear")
+
+        elif self.currentXUnit == "thz":
+            plt.xlim(self.convertUMtoTHz(float(self.appSettings["plotSpectrumXRangeMin"])),
+                                self.convertUMtoTHz(float(self.appSettings["plotSpectrumXRangeMax"])))
+            plt.xlabel('Frequency [THz]', fontsize=20)
+            plt.xscale("log")
+
+        else:
+            plt.xlim(self.convertUMtoCM(float(self.appSettings["plotSpectrumXRangeMin"])),
+                                self.convertUMtoCM(float(self.appSettings["plotSpectrumXRangeMax"])))
+            plt.xlabel('Wavenumber [cm-1]', fontsize=20)
+            plt.xscale("linear")
+
+        plt.ylim((float(self.appSettings["plotSpectrumYRangeMin"]), float(self.appSettings["plotSpectrumYRangeMax"])))
+        # plt.xlabel("Wavelength [\u03BCm]", fontsize=20)
         plt.ylabel("Intensity [dBm]", fontsize=20)
         plt.plot(self.currentAverageSpectrumX, self.currentAverageSpectrumY, color="dodgerblue")
-        plt.xlim((float(self.appSettings["plotSpectrumXRangeMin"]), float(self.appSettings["plotSpectrumXRangeMax"])))
-        plt.ylim((float(self.appSettings["plotSpectrumYRangeMin"]), float(self.appSettings["plotSpectrumYRangeMax"])))
+        # plt.xlim((float(self.appSettings["plotSpectrumXRangeMin"]), float(self.appSettings["plotSpectrumXRangeMax"])))
         plt.grid(alpha=0.3)
         plt.ion()
         plt.pause(1.0)
