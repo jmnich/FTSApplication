@@ -205,6 +205,11 @@ class BackgroundController:
             # send the delay line to the starting position
             self.ZaberDriver.setPosition(position=startPosition, speed=ZaberDriver.MaxSpeed)
 
+            # if trigger mode is enabled arm the trigger and wait for a moment until it takes effect
+            if self.triggerModeEnabled:
+                self.MFLIDriver.armTrigger()
+                time.sleep(1.0)
+
             # wait until the mirror is in position
             self.ZaberDriver.waitUntilIdle()
             time.sleep(1.0)  # wait to let the mirror settle
@@ -222,7 +227,11 @@ class BackgroundController:
             #     self.ZaberDriver.setPosition(position=self.scanStartPosition - self.scanLength,
             #                                  speed=self.scanSpeed * 1000)
 
-            measStatus = self.MFLIDriver.measureData()
+            if self.triggerModeEnabled:
+                measStatus = self.MFLIDriver.measureDataWithPrearmedTrigger()
+            else:
+                measStatus = self.MFLIDriver.measureDataStandaloneMethod()
+
             self.ZaberDriver.waitUntilIdle()
 
             # try to complete the measurement even if acquisition fails a few times

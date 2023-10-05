@@ -51,7 +51,6 @@ class ZaberDriver:
             self.serialPort.write(bytes(dummy, 'ascii'))
 
     def waitUntilIdle(self):
-
         if not self.serialPort.isOpen():
             return
 
