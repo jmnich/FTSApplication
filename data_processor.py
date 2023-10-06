@@ -64,7 +64,7 @@ class DataProcessor:
 
         # calculate spectrum
         spectrum_x = np.arange(0, len(meas_volt), 1)
-        spectrum = np.fft.rfft(meas_volt_padded)
+        spectrum = np.fft.fft(meas_volt_padded)
 
         # cut spectrum to match the correct X axis (required due to padding)
         spectrum = spectrum[0:len(spectrum_x) - 1]
