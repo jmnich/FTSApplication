@@ -61,14 +61,14 @@ class ZaberDriver:
             if "IDLE" in response:
                 break
             else:
-                time.sleep(0.05)
+                time.sleep(0.1)
 
     def setPosition(self, position, speed = 10000):
         calculated_steps = round(position / self.DelayLineResolution)
         command = f"/move abs {calculated_steps} {self.convertVelocityFromSIToZaber(speed)} {50}"
         self.sendCommand(command)
         self.serialPort.readline()
-        time.sleep(0.5)
+        # time.sleep(0.5)
 
     def convertVelocityFromSIToZaber(self, velInUmPerS):
         return round((velInUmPerS * 1.6384) / ZaberDriver.DelayLineResolution)
