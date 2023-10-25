@@ -167,6 +167,15 @@ class FTSApp:
                                             command=self.onCmdReferencePlot)
         self.referenceSignalButton.grid(row=4, column=0, sticky="N", padx=5, pady=5)
 
+        self.adjustToolButton = ctk.CTkButton(master=self.frameButtonsTop,
+                                            text="Adjustment\ntool",
+                                            width=120,
+                                            height=75,
+                                            corner_radius=10,
+                                            # fg_color="darkgreen",
+                                            command=None)
+        self.adjustToolButton.grid(row=4, column=1, sticky="N", padx=5, pady=5)
+
         self.absorbanceToolButton = ctk.CTkButton(master=self.frameButtonsTop,
                                             text="Absorbance\ntool",
                                             width=120,
