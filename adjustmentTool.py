@@ -1,6 +1,8 @@
 import os
 import time
 
+from threading import *
+
 import customtkinter as ctk
 import numpy as np
 import matplotlib as mpl
@@ -11,9 +13,12 @@ from tkinter import messagebox
 
 class AdjustmentTool:
 
-    def __init__(self, root, zaberController):
+    def __init__(self, root, zaberController, mfliController):
 
         self.zaberDriver = zaberController
+        self.MFLIDriver = mfliController
+
+        self.scanStopFlag = False
 
         # config
         self.centerPointIncrement = 250.0
@@ -165,7 +170,8 @@ class AdjustmentTool:
                                         command=self.onExecute)
         self.executeButton.grid(row=6, column=1, sticky="W", padx=5, pady=(30, 15))
 
-        # plot
+        # Plot
+        # =================================================================================
         self.previewPlotFrame = ctk.CTkFrame(master=self.adjustmenRoot,
                                             fg_color="darkblue")
         # self.frame.place(relx=0.33, rely=0.025)
@@ -193,8 +199,12 @@ class AdjustmentTool:
 
 
     def onExecute(self):
-        startPos = self.centerPointCurrent - self.amplitudeCurrent
-        self.executeScan(startPos, self.amplitudeCurrent, self.timePeriodCurrent)
+        # start the scanning thread
+        t = Thread(target=self.scanningThread, daemon=True)
+        t.start()
+
+        # startPos = self.centerPointCurrent - self.amplitudeCurrent
+        # self.executeScan(startPos, self.amplitudeCurrent, self.timePeriodCurrent)
 
     def executeScan(self, startPosition, amplitude, timePeriod):
         self.zaberDriver.stop()
@@ -204,7 +214,8 @@ class AdjustmentTool:
         self.zaberDriver.sineMove(amplitude, timePeriod)
 
     def stopScan(self):
-        self.zaberDriver.stop()
+        self.scanStopFlag = True
+        # self.zaberDriver.stop()
 
     def refreshValues(self):
 
@@ -296,6 +307,60 @@ class AdjustmentTool:
         self.axPreview.clear()
         self.axPreview.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
         self.axPreview.plot(dataY, color='y')
+        self.axPreview.set_xlim(0, len(dataY))
 
         self.canvasPreviewPlot.draw()
         self.adjustmenRoot.update()
+
+    def scanningThread(self):
+        print("Scanning thread started")
+        freqIndex = 11
+
+        mfliSamplingFrequency = self.MFLIDriver.MFLISamplingRates[freqIndex]
+        samplingTime = self.timePeriodCurrent
+        sampleCount = samplingTime / 1000.0 * mfliSamplingFrequency
+
+        # configure MFLI
+        self.MFLIDriver.configureForMeasurement(samplingFreqIndex=freqIndex,
+                                                sampleLength=sampleCount,
+                                                triggerEnabled=False,
+                                                triggerLevel=0,
+                                                triggerReference=0,
+                                                triggerHysteresis=0)
+
+        startPos = self.centerPointCurrent - self.amplitudeCurrent
+
+        self.zaberDriver.stop()
+        self.zaberDriver.waitUntilIdle()
+        self.zaberDriver.setPosition(startPos, speed=self.zaberDriver.MaxSpeed)
+        self.zaberDriver.waitUntilIdle()
+
+        time.sleep(0.1)
+
+        while True:
+
+            if self.scanStopFlag:
+                self.scanStopFlag = False
+                break
+
+            startPos = self.centerPointCurrent - self.amplitudeCurrent
+
+            self.zaberDriver.stop()
+            self.zaberDriver.waitUntilIdle()
+            self.zaberDriver.setPosition(startPos, speed=self.zaberDriver.MaxSpeed)
+            self.zaberDriver.waitUntilIdle()
+
+            # self.zaberDriver.sineMoveNTimes(self.amplitudeCurrent, self.timePeriodCurrent, 1)
+            # calculate the speed required to complete the movement in the specified time
+            requiredMovementSpeed = (self.amplitudeCurrent * 2.0) / (self.timePeriodCurrent / 1000.0) # [um/s]
+            self.zaberDriver.setPosition(startPos + (self.amplitudeCurrent * 2.0), speed=requiredMovementSpeed)
+
+            measStatus = self.MFLIDriver.measureDataStandaloneMethod()
+
+            self.zaberDriver.waitUntilIdle()
+
+            if measStatus != "ok":
+                print(f"Preview measurement failed due to: {measStatus}")
+
+            self.updatePlotData(self.MFLIDriver.lastInterferogramData)
+

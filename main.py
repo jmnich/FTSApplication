@@ -986,7 +986,7 @@ class FTSApp:
         self.absorbanceToolWindow.setApplicationSettings = self.setApplicationSettings
 
     def onCmdOpenAdjustmentTool(self):
-        self.adjustmentToolWindow = AdjustmentTool.AdjustmentTool(self.root, self.ZaberDrv)
+        self.adjustmentToolWindow = AdjustmentTool.AdjustmentTool(self.root, self.ZaberDrv, self.MFLIDrv)
 
     def onCmdUpdateSpectrumPlotRanges(self, other):
         self.appSettings["plotSpectrumXRangeMin"] = self.spectrumXMinBox.get()
