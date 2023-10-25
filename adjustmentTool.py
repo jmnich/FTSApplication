@@ -15,6 +15,21 @@ class AdjustmentTool:
 
         self.zaberDriver = zaberController
 
+        # config
+        self.centerPointIncrement = 250.0
+        self.amplitudeIncrement = 250.0
+        self.timePeriodIncrement = 250.0
+
+        self.centerPointCurrent = 75000.0
+        self.amplitudeCurrent = 5000.0
+        self.timePeriodCurrent = 2000.0
+
+        self.limitTPMin = 500.0
+        self.limitTPMax = 60000.0
+        self.limitAmpMin = 250.0
+        self.limitAmpMax = 75000.0
+        self.limitCPMin = 1.0
+        self.limitCPMax = 149999
         # build GUI
         ctk.set_appearance_mode("dark")
         self.adjustmenRoot = ctk.CTkToplevel()
@@ -45,17 +60,17 @@ class AdjustmentTool:
 
         self.centerPointBox = ctk.CTkEntry(master=self.adjustmenRoot,
                                         width=80, height=30)
-        self.centerPointBox.insert(0, f"{self.zaberDriver.DelayLineNominalLength / 2.0}")
+        self.centerPointBox.insert(0, f"{self.centerPointCurrent}")
         self.centerPointBox.grid(row=0, column=1, sticky="SW", padx=5, pady=(30, 15))
-        # self.yMaxBox.bind("<FocusOut>", self.onCmdUpdatePlotRanges)
-        # self.yMaxBox.bind("<Return>", self.onCmdUpdatePlotRanges)
+        self.centerPointBox.bind("<FocusOut>", self.onUpdateDataFromBoxes)
+        self.centerPointBox.bind("<Return>", self.onUpdateDataFromBoxes)
 
         self.centerPointUpBtn = ctk.CTkButton(master=self.adjustmenRoot,
                                             text="\u2191 \u2191 \u2191 \u2191 \u2191",
                                             width=80,
                                             height=40,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCenterPointIncrement)
         self.centerPointUpBtn.grid(row=1, column=0, sticky="NE", padx=5, pady=5)
 
         self.centerPointDownBtn = ctk.CTkButton(master=self.adjustmenRoot,
@@ -63,7 +78,7 @@ class AdjustmentTool:
                                             width=80,
                                             height=40,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onCenterPointDecrement)
         self.centerPointDownBtn.grid(row=1, column=1, sticky="NW", padx=5, pady=5)
 
         # Amplitude controls
@@ -75,17 +90,17 @@ class AdjustmentTool:
 
         self.amplitudeBox = ctk.CTkEntry(master=self.adjustmenRoot,
                                         width=80, height=30)
-        self.amplitudeBox.insert(0, f"{5000}")
+        self.amplitudeBox.insert(0, f"{self.amplitudeCurrent}")
         self.amplitudeBox.grid(row=2, column=1, sticky="SW", padx=5, pady=(50,15))
-        # self.yMaxBox.bind("<FocusOut>", self.onCmdUpdatePlotRanges)
-        # self.yMaxBox.bind("<Return>", self.onCmdUpdatePlotRanges)
+        self.amplitudeBox.bind("<FocusOut>", self.onUpdateDataFromBoxes)
+        self.amplitudeBox.bind("<Return>", self.onUpdateDataFromBoxes)
 
         self.amplitudeUpBtn = ctk.CTkButton(master=self.adjustmenRoot,
                                             text="\u2191 \u2191 \u2191 \u2191 \u2191",
                                             width=80,
                                             height=40,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onAmplitudeIncrement)
         self.amplitudeUpBtn.grid(row=3, column=0, sticky="NE", padx=5, pady=5)
 
         self.amplitudeDownBtn = ctk.CTkButton(master=self.adjustmenRoot,
@@ -93,7 +108,7 @@ class AdjustmentTool:
                                             width=80,
                                             height=40,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onAmplitudeDecrement)
         self.amplitudeDownBtn.grid(row=3, column=1, sticky="NW", padx=5, pady=5)
 
         # Time period controls
@@ -105,17 +120,17 @@ class AdjustmentTool:
 
         self.timePeriodBox = ctk.CTkEntry(master=self.adjustmenRoot,
                                         width=80, height=30)
-        self.timePeriodBox.insert(0, f"{2000}")
+        self.timePeriodBox.insert(0, f"{self.timePeriodCurrent}")
         self.timePeriodBox.grid(row=4, column=1, sticky="SW", padx=5, pady=(50,15))
-        # self.yMaxBox.bind("<FocusOut>", self.onCmdUpdatePlotRanges)
-        # self.yMaxBox.bind("<Return>", self.onCmdUpdatePlotRanges)
+        self.timePeriodBox.bind("<FocusOut>", self.onUpdateDataFromBoxes)
+        self.timePeriodBox.bind("<Return>", self.onUpdateDataFromBoxes)
 
         self.timePeriodUpBtn = ctk.CTkButton(master=self.adjustmenRoot,
                                             text="\u2191 \u2191 \u2191 \u2191 \u2191",
                                             width=80,
                                             height=40,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onTimePeriodIncrement)
         self.timePeriodUpBtn.grid(row=5, column=0, sticky="NE", padx=5, pady=5)
 
         self.timePeriodDownBtn = ctk.CTkButton(master=self.adjustmenRoot,
@@ -123,7 +138,7 @@ class AdjustmentTool:
                                             width=80,
                                             height=40,
                                             corner_radius=10,
-                                            command=None)
+                                            command=self.onTimePeriodDecrement)
         self.timePeriodDownBtn.grid(row=5, column=1, sticky="NW", padx=5, pady=5)
 
         # Buttons
@@ -162,3 +177,77 @@ class AdjustmentTool:
 
     def stopScan(self):
         self.zaberDriver.stop()
+
+    def refreshValues(self):
+
+        # apply limits
+        if self.timePeriodCurrent < self.limitTPMin:
+            self.timePeriodCurrent = self.limitTPMin
+
+        if self.timePeriodCurrent > self.limitTPMax:
+            self.timePeriodCurrent = self.limitTPMax
+
+        if self.amplitudeCurrent < self.limitAmpMin:
+            self.amplitudeCurrent = self.limitAmpMin
+
+        if self.amplitudeCurrent > self.limitAmpMax:
+            self.amplitudeCurrent = self.limitAmpMax
+
+        if self.centerPointCurrent < self.limitCPMin:
+            self.centerPointCurrent = self.limitCPMin
+
+        if self.centerPointCurrent > self.limitCPMax:
+            self.centerPointCurrent = self.limitCPMax
+
+        # refresh values in boxes
+        self.timePeriodBox.delete(0, "end")
+        self.timePeriodBox.insert(0, f"{self.timePeriodCurrent}")
+
+        self.centerPointBox.delete(0, "end")
+        self.centerPointBox.insert(0, f"{self.centerPointCurrent}")
+
+        self.amplitudeBox.delete(0, "end")
+        self.amplitudeBox.insert(0, f"{self.amplitudeCurrent}")
+
+    def onAmplitudeIncrement(self):
+        self.amplitudeCurrent = self.amplitudeCurrent + self.amplitudeIncrement
+        self.refreshValues()
+
+    def onAmplitudeDecrement(self):
+        self.amplitudeCurrent = self.amplitudeCurrent - self.amplitudeIncrement
+        self.refreshValues()
+
+    def onCenterPointIncrement(self):
+        self.centerPointCurrent = self.centerPointCurrent + self.centerPointIncrement
+        self.refreshValues()
+
+    def onCenterPointDecrement(self):
+        self.centerPointCurrent = self.centerPointCurrent - self.centerPointIncrement
+        self.refreshValues()
+
+    def onTimePeriodIncrement(self):
+        self.timePeriodCurrent = self.timePeriodCurrent + self.timePeriodIncrement
+        self.refreshValues()
+
+    def onTimePeriodDecrement(self):
+        self.timePeriodCurrent = self.timePeriodCurrent - self.timePeriodIncrement
+        self.refreshValues()
+
+    def onUpdateDataFromBoxes(self, other):
+
+        try:
+            self.timePeriodCurrent = float(self.timePeriodBox.get())
+        except:
+            pass
+
+        try:
+            self.amplitudeCurrent = float(self.amplitudeBox.get())
+        except:
+            pass
+
+        try:
+            self.centerPointCurrent = float(self.centerPointBox.get())
+        except:
+            pass
+
+        self.refreshValues()
