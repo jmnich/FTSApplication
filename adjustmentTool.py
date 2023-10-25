@@ -149,7 +149,7 @@ class AdjustmentTool:
                                             height=80,
                                             corner_radius=10,
                                             fg_color="darkred",
-                                            command=None)
+                                            command=self.stopScan)
         self.stopButton.grid(row=6, column=0, sticky="E", padx=5, pady=(30, 15))
 
         self.executeButton = ctk.CTkButton(master=self.adjustmenRoot,
@@ -158,7 +158,7 @@ class AdjustmentTool:
                                         height=80,
                                         corner_radius=10,
                                         fg_color="darkgreen",
-                                        command=None)
+                                        command=self.onExecute)
         self.executeButton.grid(row=6, column=1, sticky="W", padx=5, pady=(30, 15))
 
 
@@ -169,7 +169,12 @@ class AdjustmentTool:
         self.adjustmenRoot.update()
 
 
+    def onExecute(self):
+        startPos = self.centerPointCurrent - self.amplitudeCurrent
+        self.executeScan(startPos, self.amplitudeCurrent, self.timePeriodCurrent)
+
     def executeScan(self, startPosition, amplitude, timePeriod):
+        self.zaberDriver.stop()
         self.zaberDriver.waitUntilIdle()
         self.zaberDriver.setPosition(startPosition)
         self.zaberDriver.waitUntilIdle()
@@ -251,3 +256,6 @@ class AdjustmentTool:
             pass
 
         self.refreshValues()
+
+    def onClosing(self):
+        self.zaberDriver.stop()
