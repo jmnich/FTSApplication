@@ -18,6 +18,7 @@ from tkinter import filedialog
 from datetime import datetime
 import data_export_tool as DataExportTool
 import absorbanceTool as AbsorbanceTool
+import adjustmentTool as AdjustmentTool
 
 class FTSApp:
 
@@ -26,6 +27,7 @@ class FTSApp:
         logging.info('========= Application started =========')
 
         self.absorbanceToolWindow = None
+        self.adjustmentToolWindow = None
 
         if SM.isSettingsFileAvailable():
             self.appSettings = SM.readSettingsFromFile()
@@ -167,14 +169,13 @@ class FTSApp:
                                             command=self.onCmdReferencePlot)
         self.referenceSignalButton.grid(row=4, column=0, sticky="N", padx=5, pady=5)
 
-        self.adjustToolButton = ctk.CTkButton(master=self.frameButtonsTop,
+        self.adjustmentToolButton = ctk.CTkButton(master=self.frameButtonsTop,
                                             text="Adjustment\ntool",
                                             width=120,
                                             height=75,
                                             corner_radius=10,
-                                            # fg_color="darkgreen",
-                                            command=None)
-        self.adjustToolButton.grid(row=4, column=1, sticky="N", padx=5, pady=5)
+                                            command=self.onCmdOpenAdjustmentTool)
+        self.adjustmentToolButton.grid(row=4, column=1, sticky="N", padx=5, pady=5)
 
         self.absorbanceToolButton = ctk.CTkButton(master=self.frameButtonsTop,
                                             text="Absorbance\ntool",
@@ -983,6 +984,9 @@ class FTSApp:
         self.absorbanceToolWindow.grabReferenceSpectrumDataLast = self.giveSpectrumForAbsorbanceLast
         self.absorbanceToolWindow.grabApplicationSettings = self.getApplicationSettings
         self.absorbanceToolWindow.setApplicationSettings = self.setApplicationSettings
+
+    def onCmdOpenAdjustmentTool(self):
+        self.adjustmentToolWindow = AdjustmentTool.AdjustmentTool(self.root, self.ZaberDrv)
 
     def onCmdUpdateSpectrumPlotRanges(self, other):
         self.appSettings["plotSpectrumXRangeMin"] = self.spectrumXMinBox.get()
