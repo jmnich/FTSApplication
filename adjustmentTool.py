@@ -34,8 +34,8 @@ class AdjustmentTool:
         ctk.set_appearance_mode("dark")
         self.adjustmenRoot = ctk.CTkToplevel()
         self.adjustmenRoot.protocol("WM_DELETE_WINDOW", self.onClosing)
-        self.adjustmenRoot.geometry("300x550")
-        self.adjustmenRoot.minsize(width=300, height=550)
+        self.adjustmenRoot.geometry("900x550")
+        self.adjustmenRoot.minsize(width=900, height=550)
         self.adjustmenRoot.title("Adjustment tool")
         self.adjustmenRoot.iconbitmap(default='icon.ico')
         self.adjustmenRoot.resizable(True, True)
@@ -43,14 +43,17 @@ class AdjustmentTool:
         self.backgroundGray = "#242424"
 
 
-        self.adjustmenRoot.columnconfigure(0, weight=1)
-        self.adjustmenRoot.columnconfigure(1, weight=1)
+        self.adjustmenRoot.columnconfigure(0, weight=1, minsize=120)
+        self.adjustmenRoot.columnconfigure(1, weight=1, minsize=120)
+        self.adjustmenRoot.columnconfigure(2, weight=5)
 
-        # self.adjustmenRoot.rowconfigure(0, weight=1)
-        # self.adjustmenRoot.rowconfigure(1, weight=1)
-        # self.adjustmenRoot.rowconfigure(2, weight=1)
-        # self.adjustmenRoot.rowconfigure(3, weight=1)
-        # self.adjustmenRoot.rowconfigure(4, weight=1)
+        self.adjustmenRoot.rowconfigure(0, weight=1)
+        self.adjustmenRoot.rowconfigure(1, weight=1)
+        self.adjustmenRoot.rowconfigure(2, weight=1)
+        self.adjustmenRoot.rowconfigure(3, weight=1)
+        self.adjustmenRoot.rowconfigure(4, weight=1)
+        self.adjustmenRoot.rowconfigure(5, weight=1)
+        self.adjustmenRoot.rowconfigure(6, weight=1)
 
         # Center point controls
         # =================================================================================
@@ -162,7 +165,26 @@ class AdjustmentTool:
                                         command=self.onExecute)
         self.executeButton.grid(row=6, column=1, sticky="W", padx=5, pady=(30, 15))
 
+        # plot
+        self.previewPlotFrame = ctk.CTkFrame(master=self.adjustmenRoot,
+                                            fg_color="darkblue")
+        # self.frame.place(relx=0.33, rely=0.025)
+        self.previewPlotFrame.grid(row=0, column=2, padx=(5, 5), pady=0, rowspan=7)
 
+        plt.style.use('dark_background')
+        self.figPreview, self.axPreview = plt.subplots()
+        self.figPreview.suptitle("Preview data")
+        self.axPreview.set_xlabel('Sample num.')
+        self.axPreview.set_ylabel('Voltage [V]')
+        self.figPreview.set_facecolor(self.backgroundGray)
+        self.figPreview.set_size_inches(100, 100)
+        self.figPreview.subplots_adjust(left=0.1, right=0.99, bottom=0.1, top=0.97, wspace=0, hspace=0)
+        self.figPreview.set_tight_layout(True)
+        # self.axRef.set_yscale("slog")
+        self.canvasPreviewPlot = FigureCanvasTkAgg(self.figPreview, master=self.previewPlotFrame)
+        self.canvasPreviewPlot.get_tk_widget().pack(side='right', fill='both', expand=True)
+        self.canvasPreviewPlot.draw()
+        plt.close()
 
         self.adjustmenRoot.attributes('-topmost', 1)
         self.adjustmenRoot.grab_set()
@@ -215,6 +237,8 @@ class AdjustmentTool:
         self.amplitudeBox.delete(0, "end")
         self.amplitudeBox.insert(0, f"{self.amplitudeCurrent}")
 
+        self.adjustmenRoot.update()
+
     def onAmplitudeIncrement(self):
         self.amplitudeCurrent = self.amplitudeCurrent + self.amplitudeIncrement
         self.refreshValues()
@@ -259,4 +283,19 @@ class AdjustmentTool:
         self.refreshValues()
 
     def onClosing(self):
-        self.zaberDriver.stop()
+
+        try:
+            self.zaberDriver.stop()
+        except:
+            pass
+        finally:
+            self.adjustmenRoot.destroy()
+
+    def updatePlotData(self, dataY):
+        plt.style.use('dark_background')
+        self.axPreview.clear()
+        self.axPreview.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
+        self.axPreview.plot(dataY, color='y')
+
+        self.canvasPreviewPlot.draw()
+        self.adjustmenRoot.update()
