@@ -76,6 +76,12 @@ class ZaberDriver:
         self.sendCommand(command)
         self.serialPort.readline()
 
+    def sineMoveNTimes(self, amplitude, timePeriod, repetitions):
+        amplitudeInSteps = round(amplitude / self.DelayLineResolution)
+        command = f"/move sin {amplitudeInSteps} {timePeriod} {repetitions}"
+        self.sendCommand(command)
+        self.serialPort.readline()
+
     def stop(self):
         command = "/stop"
         self.sendCommand(command)

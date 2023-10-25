@@ -33,6 +33,7 @@ class AdjustmentTool:
         # build GUI
         ctk.set_appearance_mode("dark")
         self.adjustmenRoot = ctk.CTkToplevel()
+        self.adjustmenRoot.protocol("WM_DELETE_WINDOW", self.onClosing)
         self.adjustmenRoot.geometry("300x550")
         self.adjustmenRoot.minsize(width=300, height=550)
         self.adjustmenRoot.title("Adjustment tool")
