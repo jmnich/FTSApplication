@@ -99,6 +99,11 @@ class DataProcessor:
 
         return output
 
+    def find_nearest(self, array, value):
+        array = np.asarray(array)
+        idx = (np.abs(array - value)).argmin()
+        return idx
+
     def analyzeDataHilbertInterpolation(self, rawReferenceSignal, rawInterferogram):
         print("Analyzing data (Hilbert transform-based interpolation algorithm)")
 
@@ -159,7 +164,33 @@ class DataProcessor:
         spectrum_abs = spectrum_abs[spectrum_slicing_index_start: spectrum_slicing_index_stop]
         spectrum_x_recalc = spectrum_x_recalc[spectrum_slicing_index_start: spectrum_slicing_index_stop]
 
-        output = {"spectrumX": spectrum_x_recalc,
+        # make a new X axis, common to all spectra and interpolate them on it
+        spectrum_config_x_min = 0.3
+        spectrum_config_x_max = 30.0
+        spectrum_config_pts = int(2E6)
+        common_spectrum_X = np.linspace(start=spectrum_config_x_min,
+                                        stop=spectrum_config_x_max,
+                                        num=spectrum_config_pts,
+                                        endpoint=True)
+
+        common_spectrum_X = np.flip(common_spectrum_X)
+
+        start_index = self.find_nearest(spectrum_x_recalc, spectrum_config_x_min)
+        stop_index = self.find_nearest(spectrum_x_recalc, spectrum_config_x_max)
+
+        print(f"Start index: {start_index}, Stop index: {stop_index}")
+        print(f"X Start: {spectrum_x_recalc[start_index]}, Stop: {spectrum_x_recalc[stop_index]}")
+        print(f"Y Start: {spectrum_abs[start_index]}, Stop: {spectrum_abs[stop_index]}")
+
+        axisXCut = spectrum_x_recalc[stop_index:start_index]
+        axisYCut = spectrum_abs[stop_index:start_index]
+
+        axisXCut = np.flip(axisXCut)
+        axisYCut = np.flip(axisYCut)
+
+        spectrum_abs = np.interp(common_spectrum_X, axisXCut, axisYCut)
+
+        output = {"spectrumX": common_spectrum_X,
                   "spectrumY": spectrum_abs,
                   "interferogramX": resampled_interferogram_X,
                   "interferogramY": resampled_interferogram_Y}
