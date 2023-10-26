@@ -27,13 +27,13 @@ class AdjustmentTool:
         # config
         self.centerPointIncrement = 250.0
         self.amplitudeIncrement = 250.0
-        self.timePeriodIncrement = 250.0
+        self.timePeriodIncrement = 100.0
 
         self.centerPointCurrent = 75000.0
         self.amplitudeCurrent = 5000.0
         self.timePeriodCurrent = 2000.0
 
-        self.limitTPMin = 500.0
+        self.limitTPMin = 200.0
         self.limitTPMax = 60000.0
         self.limitAmpMin = 250.0
         self.limitAmpMax = 75000.0
