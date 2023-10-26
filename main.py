@@ -301,12 +301,21 @@ class FTSApp:
         self.scanSpeedSlider = ctk.CTkSlider(master = self.settingsTabs.tab("Scan"),
                                               width = 250,
                                               height = 20,
-                                              from_ = int(self.appSettings["delayLineMinimumSpeed"]),
-                                              to = int(self.appSettings["delayLineMaximumSpeed"]),
+                                              from_ = 0,
+                                              to = int(self.appSettings["delayLineSpeedSliderTicks"]),
                                               number_of_steps = int(self.appSettings["delayLineSpeedSliderTicks"]),
                                               command=self.onCmdScanSpeedUpdateFromSlider)
         self.scanSpeedSlider.grid(row=5, column=0, columnspan=2, sticky="N", padx=5, pady=5)
-        self.scanSpeedSlider.set(float(self.appSettings["delayLineConfiguredScanSpeed"]))
+
+
+
+        sliderRange = float(self.appSettings["delayLineMaximumSpeed"]) - float(self.appSettings["delayLineMinimumSpeed"])
+
+        sliderSetting = (((float(self.appSettings["delayLineConfiguredScanSpeed"]) -
+                            float(self.appSettings["delayLineMinimumSpeed"])) / sliderRange) *
+                            int(self.appSettings["delayLineSpeedSliderTicks"]))
+
+        self.scanSpeedSlider.set(sliderSetting)
 
         # configure settings 'TRIG' tab
         # ==============================================================================================================
@@ -917,9 +926,16 @@ class FTSApp:
         self.onCmdUpdateScanLengthFromBox(None)
 
     def onCmdScanSpeedUpdateFromSlider(self, other):
-        configuredScanSpeed = self.scanSpeedSlider.get()
-        self.scanSpeedValueLabel.configure(text=str(int(configuredScanSpeed)))
-        self.appSettings["delayLineConfiguredScanSpeed"] = str(configuredScanSpeed)
+        sliderSetting = self.scanSpeedSlider.get()
+
+        proportional = sliderSetting / int(self.appSettings["delayLineSpeedSliderTicks"])
+        sliderRange = (float(self.appSettings["delayLineMaximumSpeed"]) -
+                       float(self.appSettings["delayLineMinimumSpeed"]))
+
+        configuredScanSpeed = proportional * sliderRange + float(self.appSettings["delayLineMinimumSpeed"])
+
+        self.scanSpeedValueLabel.configure(text="{:.1f}".format(configuredScanSpeed))
+        self.appSettings["delayLineConfiguredScanSpeed"] = "{:.1f}".format(configuredScanSpeed)
 
     def onCmdUpdateAveragingCount(self, other):
 
