@@ -20,6 +20,10 @@ class AdjustmentTool:
 
         self.scanStopFlag = False
 
+        self.plotNamePrimary = "Primary"
+        self.plotNameReference = "Reference"
+        self.currentlySelectedPlot = self.plotNamePrimary
+
         # config
         self.centerPointIncrement = 250.0
         self.amplitudeIncrement = 250.0
@@ -39,8 +43,8 @@ class AdjustmentTool:
         ctk.set_appearance_mode("dark")
         self.adjustmenRoot = ctk.CTkToplevel()
         self.adjustmenRoot.protocol("WM_DELETE_WINDOW", self.onClosing)
-        self.adjustmenRoot.geometry("900x550")
-        self.adjustmenRoot.minsize(width=900, height=550)
+        self.adjustmenRoot.geometry("900x615")
+        self.adjustmenRoot.minsize(width=900, height=615)
         self.adjustmenRoot.title("Adjustment tool")
         self.adjustmenRoot.iconbitmap(default='icon.ico')
         self.adjustmenRoot.resizable(True, True)
@@ -150,6 +154,24 @@ class AdjustmentTool:
                                             command=self.onTimePeriodDecrement)
         self.timePeriodDownBtn.grid(row=5, column=1, sticky="NW", padx=5, pady=5)
 
+        # Radio buttons
+        # =================================================================================
+        self.selectPrimaryPlotVar = ctk.IntVar(value=0)
+        self.selectPrimaryPlotRadioButton = ctk.CTkRadioButton(master=self.adjustmenRoot,
+                                                text="Primary",
+                                                command=self.onRadioBtnSelPrimary,
+                                                value=1,
+                                                variable=self.selectPrimaryPlotVar)
+        self.selectPrimaryPlotRadioButton.grid(row=6, column=0, sticky="E", padx=5, pady=(30,5))
+
+        self.selectReferencePlotVar = ctk.IntVar(value=0)
+        self.selectReferencePlotRadioButton = ctk.CTkRadioButton(master=self.adjustmenRoot,
+                                                text="Primary",
+                                                command=self.onRadioBtnSelReference,
+                                                value=1,
+                                                variable=self.selectReferencePlotVar)
+        self.selectReferencePlotRadioButton.grid(row=6, column=1, sticky="W", padx=5, pady=(30,5))
+
         # Buttons
         # =================================================================================
         self.stopButton = ctk.CTkButton(master=self.adjustmenRoot,
@@ -159,7 +181,7 @@ class AdjustmentTool:
                                             corner_radius=10,
                                             fg_color="darkred",
                                             command=self.stopScan)
-        self.stopButton.grid(row=6, column=0, sticky="E", padx=5, pady=(30, 15))
+        self.stopButton.grid(row=7, column=0, sticky="E", padx=5, pady=(30, 15))
 
         self.executeButton = ctk.CTkButton(master=self.adjustmenRoot,
                                         text="Execute",
@@ -168,18 +190,18 @@ class AdjustmentTool:
                                         corner_radius=10,
                                         fg_color="darkgreen",
                                         command=self.onExecute)
-        self.executeButton.grid(row=6, column=1, sticky="W", padx=5, pady=(30, 15))
+        self.executeButton.grid(row=7, column=1, sticky="W", padx=5, pady=(30, 15))
 
         # Plot
         # =================================================================================
         self.previewPlotFrame = ctk.CTkFrame(master=self.adjustmenRoot,
                                             fg_color="darkblue")
         # self.frame.place(relx=0.33, rely=0.025)
-        self.previewPlotFrame.grid(row=0, column=2, padx=(5, 5), pady=0, rowspan=7)
+        self.previewPlotFrame.grid(row=0, column=2, padx=(5, 5), pady=0, rowspan=8)
 
         plt.style.use('dark_background')
         self.figPreview, self.axPreview = plt.subplots()
-        self.figPreview.suptitle("Preview data")
+        self.figPreview.suptitle("- - - No Data - - - ")
         self.axPreview.set_xlabel('Sample num.')
         self.axPreview.set_ylabel('Voltage [V]')
         self.figPreview.set_facecolor(self.backgroundGray)
@@ -194,6 +216,8 @@ class AdjustmentTool:
 
         self.adjustmenRoot.attributes('-topmost', 1)
         self.adjustmenRoot.grab_set()
+
+        self.selectPrimaryPlotRadioButton.select()
 
         self.adjustmenRoot.update()
 
@@ -274,6 +298,19 @@ class AdjustmentTool:
         self.timePeriodCurrent = self.timePeriodCurrent - self.timePeriodIncrement
         self.refreshValues()
 
+
+    def onRadioBtnSelReference(self):
+        if self.selectReferencePlotVar.get() != 0:
+            self.currentlySelectedPlot = self.plotNameReference
+
+        self.selectPrimaryPlotRadioButton.deselect()
+
+    def onRadioBtnSelPrimary(self):
+        if self.selectPrimaryPlotVar.get() != 0:
+            self.currentlySelectedPlot = self.plotNamePrimary
+
+        self.selectReferencePlotRadioButton.deselect()
+
     def onUpdateDataFromBoxes(self, other):
 
         try:
@@ -302,8 +339,9 @@ class AdjustmentTool:
         finally:
             self.adjustmenRoot.destroy()
 
-    def updatePlotData(self, dataY):
+    def updatePlotData(self, dataY, title):
         plt.style.use('dark_background')
+        self.figPreview.suptitle(title)
         self.axPreview.clear()
         self.axPreview.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
         self.axPreview.plot(dataY, color='y')
@@ -373,19 +411,23 @@ class AdjustmentTool:
             self.zaberDriver.setPosition(startPos, speed=self.zaberDriver.MaxSpeed)
             self.zaberDriver.waitUntilIdle()
 
-            self.zaberDriver.sineMoveNTimes(self.amplitudeCurrent, self.timePeriodCurrent, 1)
+            # self.zaberDriver.sineMoveNTimes(self.amplitudeCurrent, self.timePeriodCurrent, 1)
             # calculate the speed required to complete the movement in the specified time
-            # requiredMovementSpeed = (self.amplitudeCurrent * 2.0) / (self.timePeriodCurrent / 1000.0) # [um/s]
-            # self.zaberDriver.setPosition(startPos + (self.amplitudeCurrent * 2.0), speed=requiredMovementSpeed)
+            requiredMovementSpeed = (self.amplitudeCurrent * 2.0) / (self.timePeriodCurrent / 1000.0) # [um/s]
+            self.zaberDriver.setPosition(startPos + (self.amplitudeCurrent * 2.0), speed=requiredMovementSpeed)
 
             measStatus = self.MFLIDriver.measureDataStandaloneMethod()
 
-            time.sleep(samplingTime + 0.05)
+            time.sleep((samplingTime/1000) + 0.05)
 
             self.zaberDriver.waitUntilIdle()
+            self.zaberDriver.setPosition(startPos, speed=self.zaberDriver.MaxSpeed) # send the carriage back
 
             if measStatus != "ok":
                 print(f"Preview measurement failed due to: {measStatus}")
 
-            self.updatePlotData(self.MFLIDriver.lastInterferogramData)
+            if self.currentlySelectedPlot == self.plotNamePrimary:
+                self.updatePlotData(self.MFLIDriver.lastInterferogramData, "Primary detector preview")
+            else:
+                self.updatePlotData(self.MFLIDriver.lastReferenceData, "Reference detector preview")
 
