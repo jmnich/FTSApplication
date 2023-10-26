@@ -317,16 +317,6 @@ class AdjustmentTool:
         freqIndex = 11
 
         mfliSamplingFrequency = self.MFLIDriver.MFLISamplingRates[freqIndex]
-        samplingTime = self.timePeriodCurrent
-        sampleCount = samplingTime / 1000.0 * mfliSamplingFrequency
-
-        # configure MFLI
-        self.MFLIDriver.configureForMeasurement(samplingFreqIndex=freqIndex,
-                                                sampleLength=sampleCount,
-                                                triggerEnabled=False,
-                                                triggerLevel=0,
-                                                triggerReference=0,
-                                                triggerHysteresis=0)
 
         startPos = self.centerPointCurrent - self.amplitudeCurrent
 
@@ -337,25 +327,60 @@ class AdjustmentTool:
 
         time.sleep(0.1)
 
+        samplingTime = self.timePeriodCurrent
+        sampleCount = samplingTime / 1000.0 * mfliSamplingFrequency
+
+        previous_samplingTime = samplingTime
+        previous_sampleCount = sampleCount
+        previous_startPos = startPos
+
+        self.MFLIDriver.configureForMeasurement(samplingFreqIndex=freqIndex,
+                                                sampleLength=sampleCount,
+                                                triggerEnabled=False,
+                                                triggerLevel=0,
+                                                triggerReference=0,
+                                                triggerHysteresis=0)
+
         while True:
 
             if self.scanStopFlag:
                 self.scanStopFlag = False
                 break
 
+            # configure MFLI
+            samplingTime = self.timePeriodCurrent
+            sampleCount = samplingTime / 1000.0 * mfliSamplingFrequency
             startPos = self.centerPointCurrent - self.amplitudeCurrent
+
+            # if configuration was changed, reinitialize MFLI
+            if (samplingTime != previous_samplingTime or
+                    sampleCount != previous_sampleCount or
+                    startPos != previous_startPos):
+
+                self.MFLIDriver.configureForMeasurement(samplingFreqIndex=freqIndex,
+                                                        sampleLength=sampleCount,
+                                                        triggerEnabled=False,
+                                                        triggerLevel=0,
+                                                        triggerReference=0,
+                                                        triggerHysteresis=0)
+
+            previous_samplingTime = samplingTime
+            previous_sampleCount = sampleCount
+            previous_startPos = startPos
 
             self.zaberDriver.stop()
             self.zaberDriver.waitUntilIdle()
             self.zaberDriver.setPosition(startPos, speed=self.zaberDriver.MaxSpeed)
             self.zaberDriver.waitUntilIdle()
 
-            # self.zaberDriver.sineMoveNTimes(self.amplitudeCurrent, self.timePeriodCurrent, 1)
+            self.zaberDriver.sineMoveNTimes(self.amplitudeCurrent, self.timePeriodCurrent, 1)
             # calculate the speed required to complete the movement in the specified time
-            requiredMovementSpeed = (self.amplitudeCurrent * 2.0) / (self.timePeriodCurrent / 1000.0) # [um/s]
-            self.zaberDriver.setPosition(startPos + (self.amplitudeCurrent * 2.0), speed=requiredMovementSpeed)
+            # requiredMovementSpeed = (self.amplitudeCurrent * 2.0) / (self.timePeriodCurrent / 1000.0) # [um/s]
+            # self.zaberDriver.setPosition(startPos + (self.amplitudeCurrent * 2.0), speed=requiredMovementSpeed)
 
             measStatus = self.MFLIDriver.measureDataStandaloneMethod()
+
+            time.sleep(samplingTime + 0.05)
 
             self.zaberDriver.waitUntilIdle()
 
