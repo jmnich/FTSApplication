@@ -67,7 +67,7 @@ class AdjustmentTool:
         # Center point controls
         # =================================================================================
         self.centerPointLabel = ctk.CTkLabel(master=self.adjustmenRoot,
-                                                    text="Center point",
+                                                    text="Center point [\u03BCm]",
                                                     font=ctk.CTkFont(size=12))
         self.centerPointLabel.grid(row=0, column=0, sticky="SE", padx=5, pady=(30, 15))
 
@@ -97,7 +97,7 @@ class AdjustmentTool:
         # Amplitude controls
         # =================================================================================
         self.amplitudeLabel = ctk.CTkLabel(master=self.adjustmenRoot,
-                                                    text="Amplitude",
+                                                    text="Amplitude [\u03BCm]",
                                                     font=ctk.CTkFont(size=12))
         self.amplitudeLabel.grid(row=2, column=0, sticky="SE", padx=5, pady=(50,15))
 
@@ -127,7 +127,7 @@ class AdjustmentTool:
         # Time period controls
         # =================================================================================
         self.timePeriodLabel = ctk.CTkLabel(master=self.adjustmenRoot,
-                                                    text="Time period",
+                                                    text="Time period [ms]",
                                                     font=ctk.CTkFont(size=12))
         self.timePeriodLabel.grid(row=4, column=0, sticky="SE", padx=5, pady=(50,15))
 
@@ -166,7 +166,7 @@ class AdjustmentTool:
 
         self.selectReferencePlotVar = ctk.IntVar(value=0)
         self.selectReferencePlotRadioButton = ctk.CTkRadioButton(master=self.adjustmenRoot,
-                                                text="Primary",
+                                                text="Reference",
                                                 command=self.onRadioBtnSelReference,
                                                 value=1,
                                                 variable=self.selectReferencePlotVar)
