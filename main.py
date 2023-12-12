@@ -572,7 +572,7 @@ class FTSApp:
         self.xUnitsLabel.grid(row=4, column=0, sticky="E", padx=5, pady=5)
 
 
-        self.currentXUnit = "um"
+        self.currentXUnit = "cm-1"
 
         self.xUnitRadioUMVar = ctk.IntVar(value=0)
         self.xUnitRadioUM = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plots"),

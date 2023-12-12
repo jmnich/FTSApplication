@@ -10,6 +10,10 @@ import matplotlib.pyplot as plt
 import scipy
 import math
 
+config_save_raw_data = True
+config_save_corrected_interferograms = False
+config_save_individual_spectra = False
+
 def find_nearest(array,value):
     idx = np.searchsorted(array, value, side="left")
     if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) < math.fabs(value - array[idx])):
@@ -212,9 +216,14 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
     pathToRawDataDirectory = os.path.join(savePackageRootPath, "raw_data")
 
     if saveRawData:
-        os.mkdir(pathToRawSpectraDirectory)
-        os.mkdir(pathToCorrectedInterferogramsDirectory)
-        os.mkdir(pathToRawDataDirectory)
+        if config_save_individual_spectra:
+            os.mkdir(pathToRawSpectraDirectory)
+
+        if config_save_corrected_interferograms:
+            os.mkdir(pathToCorrectedInterferogramsDirectory)
+
+        if config_save_raw_data:
+            os.mkdir(pathToRawDataDirectory)
 
     averageSpectrumDataValid = False
     rawSpectraDataValid = False
@@ -275,7 +284,8 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
         plt.close()
 
     # save raw spectra to .CSV files
-    if (saveRawData and
+    if (config_save_individual_spectra and
+            saveRawData and
             len(rawSpectraX) == len(rawSpectraY) and
             len(rawSpectraX) != 0):
 
@@ -290,7 +300,8 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
                                  rawSpectraX[i], rawSpectraY[i])
 
     # save corrected interferograms to .CSV files
-    if (saveRawData and
+    if (config_save_corrected_interferograms and
+        saveRawData and
         len(correctedInterferogramsX) == len(correctedInterferogramsY) and
         len(correctedInterferogramsX) != 0):
 
@@ -305,7 +316,8 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
                                  correctedInterferogramsX[i], correctedInterferogramsY[i])
 
     # save raw data to .CSV files
-    if (saveRawData and
+    if (config_save_raw_data and
+        saveRawData and
         len(referenceSignalsRaw) == len(interferogramsRaw) and
         len(referenceSignalsRaw) != 0):
 
