@@ -5,11 +5,13 @@ from threading import *
 
 import customtkinter as ctk
 import numpy as np
+from scipy import signal
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sys
 from tkinter import messagebox
+
 
 class AdjustmentTool:
 
@@ -32,6 +34,9 @@ class AdjustmentTool:
         self.centerPointCurrent = 75000.0
         self.amplitudeCurrent = 5000.0
         self.timePeriodCurrent = 2000.0
+
+        self.previousData = None
+        self.previousData2 = None
 
         self.limitTPMin = 200.0
         self.limitTPMax = 60000.0
@@ -239,6 +244,8 @@ class AdjustmentTool:
 
     def stopScan(self):
         self.scanStopFlag = True
+        self.previousData = None
+        self.previousData2 = None
         # self.zaberDriver.stop()
 
     def refreshValues(self):
@@ -337,18 +344,53 @@ class AdjustmentTool:
         except:
             pass
         finally:
+            self.previousData = None
+            self.previousData2 = None
             self.adjustmenRoot.destroy()
 
     def updatePlotData(self, dataY, title):
+
+        dataY = dataY - np.mean(dataY)
+        #decimatedData = signal.decimate(dataY, 10)
+        decimatedData = dataY
+
         plt.style.use('dark_background')
         self.figPreview.suptitle(title)
         self.axPreview.clear()
         self.axPreview.grid(color="dimgrey", linestyle='-', linewidth=1, alpha=0.6)
-        self.axPreview.plot(dataY, color='y')
-        self.axPreview.set_xlim(0, len(dataY))
+
+        if self.previousData2 is not None:
+            self.axPreview.plot(self.previousData2, color='gray', alpha=0.5)
+
+        if self.previousData is not None:
+            self.axPreview.plot(self.previousData, color='gray', alpha=0.75)
+
+        dataMin = np.min(dataY)
+        dataMax = np.max(dataY)
+        dataSpan = dataMax - dataMin
+        print(f"\nAlignment data:\nMin: {dataMin}\nMax: {dataMax}\nPkPk: {dataSpan}\n")
+
+        self.axPreview.plot(decimatedData, color='y')
+        self.axPreview.set_xlim(0, len(decimatedData))
+
+        if dataSpan > 1.0:
+            self.axPreview.set_ylim(-1.0, 1.0)
+        elif dataSpan > 0.5:
+            self.axPreview.set_ylim(-0.6, 0.6)
+        elif dataSpan > 0.25:
+            self.axPreview.set_ylim(-0.3, 0.3)
+        elif dataSpan > 0.1:
+            self.axPreview.set_ylim(-0.15, 0.15)
+        elif dataSpan > 0.05:
+            self.axPreview.set_ylim(-0.075, 0.075)
+        else:
+            self.axPreview.set_ylim(-0.03, 0.03)
 
         self.canvasPreviewPlot.draw()
         self.adjustmenRoot.update()
+
+        self.previousData2 = np.copy(self.previousData)
+        self.previousData = np.copy(decimatedData)
 
     def scanningThread(self):
         print("Scanning thread started")

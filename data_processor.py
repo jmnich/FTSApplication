@@ -166,7 +166,7 @@ class DataProcessor:
 
         # make a new X axis, common to all spectra and interpolate them on it
         spectrum_config_x_min = 0.3
-        spectrum_config_x_max = 30.0
+        spectrum_config_x_max = 60.0
         spectrum_config_pts = int(2E6)
         common_spectrum_X = np.linspace(start=spectrum_config_x_min,
                                         stop=spectrum_config_x_max,
