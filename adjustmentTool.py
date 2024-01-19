@@ -389,16 +389,20 @@ class AdjustmentTool:
 
         if dataSpan > 1.0:
             self.axPreview.set_ylim(-1.0, 1.0)
+        elif dataSpan > 0.75:
+            self.axPreview.set_ylim(-0.76, 76)
         elif dataSpan > 0.5:
-            self.axPreview.set_ylim(-0.6, 0.6)
-        elif dataSpan > 0.25:
-            self.axPreview.set_ylim(-0.3, 0.3)
+            self.axPreview.set_ylim(-0.51, 0.51)
+        elif dataSpan > 0.35:
+            self.axPreview.set_ylim(-0.36, 0.36)
+        elif dataSpan > 0.2:
+            self.axPreview.set_ylim(-0.21, 0.21)
         elif dataSpan > 0.1:
             self.axPreview.set_ylim(-0.15, 0.15)
         elif dataSpan > 0.05:
             self.axPreview.set_ylim(-0.075, 0.075)
         else:
-            self.axPreview.set_ylim(-0.03, 0.03)
+            self.axPreview.set_ylim(-0.05, 0.05)
 
         self.canvasPreviewPlot.draw()
         self.adjustmenRoot.update()
