@@ -66,7 +66,11 @@ def getDefaultSettings():
         "triggerModeEnabled": "False",
         "triggerLevel": "100.0",
         "triggerReference": "50.0",
-        "triggerHysteresis": "10.0"
+        "triggerHysteresis": "10.0",
+
+        "adjustmentCenterPoint" : "75000.0",
+        "adjustmentAmplitude" : "5000.0",
+        "adjustmentPeriod" : "2000.0"
     }
 
     return  defaultSettings

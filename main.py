@@ -838,13 +838,14 @@ class FTSApp:
                                                              index(self.samplingFreqCombo.get()))
 
         logging.info(f"Multiple captures with averaging started. Count = {measCount}")
-        self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
 
+        # trigger mode
         if self.appSettings["triggerModeEnabled"] == "True":
             trgMode = True
         else:
             trgMode = False
 
+        # actual mesurement order
         self.ApplicationController.performMeasurements(measurementsCount=measCount,
                                                        samplingFrequency=self.MFLIFreqneuenciesAsStrings.
                                                        index(self.samplingFreqCombo.get()),
@@ -1002,6 +1003,7 @@ class FTSApp:
         self.absorbanceToolWindow.setApplicationSettings = self.setApplicationSettings
 
     def onCmdOpenAdjustmentTool(self):
+        SM.saveSettingsToFile(self.appSettings)     # try to maintain settings coherence
         self.adjustmentToolWindow = AdjustmentTool.AdjustmentTool(self.root, self.ZaberDrv, self.MFLIDrv)
 
     def onCmdUpdateSpectrumPlotRanges(self, other):

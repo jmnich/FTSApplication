@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sys
 from tkinter import messagebox
-
+import settings_manager as SM
+from main import FTSApp
 
 class AdjustmentTool:
 
@@ -19,6 +20,13 @@ class AdjustmentTool:
 
         self.zaberDriver = zaberController
         self.MFLIDriver = mfliController
+        self.root = root
+
+        if SM.isSettingsFileAvailable():
+            self.appSettings = SM.readSettingsFromFile()
+            SM.validateAndFixSettings(self.appSettings)
+        else:
+            self.appSettings = SM.getDefaultSettings()
 
         self.scanStopFlag = False
 
@@ -78,7 +86,8 @@ class AdjustmentTool:
 
         self.centerPointBox = ctk.CTkEntry(master=self.adjustmenRoot,
                                         width=80, height=30)
-        self.centerPointBox.insert(0, f"{self.centerPointCurrent}")
+
+        self.centerPointBox.insert(0, self.appSettings["adjustmentCenterPoint"])
         self.centerPointBox.grid(row=0, column=1, sticky="SW", padx=5, pady=(30, 15))
         self.centerPointBox.bind("<FocusOut>", self.onUpdateDataFromBoxes)
         self.centerPointBox.bind("<Return>", self.onUpdateDataFromBoxes)
@@ -108,7 +117,7 @@ class AdjustmentTool:
 
         self.amplitudeBox = ctk.CTkEntry(master=self.adjustmenRoot,
                                         width=80, height=30)
-        self.amplitudeBox.insert(0, f"{self.amplitudeCurrent}")
+
         self.amplitudeBox.grid(row=2, column=1, sticky="SW", padx=5, pady=(50,15))
         self.amplitudeBox.bind("<FocusOut>", self.onUpdateDataFromBoxes)
         self.amplitudeBox.bind("<Return>", self.onUpdateDataFromBoxes)
@@ -138,7 +147,8 @@ class AdjustmentTool:
 
         self.timePeriodBox = ctk.CTkEntry(master=self.adjustmenRoot,
                                         width=80, height=30)
-        self.timePeriodBox.insert(0, f"{self.timePeriodCurrent}")
+
+        self.timePeriodBox.insert(0, self.appSettings["adjustmentPeriod"])
         self.timePeriodBox.grid(row=4, column=1, sticky="SW", padx=5, pady=(50,15))
         self.timePeriodBox.bind("<FocusOut>", self.onUpdateDataFromBoxes)
         self.timePeriodBox.bind("<Return>", self.onUpdateDataFromBoxes)
@@ -246,6 +256,7 @@ class AdjustmentTool:
         self.scanStopFlag = True
         self.previousData = None
         self.previousData2 = None
+        SM.saveSettingsToFile(self.appSettings)
         # self.zaberDriver.stop()
 
     def refreshValues(self):
@@ -341,6 +352,9 @@ class AdjustmentTool:
 
         try:
             self.zaberDriver.stop()
+            SM.saveSettingsToFile(self.appSettings)
+            self.root.appSettings = self.appSettings
+
         except:
             pass
         finally:
