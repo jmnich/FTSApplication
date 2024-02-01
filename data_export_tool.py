@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import scipy
 import math
 
+# from serial.serialjava import comm
+
 config_save_raw_data = True
 config_save_corrected_interferograms = False
 config_save_individual_spectra = False
@@ -172,7 +174,7 @@ def exportSpectrumAsCSV(spectrumX, spectrumY):
 def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
                                       rawSpectraX, rawSpectraY,
                                       correctedInterferogramsX, correctedInterferogramsY,
-                                      interferogramsRaw, referenceSignalsRaw, settings):
+                                      interferogramsRaw, referenceSignalsRaw, settings, comments):
 
     direcotry_selected = filedialog.askdirectory()
     packageNameDialog = ctk.CTkInputDialog(text="Type in a short name for the data package", title="Name your results")
@@ -194,6 +196,7 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
     pathToInterferogramCSV = os.path.join(savePackageRootPath, "interferogram.csv")
     pathToSpectrumPicture = os.path.join(savePackageRootPath, "spectrum.png")
     pathToInterferogramPicture = os.path.join(savePackageRootPath, "interferogram.png")
+    pathToComments = os.path.join(savePackageRootPath, "comments.txt")
 
     pathToMatlabSubDirectory = os.path.join(savePackageRootPath, "matlab")
 
@@ -392,6 +395,12 @@ def exportAllDataMultipleMeasurements(averageSpectrumX, averageSpectrumY,
 
             for key in settings.keys():
                 f.write(f"{key}:{settings[key]}\n")
+
+    if comments is not None:
+        with open(pathToComments, 'w') as f:
+            f.write(f"NAME: {selectedName}\n")
+            f.write(f"TIMESTAMP: {timestamp}\n\n")
+            f.write(comments)
 
     logging.info(f"Data export finished. Location: {savePackageRootPath}")
 

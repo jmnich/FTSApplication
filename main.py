@@ -506,6 +506,19 @@ class FTSApp:
             self.exportToMatSwitch.select()
         else:
             self.exportToMatSwitch.deselect()
+
+        self.commentsLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Save"),
+                                                    text="Comments:",
+                                                    font=ctk.CTkFont(size=12))
+        self.commentsLabel.grid(row=3, column=0, columnspan=2, sticky="W", padx=5, pady=(10,0))
+
+        self.commentsTextBox = ctk.CTkTextbox(master=self.settingsTabs.tab("Save"),
+                                              text_color='ghost white',
+                                              bg_color='gray18',
+                                              corner_radius=10)
+
+        self.commentsTextBox.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky='W')
+
         # configure settings 'PLOTS' tab
         # ==============================================================================================================
         self.settingsTabs.tab("Plots").columnconfigure(0, weight=1)
@@ -1142,7 +1155,8 @@ class FTSApp:
             correctedInterferogramsY    = self.ApplicationController.processedInterferogramsY,
             interferogramsRaw           = self.ApplicationController.rawInterferograms,
             referenceSignalsRaw         = self.ApplicationController.rawReferenceSignals,
-            settings                    = self.settingsUsedForCurrentMeasurement
+            settings                    = self.settingsUsedForCurrentMeasurement,
+            comments                    = self.commentsTextBox.get("0.0", "end")
         )
 
     def onClosing(self):
