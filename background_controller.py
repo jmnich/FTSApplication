@@ -294,7 +294,8 @@ class BackgroundController:
 
             self.SendResultsToPlot(results["interferogramX"], results["rawInterferogramY"],
                                    results["spectrumX"], results["spectrumY"],
-                                   self.averageSpectrumX, self.averageSpectrumY, i)
+                                   self.averageSpectrumX, self.averageSpectrumY, i,
+                                   results["apodizationWindow"])
 
         return "ok"
 

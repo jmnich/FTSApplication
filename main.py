@@ -48,6 +48,7 @@ class FTSApp:
         self.currentInterferogramY = []
         self.currentAverageSpectrumX = []
         self.currentAverageSpectrumY = []
+        self.currentApodizationWindow = []
 
         self.currentlyAvailableCOMPorts = []
 
@@ -343,7 +344,9 @@ class FTSApp:
                                                  state="readonly",
                                                  width=130)
         self.apodizationTypeCombo.grid(row=0, column=1, sticky="E", padx=5, pady=5)
-        self.apodizationTypeCombo.set(DataProcessor.getApodizationWindowsTypesList()[0])
+        # self.apodizationTypeCombo.set(DataProcessor.getApodizationWindowsTypesList()[0])
+        self.apodizationTypeCombo.set(self.appSettings["apodizationWindow"])
+
         # configure settings 'TRIG' tab
         # ==============================================================================================================
         self.settingsTabs.tab("Trg").columnconfigure(0, weight=1)
@@ -760,7 +763,7 @@ class FTSApp:
             logging.info(f"Delay line status: not ready")
 
     def receiveMeasurementResults(self, interfX, interfY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
-        completedMeasurements):
+        completedMeasurements, apodizationWindow):
 
         self.currentInterferogramX = interfX
         self.currentInterferogramY = interfY
@@ -768,6 +771,7 @@ class FTSApp:
         self.currentSpectrumY = spectrumY
         self.currentAverageSpectrumX = averageSpectrumX
         self.currentAverageSpectrumY = averageSpectrumY
+        self.currentApodizationWindow = apodizationWindow
 
         self.multipleMeasBox.delete(0, "end")
 
@@ -1203,7 +1207,8 @@ class FTSApp:
     def updatePlot(self):
         self.loadDataToPlots(self.currentInterferogramX, self.currentInterferogramY,
                              self.currentSpectrumX, self.currentSpectrumY,
-                             self.currentAverageSpectrumX, self.currentAverageSpectrumY, 0)
+                             self.currentAverageSpectrumX, self.currentAverageSpectrumY, 0,
+                             self.currentApodizationWindow)
 
     def giveSpectrumForAbsorbanceLast(self):
         return ('Wavelength [\u03BCm]', 'Intensity [dBm]',
@@ -1213,7 +1218,7 @@ class FTSApp:
         return ('Wavelength [\u03BCm]', 'Intensity [dBm]',
                 self.currentAverageSpectrumX.copy(), self.currentAverageSpectrumY.copy())
     def loadDataToPlots(self, interferogramX, interferogramY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
-                        completedMeasurements):
+                        completedMeasurements, apodizationWindow):
 
         if completedMeasurements != 0:
             self.multipleMeasBox.delete(0, "end")
@@ -1331,6 +1336,7 @@ class FTSApp:
 
         # plot the interferogram itself
         if interferogramValidForDisplay:
+            self.axTop.plot(interferogramX, apodizationWindow * np.max(interferogramY), color="grey", alpha=0.7)
             self.axTop.plot(interferogramX, interferogramY, color=self.plotLineColor, label="Signal")
             self.axTop.set_xlim(np.min(interferogramX), np.max(interferogramX))
 
