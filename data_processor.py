@@ -244,9 +244,9 @@ class DataProcessor:
             return window
 
         elif windowType == "gauss":
-            winLeft = signal.windows.gaussian((zpdIdx + 1) * 2)
+            winLeft = signal.windows.gaussian((zpdIdx + 1) * 2, std=7)
             winLeft = winLeft[:int(len(winLeft) / 2)]
-            winRight = signal.windows.gaussian(((len(interferogram) - 1) - zpdIdx) * 2)
+            winRight = signal.windows.gaussian(((len(interferogram) - 1) - zpdIdx) * 2, std=7)
             winRight = winRight[int(len(winRight) / 2):]
             window = np.concatenate((winLeft, winRight))
 
