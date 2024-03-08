@@ -29,6 +29,7 @@ class BackgroundController:
         self.triggerLevel = None
         self.triggerHysteresis = None
         self.triggerReference = None
+        self.selectedApodizationWindowType = None
 
         self.MFLIDriver     = mfliDrv
         self.ZaberDriver    = zaberDrv
@@ -99,7 +100,7 @@ class BackgroundController:
 
 
     def performMeasurements(self, measurementsCount, samplingFrequency, scanStart, scanLength, scanSpeed,
-                            trigModeEnabled, trigLevel, trigHysteresis, trigReference):
+                            trigModeEnabled, trigLevel, trigHysteresis, trigReference, apodizationWindow):
         logging.info(f"Application controller: measurement starting")
 
         # reset and configure the backgroung controller
@@ -117,6 +118,7 @@ class BackgroundController:
         self.scanStartPosition          = scanStart
         self.scanLength                 = scanLength
         self.scanSpeed                  = scanSpeed
+        self.selectedApodizationWindowType = apodizationWindow
 
         self.triggerModeEnabled         = trigModeEnabled
         self.triggerLevel               = trigLevel
@@ -252,7 +254,8 @@ class BackgroundController:
                 # results = self.DataAnalyzer.analyzeData(rawReferenceSignal=self.MFLIDriver.lastReferenceData,
                 #                                         rawInterferogram=self.MFLIDriver.lastInterferogramData)
                 results = self.DataAnalyzer.analyzeDataHilbertInterpolation(rawReferenceSignal=self.MFLIDriver.lastReferenceData,
-                                                        rawInterferogram=self.MFLIDriver.lastInterferogramData)
+                                                        rawInterferogram=self.MFLIDriver.lastInterferogramData,
+                                                        apodizationWindowType=self.selectedApodizationWindowType)
             except:
                 self.SetStatusMessageMethod("Data acquisition or analysis failed")
                 failedAcquisitionsCount += 1
@@ -289,7 +292,7 @@ class BackgroundController:
             self.averageSpectrumX = self.spectraX[0]
             self.averageSpectrumY = sumArr
 
-            self.SendResultsToPlot(results["interferogramX"], results["interferogramY"],
+            self.SendResultsToPlot(results["interferogramX"], results["rawInterferogramY"],
                                    results["spectrumX"], results["spectrumY"],
                                    self.averageSpectrumX, self.averageSpectrumY, i)
 

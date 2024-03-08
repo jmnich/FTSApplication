@@ -19,10 +19,12 @@ from datetime import datetime
 import data_export_tool as DataExportTool
 import absorbanceTool as AbsorbanceTool
 import adjustmentTool as AdjustmentTool
-
+import data_processor as DataProcessor
 class FTSApp:
 
     def __init__(self):
+        self.appVersion = "1.1_240308"
+
         logging.basicConfig(filename='ftsapp.log', format='%(asctime)s %(message)s', level=logging.INFO)
         logging.info('========= Application started =========')
 
@@ -54,7 +56,7 @@ class FTSApp:
         self.root = ctk.CTk()
         self.root.geometry("1200x800")
         self.root.minsize(800, 800)
-        self.root.title("FTS App")
+        self.root.title("FTS App" + "   " + "v." + self.appVersion)
         self.root.iconbitmap(default='icon.ico')
         self.root.resizable(True, True)
         self.root.state('zoomed')
@@ -221,10 +223,11 @@ class FTSApp:
         self.settingsTabs = ctk.CTkTabview(master=self.frameButtonsBottom)
         self.settingsTabs.grid(row=4, column=0, columnspan=2, sticky="NSEW", padx=2, pady=2)
         self.settingsTabs.add("Scan")
-        self.settingsTabs.add("Trig")
-        self.settingsTabs.add("Hardware")
-        self.settingsTabs.add("Plots")
-        self.settingsTabs.add("Save")
+        self.settingsTabs.add("Trg")
+        self.settingsTabs.add("Proc")
+        self.settingsTabs.add("Conn")
+        self.settingsTabs.add("Plot")
+        self.settingsTabs.add("Sv")
 
         # configure settings 'SCAN' tab
         # ==============================================================================================================
@@ -317,17 +320,41 @@ class FTSApp:
 
         self.scanSpeedSlider.set(sliderSetting)
 
+        # configure settings 'PROC' tab
+        # ==============================================================================================================
+        # data processing stuff
+
+        self.settingsTabs.tab("Proc").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Proc").columnconfigure(1, weight=1)
+
+        self.settingsTabs.tab("Proc").rowconfigure(0, weight=1)
+        self.settingsTabs.tab("Proc").rowconfigure(1, weight=1)
+        self.settingsTabs.tab("Proc").rowconfigure(2, weight=1)
+        self.settingsTabs.tab("Proc").rowconfigure(3, weight=1)
+        self.settingsTabs.tab("Proc").rowconfigure(4, weight=1)
+
+        self.apodizationComboLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Proc"),
+                                                    text="Apodization\nwindow",
+                                                    font=ctk.CTkFont(size=12))
+        self.apodizationComboLabel.grid(row=0, column=0, sticky="E", padx=5, pady=5)
+
+        self.apodizationTypeCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Proc"),
+                                                 values= DataProcessor.getApodizationWindowsTypesList(),
+                                                 state="readonly",
+                                                 width=130)
+        self.apodizationTypeCombo.grid(row=0, column=1, sticky="E", padx=5, pady=5)
+        self.apodizationTypeCombo.set(DataProcessor.getApodizationWindowsTypesList()[0])
         # configure settings 'TRIG' tab
         # ==============================================================================================================
-        self.settingsTabs.tab("Trig").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Trig").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Trg").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Trg").columnconfigure(1, weight=1)
 
-        self.settingsTabs.tab("Trig").rowconfigure(0, weight=1)
-        self.settingsTabs.tab("Trig").rowconfigure(1, weight=1)
-        self.settingsTabs.tab("Trig").rowconfigure(2, weight=1)
-        self.settingsTabs.tab("Trig").rowconfigure(3, weight=1)
+        self.settingsTabs.tab("Trg").rowconfigure(0, weight=1)
+        self.settingsTabs.tab("Trg").rowconfigure(1, weight=1)
+        self.settingsTabs.tab("Trg").rowconfigure(2, weight=1)
+        self.settingsTabs.tab("Trg").rowconfigure(3, weight=1)
 
-        self.triggerEnableSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Trig"),
+        self.triggerEnableSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Trg"),
                                                     text="Triggered acquisition mode",
                                                     command=self.onCmdTriggerSwitchModified,
                                                     onvalue="True", offvalue="False")
@@ -338,36 +365,36 @@ class FTSApp:
         else:
             self.triggerEnableSwitch.deselect()
 
-        self.triggerLevelLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trig"),
+        self.triggerLevelLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trg"),
                                                     text="Trigger\nlevel [mV]",
                                                     font=ctk.CTkFont(size=12))
         self.triggerLevelLabel.grid(row=1, column=0, sticky="E", padx=5, pady=5)
 
-        self.triggerLevelBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trig"),
+        self.triggerLevelBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trg"),
                                         width=120, height=30)
         self.triggerLevelBox.insert(0, self.appSettings["triggerLevel"])
         self.triggerLevelBox.grid(row=1, column=1, sticky="E", padx=5, pady=5)
         self.triggerLevelBox.bind("<FocusOut>", self.onCmdRefreshTriggerSettings)
         self.triggerLevelBox.bind("<Return>", self.onCmdRefreshTriggerSettings)
 
-        self.triggerHysteresisLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trig"),
+        self.triggerHysteresisLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trg"),
                                                     text="Trigger\nhysteresis [mV]",
                                                     font=ctk.CTkFont(size=12))
         self.triggerHysteresisLabel.grid(row=2, column=0, sticky="E", padx=5, pady=5)
 
-        self.triggerHysteresisBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trig"),
+        self.triggerHysteresisBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trg"),
                                         width=120, height=30)
         self.triggerHysteresisBox.insert(0, self.appSettings["triggerHysteresis"])
         self.triggerHysteresisBox.grid(row=2, column=1, sticky="E", padx=5, pady=5)
         self.triggerHysteresisBox.bind("<FocusOut>", self.onCmdRefreshTriggerSettings)
         self.triggerHysteresisBox.bind("<Return>", self.onCmdRefreshTriggerSettings)
 
-        self.triggerReferenceLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trig"),
+        self.triggerReferenceLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Trg"),
                                                     text="Trigger\nreference [%]",
                                                     font=ctk.CTkFont(size=12))
         self.triggerReferenceLabel.grid(row=3, column=0, sticky="E", padx=5, pady=5)
 
-        self.triggerReferenceBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trig"),
+        self.triggerReferenceBox = ctk.CTkEntry(master=self.settingsTabs.tab("Trg"),
                                         width=120, height=30)
         self.triggerReferenceBox.insert(0, self.appSettings["triggerReference"])
         self.triggerReferenceBox.grid(row=3, column=1, sticky="E", padx=5, pady=5)
@@ -376,48 +403,48 @@ class FTSApp:
 
         # configure settings 'HARDWARE' tab
         # ==============================================================================================================
-        self.settingsTabs.tab("Hardware").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Hardware").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Conn").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Conn").columnconfigure(1, weight=1)
 
-        self.hardwareStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
+        self.hardwareStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                                       text="General\nstatus",
                                                       font=ctk.CTkFont(size=12))
         self.hardwareStatusLabelHeader.grid(row=0, column=0, sticky="E", padx=5, pady=5)
 
-        self.hardwareStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
+        self.hardwareStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                                 text="NOT\nREADY",
                                                 text_color="red",
                                                 font=ctk.CTkFont(size=14, weight="bold"))
         self.hardwareStatusLabel.grid(row=0, column=1, sticky="W", padx=5, pady=5)
 
-        self.mfliStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
+        self.mfliStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                                   text="DAQ\nsystem",
                                                   font=ctk.CTkFont(size=12))
         self.mfliStatusLabelHeader.grid(row=1, column=0, sticky="E", padx=5, pady=5)
 
-        self.mfliStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
+        self.mfliStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                             text="NOT\nREADY",
                                             text_color="red",
                                             font=ctk.CTkFont(size=14, weight="bold"))
         self.mfliStatusLabel.grid(row=1, column=1, sticky="W", padx=5, pady=5)
 
-        self.zaberStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
+        self.zaberStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                                    text="Delay\nline",
                                                    font=ctk.CTkFont(size=12))
         self.zaberStatusLabelHeader.grid(row=2, column=0, sticky="E", padx=5, pady=5)
 
-        self.zaberStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
+        self.zaberStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                              text="NOT\nREADY",
                                              text_color="red",
                                              font=ctk.CTkFont(size=14, weight="bold"))
         self.zaberStatusLabel.grid(row=2, column=1, sticky="W", padx=5, pady=5)
 
-        self.zaberCOMLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
+        self.zaberCOMLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                           text="Zaber port",
                                           font=ctk.CTkFont(size=12))
         self.zaberCOMLabel.grid(row=3, column=0, sticky="W", padx=5, pady=5)
 
-        self.zaberPortCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Hardware"),
+        self.zaberPortCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Conn"),
                                               values=[],
                                               state="readonly",
                                               width=140)
@@ -428,7 +455,7 @@ class FTSApp:
         if self.currentlyAvailableCOMPorts.__contains__(self.appSettings["delayLineCOMPort"]):
             self.zaberPortCombo.set(self.appSettings["delayLineCOMPort"])
 
-        self.zaberPortRefreshButton = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
+        self.zaberPortRefreshButton = ctk.CTkButton(master=self.settingsTabs.tab("Conn"),
                                             text="",
                                             width=20,
                                             height=20,
@@ -436,18 +463,18 @@ class FTSApp:
                                             command=self.onCmdRefreshCOMPorts)
         self.zaberPortRefreshButton.grid(row=3, column=0, sticky="E", padx=5, pady=5)
 
-        self.mfliIDLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Hardware"),
+        self.mfliIDLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                         text="MFLI ID",
                                         font=ctk.CTkFont(size=12))
         self.mfliIDLabel.grid(row=4, column=0, sticky="W", padx=5, pady=5)
 
-        self.mfliIDBox = ctk.CTkTextbox(master=self.settingsTabs.tab("Hardware"),
+        self.mfliIDBox = ctk.CTkTextbox(master=self.settingsTabs.tab("Conn"),
                                         width=140, height=30)
         self.mfliIDBox.configure(wrap='none')
         self.mfliIDBox.insert("0.0", self.appSettings["mfliDeviceID"])
         self.mfliIDBox.grid(row=4, column=1, sticky="E", padx=5, pady=5)
 
-        self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
+        self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Conn"),
                                             text="Connect\nall",
                                             width=120,
                                             height=80,
@@ -455,7 +482,7 @@ class FTSApp:
                                             command=self.onCmdConnectHardware)
         self.buttonHardware.grid(row=6, column=0, sticky="N", padx=5, pady=5)
 
-        self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Hardware"),
+        self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Conn"),
                                             text="Home\nmirror",
                                             width=120,
                                             height=80,
@@ -465,13 +492,13 @@ class FTSApp:
 
         # configure settings 'EXPORT' tab
         # ==============================================================================================================
-        self.settingsTabs.tab("Save").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Save").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Sv").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Sv").columnconfigure(1, weight=1)
 
-        self.settingsTabs.tab("Save").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Save").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Sv").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Sv").columnconfigure(1, weight=1)
 
-        self.buttonSaveNormal = ctk.CTkButton(master=self.settingsTabs.tab("Save"),
+        self.buttonSaveNormal = ctk.CTkButton(master=self.settingsTabs.tab("Sv"),
                                             text="Save\nresults",
                                             width=120,
                                             height=80,
@@ -479,7 +506,7 @@ class FTSApp:
                                             command=self.onCmdSaveFull)
         self.buttonSaveNormal.grid(row=0, column=0, sticky="N", padx=5, pady=5)
 
-        self.buttonSaveCSV = ctk.CTkButton(master=self.settingsTabs.tab("Save"),
+        self.buttonSaveCSV = ctk.CTkButton(master=self.settingsTabs.tab("Sv"),
                                             text="Save\nspectrum\nas .csv",
                                             width=120,
                                             height=80,
@@ -487,7 +514,7 @@ class FTSApp:
                                             command=self.onCmdSaveCSVOnly)
         self.buttonSaveCSV.grid(row=0, column=1, sticky="N", padx=5, pady=5)
 
-        self.exportRawDataSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Save"),
+        self.exportRawDataSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Sv"),
                                                     text="Export raw data", command=self.onExportSwitchModified,
                                                     onvalue="True", offvalue="False")
         self.exportRawDataSwitch.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="W")
@@ -497,7 +524,7 @@ class FTSApp:
         else:
             self.exportRawDataSwitch.deselect()
 
-        self.exportToMatSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Save"),
+        self.exportToMatSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Sv"),
                                                     text="Export to .MAT", command=self.onExportSwitchModified,
                                                     onvalue="True", offvalue="False")
         self.exportToMatSwitch.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="W")
@@ -507,12 +534,12 @@ class FTSApp:
         else:
             self.exportToMatSwitch.deselect()
 
-        self.commentsLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Save"),
+        self.commentsLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Sv"),
                                                     text="Comments:",
                                                     font=ctk.CTkFont(size=12))
         self.commentsLabel.grid(row=3, column=0, columnspan=2, sticky="W", padx=5, pady=(10,0))
 
-        self.commentsTextBox = ctk.CTkTextbox(master=self.settingsTabs.tab("Save"),
+        self.commentsTextBox = ctk.CTkTextbox(master=self.settingsTabs.tab("Sv"),
                                               text_color='ghost white',
                                               bg_color='gray18',
                                               corner_radius=10)
@@ -521,18 +548,18 @@ class FTSApp:
 
         # configure settings 'PLOTS' tab
         # ==============================================================================================================
-        self.settingsTabs.tab("Plots").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Plots").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Plot").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Plot").columnconfigure(1, weight=1)
 
-        self.settingsTabs.tab("Plots").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Plots").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Plot").columnconfigure(0, weight=1)
+        self.settingsTabs.tab("Plot").columnconfigure(1, weight=1)
 
-        self.spectrumXMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+        self.spectrumXMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plot"),
                                                     text="Spectrum plot\nX MIN [\u03BCm]",
                                                     font=ctk.CTkFont(size=12))
         self.spectrumXMinLabel.grid(row=0, column=0, sticky="E", padx=5, pady=5)
 
-        self.spectrumXMinBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plots"),
+        self.spectrumXMinBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plot"),
                                         width=120, height=30)
         # self.scanLengthBox.configure(wrap='none')
         self.spectrumXMinBox.insert(0, self.appSettings["plotSpectrumXRangeMin"])
@@ -540,12 +567,12 @@ class FTSApp:
         self.spectrumXMinBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
         self.spectrumXMinBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
 
-        self.spectrumXMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+        self.spectrumXMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plot"),
                                                     text="Spectrum plot\nX MAX [\u03BCm]",
                                                     font=ctk.CTkFont(size=12))
         self.spectrumXMaxLabel.grid(row=1, column=0, sticky="E", padx=5, pady=5)
 
-        self.spectrumXMaxBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plots"),
+        self.spectrumXMaxBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plot"),
                                         width=120, height=30)
         # self.scanLengthBox.configure(wrap='none')
         self.spectrumXMaxBox.insert(0, self.appSettings["plotSpectrumXRangeMax"])
@@ -553,12 +580,12 @@ class FTSApp:
         self.spectrumXMaxBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
         self.spectrumXMaxBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
 
-        self.spectrumYMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+        self.spectrumYMinLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plot"),
                                                     text="Spectrum plot\nY MIN [dBm]",
                                                     font=ctk.CTkFont(size=12))
         self.spectrumYMinLabel.grid(row=2, column=0, sticky="E", padx=5, pady=5)
 
-        self.spectrumYMinBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plots"),
+        self.spectrumYMinBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plot"),
                                         width=120, height=30)
         # self.scanLengthBox.configure(wrap='none')
         self.spectrumYMinBox.insert(0, self.appSettings["plotSpectrumYRangeMin"])
@@ -566,12 +593,12 @@ class FTSApp:
         self.spectrumYMinBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
         self.spectrumYMinBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
 
-        self.spectrumYMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+        self.spectrumYMaxLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plot"),
                                                     text="Spectrum plot\nY MAX [dBm]",
                                                     font=ctk.CTkFont(size=12))
         self.spectrumYMaxLabel.grid(row=3, column=0, sticky="E", padx=5, pady=5)
 
-        self.spectrumYMaxBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plots"),
+        self.spectrumYMaxBox = ctk.CTkEntry(master=self.settingsTabs.tab("Plot"),
                                         width=120, height=30)
         # self.scanLengthBox.configure(wrap='none')
         self.spectrumYMaxBox.insert(0, self.appSettings["plotSpectrumYRangeMax"])
@@ -579,7 +606,7 @@ class FTSApp:
         self.spectrumYMaxBox.bind("<FocusOut>", self.onCmdUpdateSpectrumPlotRanges)
         self.spectrumYMaxBox.bind("<Return>", self.onCmdUpdateSpectrumPlotRanges)
 
-        self.xUnitsLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plots"),
+        self.xUnitsLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Plot"),
                                                     text="Select X axis\nunit",
                                                     font=ctk.CTkFont(size=12))
         self.xUnitsLabel.grid(row=4, column=0, sticky="E", padx=5, pady=5)
@@ -588,7 +615,7 @@ class FTSApp:
         self.currentXUnit = "cm-1"
 
         self.xUnitRadioUMVar = ctk.IntVar(value=0)
-        self.xUnitRadioUM = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plots"),
+        self.xUnitRadioUM = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plot"),
                                                 text="\u03BCm",
                                                 command=self.onCmdUnitRadioUM,
                                                 value=1,
@@ -601,7 +628,7 @@ class FTSApp:
             self.xUnitRadioUM.deselect()
 
         self.xUnitRadioFreqVar = ctk.IntVar(value=0)
-        self.xUnitRadioFreq = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plots"),
+        self.xUnitRadioFreq = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plot"),
                                                 text="THz",
                                                 command=self.onCmdUnitRadioTHz,
                                                 value=1,
@@ -614,7 +641,7 @@ class FTSApp:
             self.xUnitRadioFreq.deselect()
 
         self.xUnitRadioCMVar = ctk.IntVar(value=0)
-        self.xUnitRadioCM = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plots"),
+        self.xUnitRadioCM = ctk.CTkRadioButton(master=self.settingsTabs.tab("Plot"),
                                                 text="cm-1",
                                                 command=self.onCmdUnitRadioCM,
                                                 value=1,
@@ -663,7 +690,7 @@ class FTSApp:
                             float(self.appSettings["plotSpectrumYRangeMax"]))
         # self.axBot.set_yscale("log")
 
-        self.settingsTabs.set("Hardware")
+        self.settingsTabs.set("Conn")
 
         # create a status bar
         self.statusLabel = ctk.CTkLabel(master=self.root,
@@ -819,6 +846,9 @@ class FTSApp:
                                                              index(self.samplingFreqCombo.get()))
 
         logging.info(f"Single capture started")
+
+        self.appSettings["apodizationWindow"] = self.apodizationTypeCombo.get()
+
         self.settingsUsedForCurrentMeasurement = self.appSettings.copy()
         self.settingsUsedForCurrentMeasurement["averagingCount"] = 1
 
@@ -836,7 +866,8 @@ class FTSApp:
                                                        trigModeEnabled=trgMode,
                                                        trigLevel=float(self.appSettings["triggerLevel"]),
                                                        trigHysteresis=float(self.appSettings["triggerHysteresis"]),
-                                                       trigReference=float(self.appSettings["triggerReference"]))
+                                                       trigReference=float(self.appSettings["triggerReference"]),
+                                                       apodizationWindow = self.apodizationTypeCombo.get())
 
     def onCmdMultipleCapture(self):
 
@@ -849,6 +880,9 @@ class FTSApp:
 
         self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
                                                              index(self.samplingFreqCombo.get()))
+
+        self.appSettings["apodizationWindow"] = self.apodizationTypeCombo.get()
+        self.settingsUsedForCurrentMeasurement["apodizationWindow"] = self.apodizationTypeCombo.get()
 
         logging.info(f"Multiple captures with averaging started. Count = {measCount}")
 
@@ -868,7 +902,8 @@ class FTSApp:
                                                        trigModeEnabled=trgMode,
                                                        trigLevel=float(self.appSettings["triggerLevel"]),
                                                        trigHysteresis=float(self.appSettings["triggerHysteresis"]),
-                                                       trigReference=float(self.appSettings["triggerReference"]))
+                                                       trigReference=float(self.appSettings["triggerReference"]),
+                                                       apodizationWindow = self.apodizationTypeCombo.get())
     def onCmdStopMeasurement(self):
         self.ApplicationController.requestStop()
 

@@ -70,7 +70,9 @@ def getDefaultSettings():
 
         "adjustmentCenterPoint" : "75000.0",
         "adjustmentAmplitude" : "5000.0",
-        "adjustmentPeriod" : "2000.0"
+        "adjustmentPeriod" : "2000.0",
+
+        "apodizationWindow" : "boxcar"
     }
 
     return  defaultSettings

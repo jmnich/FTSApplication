@@ -3,6 +3,19 @@ from scipy.signal import find_peaks
 from scipy import signal
 from scipy.signal import hilbert
 
+
+def getApodizationWindowsTypesList():
+    return [
+    "boxcar",
+    "hanning",
+    "triangular",
+    "blackman-harris",
+    "gauss",
+    "tukey_0.1",
+    "tukey_0.2",
+    "tukey_0.5",
+]
+
 class DataProcessor:
 
     def __init__(self):
@@ -104,7 +117,7 @@ class DataProcessor:
         idx = (np.abs(array - value)).argmin()
         return idx
 
-    def analyzeDataHilbertInterpolation(self, rawReferenceSignal, rawInterferogram):
+    def analyzeDataHilbertInterpolation(self, rawReferenceSignal, rawInterferogram, apodizationWindowType):
         print("Analyzing data (Hilbert transform-based interpolation algorithm)")
 
         ref_volt = rawReferenceSignal - np.mean(rawReferenceSignal)
@@ -127,6 +140,14 @@ class DataProcessor:
 
         # resample Y axis with accordance with the new X axis retrieved with the use of the Hilbert transform
         resampled_interferogram_Y = np.interp(resampled_interferogram_X, interferogram_X_from_Hilbert, meas_volt)
+
+        # copy the interferogram before apodization
+        rawInterferogramY = np.copy(resampled_interferogram_Y)
+
+        # apodize the interferogram
+        print(f"Applied apodization window: {apodizationWindowType}")
+        window = self.createAssymetricApodizationWindow(resampled_interferogram_Y, apodizationWindowType)
+        resampled_interferogram_Y = resampled_interferogram_Y * window
 
         # calculate total distance traveled by the mirror
         mirror_travel_distance_total = np.max(interferogram_X_from_Hilbert)
@@ -190,9 +211,93 @@ class DataProcessor:
 
         spectrum_abs = np.interp(common_spectrum_X, axisXCut, axisYCut)
 
-        output = {"spectrumX": common_spectrum_X,
-                  "spectrumY": spectrum_abs,
-                  "interferogramX": resampled_interferogram_X,
-                  "interferogramY": resampled_interferogram_Y}
+        output = {"spectrumX": common_spectrum_X,                   # spectrum X axis
+                  "spectrumY": spectrum_abs,                        # spectrum Y axis
+                  "interferogramX": resampled_interferogram_X,      # interferogram X axis in um
+                  "interferogramY": resampled_interferogram_Y,      # interferogram Y axis (after apodization)
+                  "apodizationWindow": window,                      # applied apodization window
+                  "rawInterferogramY": rawInterferogramY}           # interferogram Y axis (before apodization)
 
         return output
+
+    def createAssymetricApodizationWindow(self, interferogram, windowType):
+
+        # find the ZPD index
+        zpdIdx = self.find_nearest(interferogram, np.max(interferogram))
+
+        if windowType == "triangular":
+            winLeft = signal.windows.triang((zpdIdx + 1) * 2)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = signal.windows.triang(((len(interferogram) - 1) - zpdIdx) * 2)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
+
+            return window
+
+        elif windowType == "blackman-harris":
+            winLeft = signal.windows.blackmanharris((zpdIdx + 1) * 2)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = signal.windows.blackmanharris(((len(interferogram) - 1) - zpdIdx) * 2)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
+
+            return window
+
+        elif windowType == "gauss":
+            winLeft = signal.windows.gaussian((zpdIdx + 1) * 2)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = signal.windows.gaussian(((len(interferogram) - 1) - zpdIdx) * 2)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
+
+            return window
+
+        elif windowType == "hanning":
+            winLeft = signal.windows.hann((zpdIdx + 1) * 2)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = signal.windows.hann(((len(interferogram) - 1) - zpdIdx) * 2)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
+
+            return window
+
+        elif windowType == "boxcar":
+            window = signal.windows.boxcar(len(interferogram))
+
+            return window
+
+        elif windowType == "tukey_0.1":
+            winLeft = signal.windows.tukey((zpdIdx + 1) * 2, 0.1)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = signal.windows.tukey(((len(interferogram) - 1) - zpdIdx) * 2, 0.1)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
+
+            return window
+
+        elif windowType == "tukey_0.2":
+            winLeft = signal.windows.tukey((zpdIdx + 1) * 2, 0.2)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = signal.windows.tukey(((len(interferogram) - 1) - zpdIdx) * 2, 0.2)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
+
+            return window
+
+        elif windowType == "tukey_0.5":
+            winLeft = signal.windows.tukey((zpdIdx + 1) * 2, 0.5)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = signal.windows.tukey(((len(interferogram) - 1) - zpdIdx) * 2, 0.5)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
+
+            return window
+
+        # elif type == "nb_weak":
+        #     # norton-beer weak
+        #     signal.windows.
+
+        #     return interferogram
+
+        else:
+            return None
