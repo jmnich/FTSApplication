@@ -58,9 +58,9 @@ class FTSApp:
         self.root.geometry("1200x800")
         self.root.minsize(800, 800)
         self.root.title("FTS App" + "   " + "v." + self.appVersion)
-        self.root.iconbitmap(default='icon.ico')
+        # self.root.iconbitmap(default='icon.ico')
         self.root.resizable(True, True)
-        self.root.state('zoomed')
+        # self.root.state('zoomed')
         self.root.withdraw()
 
         self.screen_geometry = self.root.winfo_geometry()
