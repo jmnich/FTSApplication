@@ -53,7 +53,7 @@ class MFLIDriver:
             self.DAQ.set(f'/{self.deviceID}/system/identify', 1)
             self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
             self.Scope.set('mode', 1)
-            self.Scope.set('averager/weight', 1)
+            # self.Scope.set('averager/weight', 1)
             self.Scope.set('averager/restart', 0)
 
 
@@ -117,7 +117,7 @@ class MFLIDriver:
 
         self.DAQ.sync()
 
-        self.Scope.set("historylength", 1)
+        # self.Scope.set("historylength", 1)
         self.Scope.unsubscribe('*')
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
 
