@@ -54,6 +54,7 @@ class BackgroundController:
         self.spectraY = []
         self.averageSpectrumX = None
         self.averageSpectrumY = None
+        self.MFLIIP = None
 
     def setZaberPort(self, port):
         self.ZaberPort = port
@@ -64,6 +65,9 @@ class BackgroundController:
     def setMFLIDeviceName(self, mfliName):
         self.MFLIDeviceName = mfliName
 
+    def setMFLIIP(self, mfliIP):
+        self.MFLIIP = mfliIP
+
     def initializationWork(self):
 
         if self.ZaberPort is None or self.MFLIDeviceName is None:
@@ -72,7 +76,7 @@ class BackgroundController:
 
         self.SetStatusMessageMethod("Connecting to hardware...")
 
-        if self.MFLIDriver.tryConnect(self.MFLIDeviceName):
+        if self.MFLIDriver.tryConnect(self.MFLIDeviceName, self.MFLIIP):
             self.SetDAQReadyFlagMethod(True)
         else:
             self.SetDAQReadyFlagMethod(False)

@@ -1082,12 +1082,19 @@ class FTSApp:
         strippedMFLIID = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
 
+        print(strippedMFLIID)
+
+        strippedMFLIID = strippedMFLIID.split(';')
+        strippedMFLIIP = strippedMFLIID[1]
+        strippedMFLIID = strippedMFLIID[0]
+
         strippedZaberPort = self.zaberPortCombo.get().replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
 
         logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and MFLI devID: {strippedMFLIID}")
         self.ApplicationController.setZaberPort(strippedZaberPort)
         self.ApplicationController.setMFLIDeviceName(strippedMFLIID)
+        self.ApplicationController.setMFLIIP(strippedMFLIIP)
         self.ApplicationController.performInitialization()
 
     def onCmdOpenSpectrumPlot(self):

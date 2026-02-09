@@ -25,26 +25,34 @@ class MFLIDriver:
         self.triggerEnabled = False
         # self.tryConnect(self.deviceID)
 
-    def tryConnect(self, deviceID):
+    def tryConnect(self, deviceID, dataServerIP):
 
         self.deviceID = deviceID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
         logging.info(f"MFLI driver trying to connect to: {self.deviceID}")
 
         try:
-            device_id: str = self.deviceID
-            server_host: str = "localhost"
-            server_port: int = 8004
-
-            (self.DAQ, device, props) = zhinst.utils.create_api_session(
-                device_id, 6, server_host=server_host, server_port=server_port
-            )
-
-            # restore the base configuration
-            zhinst.utils.disable_everything(self.DAQ, self.deviceID)
+            # device_id: str = self.deviceID
+            # server_host: str = "localhost"
+            # server_port: int = 8004
+            #
+            # (self.DAQ, device, props) = zhinst.utils.create_api_session(
+            #     device_id, 6, server_host=server_host, server_port=server_port
+            # )
+            #
+            # # restore the base configuration
+            # zhinst.utils.disable_everything(self.DAQ, self.deviceID)
+            # self.Scope = self.DAQ.scopeModule()
+            #
+            # self.Scope.set('mode', 1)
+            # # self.Scope.set('lastreplace', 1) # this shouldn't be used with the API, reserved for LabOne
+            # self.Scope.set('averager/weight', 1)
+            # self.Scope.set('averager/restart', 0)
+            self.DAQ = zhinst.core.ziDAQServer(dataServerIP, 8004, 6)
             self.Scope = self.DAQ.scopeModule()
 
+            self.DAQ.set(f'/{self.deviceID}/system/identify', 1)
+            self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
             self.Scope.set('mode', 1)
-            # self.Scope.set('lastreplace', 1) # this shouldn't be used with the API, reserved for LabOne
             self.Scope.set('averager/weight', 1)
             self.Scope.set('averager/restart', 0)
 
