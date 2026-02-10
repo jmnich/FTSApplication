@@ -177,6 +177,10 @@ class MFLIDriver:
         print("Debug - starting DAQ")
 
         try:
+            self.Scope.unsubscribe('*')
+            self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
+            self.DAQ.sync()
+            
             self.Scope.execute()
 
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/single', 1)
