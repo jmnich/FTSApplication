@@ -31,22 +31,6 @@ class MFLIDriver:
         logging.info(f"MFLI driver trying to connect to: {self.deviceID}")
 
         try:
-            # device_id: str = self.deviceID
-            # server_host: str = "localhost"
-            # server_port: int = 8004
-            #
-            # (self.DAQ, device, props) = zhinst.utils.create_api_session(
-            #     device_id, 6, server_host=server_host, server_port=server_port
-            # )
-            #
-            # # restore the base configuration
-            # zhinst.utils.disable_everything(self.DAQ, self.deviceID)
-            # self.Scope = self.DAQ.scopeModule()
-            #
-            # self.Scope.set('mode', 1)
-            # # self.Scope.set('lastreplace', 1) # this shouldn't be used with the API, reserved for LabOne
-            # self.Scope.set('averager/weight', 1)
-            # self.Scope.set('averager/restart', 0)
             self.DAQ = zhinst.core.ziDAQServer(dataServerIP, 8004, 6)
             self.Scope = self.DAQ.scopeModule()
 
@@ -186,7 +170,7 @@ class MFLIDriver:
 
     def measureDataStandaloneMethod(self):
         startTime = datetime.now()
-        expectedMeasDuration = (self.currentMeasurementPointsCount / self.currentMeasurementFrequency) + 2.0
+        expectedMeasDuration = (self.currentMeasurementPointsCount / self.currentMeasurementFrequency) + 20.0
         print(f"Max allowed measurement duration: {expectedMeasDuration}s")
         status = "ok"
 
@@ -210,12 +194,20 @@ class MFLIDriver:
 
                 time.sleep(0.5)
 
+                print(f"Progress {float(scope.progress()[0]) * 100:.2f} %\r")
+
             print("Debug - data acquired")
 
             self.DAQ.sync()
             result = self.Scope.read()
 
+            if len(result) < 1:
+                print("MFLI returned empty data. Retrying...")
+                time.sleep(3)
+                result = self.Scope.read()
+
             self.Scope.finish()
+            self.Scope.unsubscribe('*')
 
             print(f"Debug - data read, dict lenght: {len(result)}")
 
