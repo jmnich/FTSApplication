@@ -198,7 +198,7 @@ class MFLIDriver:
 
                 time.sleep(0.5)
 
-                print(f"Progress {float(scope.progress()[0]) * 100:.2f} %\r")
+                print(f"Progress {float(self.Scope.progress()[0]) * 100:.2f} %\r")
 
             print("Debug - data acquired")
 
