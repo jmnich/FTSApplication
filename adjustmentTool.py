@@ -59,7 +59,7 @@ class AdjustmentTool:
         self.adjustmenRoot.geometry("900x615")
         self.adjustmenRoot.minsize(width=900, height=615)
         self.adjustmenRoot.title("Adjustment tool")
-        self.adjustmenRoot.iconbitmap(default='icon.ico')
+        # self.adjustmenRoot.iconbitmap(default='icon.ico')
         self.adjustmenRoot.resizable(True, True)
 
         self.backgroundGray = "#242424"

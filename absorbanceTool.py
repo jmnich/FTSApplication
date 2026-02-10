@@ -61,7 +61,7 @@ class AbsorbanceTool:
         self.absorbanceRoot.geometry("1200x800")
         self.absorbanceRoot.minsize(width=1200, height=800)
         self.absorbanceRoot.title("Absorbance tool")
-        self.absorbanceRoot.iconbitmap(default='icon.ico')
+        # self.absorbanceRoot.iconbitmap(default='icon.ico')
         self.absorbanceRoot.resizable(True, True)
 
         self.backgroundGray = "#242424"
