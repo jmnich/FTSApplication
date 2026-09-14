@@ -726,9 +726,8 @@ class FTSApp:
         self.root.mainloop()
 
     def updateStatusMessage(self, message):
-        self.statusLabel.configure(text=message)
+        self.root.after(0, lambda: self.statusLabel.configure(text=message))
         logging.info(f"Status bar message set to: {message}")
-        self.root.update()
 
     def getApplicationSettings(self):
         return self.appSettings
@@ -737,30 +736,36 @@ class FTSApp:
         self.appSettings = settings
 
     def setGeneralReadyFlag(self, isReady):
-        if isReady:
-            self.hardwareStatusLabel.configure(text="READY", text_color="lightgreen")
-            logging.info(f"General status: ready")
-        else:
-            self.hardwareStatusLabel.configure(text="NOT\nREADY", text_color="red")
-            logging.info(f"General status: not ready")
+        def _():
+            if isReady:
+                self.hardwareStatusLabel.configure(text="READY", text_color="lightgreen")
+                logging.info(f"General status: ready")
+            else:
+                self.hardwareStatusLabel.configure(text="NOT\nREADY", text_color="red")
+                logging.info(f"General status: not ready")
+        self.root.after(0, _)
 
     def setDAQReadyFlag(self, isReady):
-        if isReady:
-            self.mfliStatusLabel.configure(text="READY", text_color="lightgreen")
-            self.appSettings["mfliDeviceID"] = self.MFLIDrv.deviceID
-            logging.info(f"DAQ status: ready")
-        else:
-            self.mfliStatusLabel.configure(text="NOT\nREADY", text_color="red")
-            logging.info(f"DAQ status: not ready")
+        def _():
+            if isReady:
+                self.mfliStatusLabel.configure(text="READY", text_color="lightgreen")
+                self.appSettings["mfliDeviceID"] = self.MFLIDrv.deviceID
+                logging.info(f"DAQ status: ready")
+            else:
+                self.mfliStatusLabel.configure(text="NOT\nREADY", text_color="red")
+                logging.info(f"DAQ status: not ready")
+        self.root.after(0, _)
 
     def setDelayLineReadyFlag(self, isReady):
-        if isReady:
-            self.zaberStatusLabel.configure(text="READY", text_color="lightgreen")
-            self.appSettings["delayLineCOMPort"] = self.zaberPortCombo.get()
-            logging.info(f"Delay line status: ready")
-        else:
-            self.zaberStatusLabel.configure(text="NOT\nREADY", text_color="red")
-            logging.info(f"Delay line status: not ready")
+        def _():
+            if isReady:
+                self.zaberStatusLabel.configure(text="READY", text_color="lightgreen")
+                self.appSettings["delayLineCOMPort"] = self.zaberPortCombo.get()
+                logging.info(f"Delay line status: ready")
+            else:
+                self.zaberStatusLabel.configure(text="NOT\nREADY", text_color="red")
+                logging.info(f"Delay line status: not ready")
+        self.root.after(0, _)
 
     def receiveMeasurementResults(self, interfX, interfY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
         completedMeasurements, apodizationWindow):
@@ -773,6 +778,9 @@ class FTSApp:
         self.currentAverageSpectrumY = averageSpectrumY
         self.currentApodizationWindow = apodizationWindow
 
+        self.root.after(0, self._updateUIAfterMeasurement, completedMeasurements)
+
+    def _updateUIAfterMeasurement(self, completedMeasurements):
         self.multipleMeasBox.delete(0, "end")
 
         if completedMeasurements == self.ApplicationController.orderedMeasurementsCount:

@@ -404,8 +404,8 @@ class AdjustmentTool:
         else:
             self.axPreview.set_ylim(-0.05, 0.05)
 
-        self.canvasPreviewPlot.draw()
-        self.adjustmenRoot.update()
+        self.adjustmenRoot.after(0, self.canvasPreviewPlot.draw)
+        self.adjustmenRoot.after(0, self.adjustmenRoot.update)
 
         self.previousData2 = np.copy(self.previousData)
         self.previousData = np.copy(decimatedData)
