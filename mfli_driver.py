@@ -4,21 +4,22 @@ import zhinst.utils
 import logging
 from datetime import datetime
 
-class MFLIDriver:
+from daq_base import DAQDriver
+
+class MFLIDriver(DAQDriver):
 
     MFLISamplingRates = (6.0E7, 3.0E7, 1.5E7, 7.5E6,
                          3.75E6, 1.88E6, 9.38E5, 4.69E5,
                          2.34E5, 1.17E5, 5.86E4, 2.93E4,
                          1.46E4, 7.32E3, 3.66E3, 1.83E3)
 
+    SamplingRates = MFLISamplingRates
+
     def __init__(self, devID):
         print("MFLI driver initializing...")
+        super().__init__()
         self.DAQ = None
         self.Scope = None
-        # self.DAQModule = None
-        self.isConnected = False
-        self.lastInterferogramData = []
-        self.lastReferenceData = []
         self.deviceID = devID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
         self.currentMeasurementFrequency = None
         self.currentMeasurementPointsCount = None
@@ -69,7 +70,7 @@ class MFLIDriver:
                      f"trigger reference: {triggerReference} %")
 
         self.triggerEnabled = triggerEnabled
-        self.currentMeasurementFrequency = MFLIDriver.MFLISamplingRates[samplingFreqIndex]
+        self.currentMeasurementFrequency = self.SamplingRates[samplingFreqIndex]
         self.currentMeasurementPointsCount = sampleLength
 
         zhinst.utils.disable_everything(self.DAQ, self.deviceID)

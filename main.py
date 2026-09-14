@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import sys
 from mfli_driver import MFLIDriver
+from digilent_driver import DigilentDriver
+from simulated_daq import SimulatedDAQ
 from zaber_driver import ZaberDriver
 import time
 import si_prefix as si
@@ -409,49 +411,62 @@ class FTSApp:
         self.settingsTabs.tab("Conn").columnconfigure(0, weight=1)
         self.settingsTabs.tab("Conn").columnconfigure(1, weight=1)
 
+        self.daqTypeLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
+                                         text="DAQ type",
+                                         font=ctk.CTkFont(size=12))
+        self.daqTypeLabel.grid(row=0, column=0, sticky="E", padx=5, pady=5)
+
+        self.daqTypeCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Conn"),
+                                             values=["MFLI", "Digilent ADP2230", "Simulated"],
+                                             state="readonly",
+                                             width=140,
+                                             command=self.onCmdDAQTypeChanged)
+        self.daqTypeCombo.grid(row=0, column=1, sticky="W", padx=5, pady=5)
+        self.daqTypeCombo.set(self.appSettings.get("daqType", "MFLI"))
+
         self.hardwareStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                                       text="General\nstatus",
                                                       font=ctk.CTkFont(size=12))
-        self.hardwareStatusLabelHeader.grid(row=0, column=0, sticky="E", padx=5, pady=5)
+        self.hardwareStatusLabelHeader.grid(row=1, column=0, sticky="E", padx=5, pady=5)
 
         self.hardwareStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                                 text="NOT\nREADY",
                                                 text_color="red",
                                                 font=ctk.CTkFont(size=14, weight="bold"))
-        self.hardwareStatusLabel.grid(row=0, column=1, sticky="W", padx=5, pady=5)
+        self.hardwareStatusLabel.grid(row=1, column=1, sticky="W", padx=5, pady=5)
 
         self.mfliStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                                   text="DAQ\nsystem",
                                                   font=ctk.CTkFont(size=12))
-        self.mfliStatusLabelHeader.grid(row=1, column=0, sticky="E", padx=5, pady=5)
+        self.mfliStatusLabelHeader.grid(row=2, column=0, sticky="E", padx=5, pady=5)
 
         self.mfliStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                             text="NOT\nREADY",
                                             text_color="red",
                                             font=ctk.CTkFont(size=14, weight="bold"))
-        self.mfliStatusLabel.grid(row=1, column=1, sticky="W", padx=5, pady=5)
+        self.mfliStatusLabel.grid(row=2, column=1, sticky="W", padx=5, pady=5)
 
         self.zaberStatusLabelHeader = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                                    text="Delay\nline",
                                                    font=ctk.CTkFont(size=12))
-        self.zaberStatusLabelHeader.grid(row=2, column=0, sticky="E", padx=5, pady=5)
+        self.zaberStatusLabelHeader.grid(row=3, column=0, sticky="E", padx=5, pady=5)
 
         self.zaberStatusLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                              text="NOT\nREADY",
                                              text_color="red",
                                              font=ctk.CTkFont(size=14, weight="bold"))
-        self.zaberStatusLabel.grid(row=2, column=1, sticky="W", padx=5, pady=5)
+        self.zaberStatusLabel.grid(row=3, column=1, sticky="W", padx=5, pady=5)
 
         self.zaberCOMLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                           text="Zaber port",
                                           font=ctk.CTkFont(size=12))
-        self.zaberCOMLabel.grid(row=3, column=0, sticky="W", padx=5, pady=5)
+        self.zaberCOMLabel.grid(row=4, column=0, sticky="W", padx=5, pady=5)
 
         self.zaberPortCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Conn"),
                                               values=[],
                                               state="readonly",
                                               width=140)
-        self.zaberPortCombo.grid(row=3, column=1, sticky="E", padx=5, pady=5)
+        self.zaberPortCombo.grid(row=4, column=1, sticky="E", padx=5, pady=5)
         self.onCmdRefreshCOMPorts()
 
         # set the last used Zaber COM port if it is currently available
@@ -464,18 +479,50 @@ class FTSApp:
                                             height=20,
                                             corner_radius=4,
                                             command=self.onCmdRefreshCOMPorts)
-        self.zaberPortRefreshButton.grid(row=3, column=0, sticky="E", padx=5, pady=5)
+        self.zaberPortRefreshButton.grid(row=4, column=0, sticky="E", padx=5, pady=5)
 
+        # DAQ-specific controls (row 5) — shown/hidden based on DAQ type
         self.mfliIDLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
                                         text="MFLI ID",
                                         font=ctk.CTkFont(size=12))
-        self.mfliIDLabel.grid(row=4, column=0, sticky="W", padx=5, pady=5)
 
         self.mfliIDBox = ctk.CTkTextbox(master=self.settingsTabs.tab("Conn"),
                                         width=140, height=30)
         self.mfliIDBox.configure(wrap='none')
         self.mfliIDBox.insert("0.0", self.appSettings["mfliDeviceID"])
-        self.mfliIDBox.grid(row=4, column=1, sticky="E", padx=5, pady=5)
+
+        self.digilentRangeLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
+                                               text="Range [V]",
+                                               font=ctk.CTkFont(size=12))
+
+        self.digilentRangeCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Conn"),
+                                                   values=["1", "2.5", "5", "10"],
+                                                   state="readonly",
+                                                   width=140)
+        self.digilentRangeCombo.set(self.appSettings.get("digilentRange", "5"))
+
+        self.digilentInfoLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
+                                              text="Auto-detected via USB",
+                                              font=ctk.CTkFont(size=11))
+
+        self.simulatedNoiseLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
+                                                text="Noise level",
+                                                font=ctk.CTkFont(size=12))
+
+        self.simulatedNoiseSlider = ctk.CTkSlider(master=self.settingsTabs.tab("Conn"),
+                                                   width=140,
+                                                   height=20,
+                                                   from_=0,
+                                                   to=1.0,
+                                                   number_of_steps=100,
+                                                   command=self.onCmdSimulatedNoiseChanged)
+
+        self.simulatedNoiseValueLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Conn"),
+                                                      text="0.10",
+                                                      font=ctk.CTkFont(size=12))
+
+        # show the correct controls for the current DAQ type
+        self._showDAQControls(self.daqTypeCombo.get())
 
         self.buttonHardware = ctk.CTkButton(master=self.settingsTabs.tab("Conn"),
                                             text="Connect\nall",
@@ -708,11 +755,11 @@ class FTSApp:
         self.statusLabel.grid(row=0, column=1, columnspan=2, sticky="NE", padx=15, pady=5)
 
         # create drivers
-        self.MFLIDrv = MFLIDriver(self.mfliIDBox.get("0.0", "end"))
+        self.DAQDriver = None
         self.ZaberDrv = ZaberDriver()
 
         # set up the background application controller
-        self.ApplicationController = BackgroundController(self.MFLIDrv, self.ZaberDrv)
+        self.ApplicationController = BackgroundController(self.DAQDriver, self.ZaberDrv)
         self.ApplicationController.SetStatusMessageMethod = self.updateStatusMessage
         self.ApplicationController.SetGeneralReadyFlagMethod = self.setGeneralReadyFlag
         self.ApplicationController.SetDAQReadyFlagMethod = self.setDAQReadyFlag
@@ -720,8 +767,7 @@ class FTSApp:
         self.ApplicationController.SendResultsToPlot = self.receiveMeasurementResults
         self.ApplicationController.NotifyAllMeasurementsDone = self.receiveNotificationAllMeasurementsDone
 
-        # try to connect to all the hardware with some default settings
-        self.ApplicationController.MFLIDeviceName = self.mfliIDBox.get("0.0", "end")
+        # set the Zaber port from the combo
         self.ApplicationController.ZaberPort = self.zaberPortCombo.get().replace(' ', '').replace(
             '\t', '').replace('\n', '').replace('\r', '')
 
@@ -755,12 +801,30 @@ class FTSApp:
         def _():
             if isReady:
                 self.mfliStatusLabel.configure(text="READY", text_color="lightgreen")
-                self.appSettings["mfliDeviceID"] = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
+                if self.daqTypeCombo.get() == "MFLI":
+                    self.appSettings["mfliDeviceID"] = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
                 logging.info(f"DAQ status: ready")
+                self._setScanTrgEnabled(self.daqTypeCombo.get() != "Simulated")
             else:
                 self.mfliStatusLabel.configure(text="NOT\nREADY", text_color="red")
                 logging.info(f"DAQ status: not ready")
+                self._setScanTrgEnabled(True)
         self.root.after(0, _)
+
+    def _setScanTrgEnabled(self, enabled):
+        state = "normal" if enabled else "disabled"
+        for widget in [self.samplingFreqCombo, self.startingPosBox, self.scanLengthBox,
+                       self.scanLengthSlider, self.scanSpeedSlider]:
+            try:
+                widget.configure(state=state)
+            except Exception:
+                pass
+        for widget in [self.triggerEnableSwitch, self.triggerLevelBox,
+                       self.triggerHysteresisBox, self.triggerReferenceBox]:
+            try:
+                widget.configure(state=state)
+            except Exception:
+                pass
 
     def setDelayLineReadyFlag(self, isReady):
         def _():
@@ -1070,7 +1134,7 @@ class FTSApp:
 
     def onCmdOpenAdjustmentTool(self):
         SM.saveSettingsToFile(self.appSettings)     # try to maintain settings coherence
-        self.adjustmentToolWindow = AdjustmentTool.AdjustmentTool(self.root, self.ZaberDrv, self.MFLIDrv)
+        self.adjustmentToolWindow = AdjustmentTool.AdjustmentTool(self.root, self.ZaberDrv, self.DAQDriver)
 
     def onCmdUpdateSpectrumPlotRanges(self, other):
         self.appSettings["plotSpectrumXRangeMin"] = self.spectrumXMinBox.get()
@@ -1093,25 +1157,84 @@ class FTSApp:
         self.updatePlot()
 
     def onCmdConnectHardware(self):
-        strippedMFLIID = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace(
-            '\r', '')
-
-        self.appSettings["mfliDeviceID"] = strippedMFLIID
-
-        print(strippedMFLIID)
-
-        strippedMFLIID = strippedMFLIID.split(';')
-        strippedMFLIIP = strippedMFLIID[1]
-        strippedMFLIID = strippedMFLIID[0]
+        daqType = self.daqTypeCombo.get()
+        self.appSettings["daqType"] = daqType
 
         strippedZaberPort = self.zaberPortCombo.get().replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
 
-        logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and MFLI devID: {strippedMFLIID}")
+        # create the DAQ driver lazily based on the selected type
+        if daqType == "MFLI":
+            strippedMFLIID = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace(
+                '\r', '')
+            self.appSettings["mfliDeviceID"] = strippedMFLIID
+
+            strippedMFLIID = strippedMFLIID.split(';')
+            strippedMFLIIP = strippedMFLIID[1]
+            strippedMFLIID = strippedMFLIID[0]
+
+            self.DAQDriver = MFLIDriver(strippedMFLIID)
+            self.ApplicationController.DAQDriver = self.DAQDriver
+            self.ApplicationController.setDAQDeviceName(strippedMFLIID)
+            self.ApplicationController.setDAQIP(strippedMFLIIP)
+
+            logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and MFLI devID: {strippedMFLIID}")
+
+        elif daqType == "Digilent ADP2230":
+            self.appSettings["digilentRange"] = self.digilentRangeCombo.get()
+
+            self.DAQDriver = DigilentDriver()
+            self.DAQDriver.setChannelRange(float(self.digilentRangeCombo.get()))
+            self.ApplicationController.DAQDriver = self.DAQDriver
+            self.ApplicationController.setDAQDeviceName("ADP2230")
+            self.ApplicationController.setDAQIP("")
+
+            logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and Digilent ADP2230")
+
+        elif daqType == "Simulated":
+            self.appSettings["simulatedNoiseLevel"] = str(self.simulatedNoiseSlider.get())
+
+            self.DAQDriver = SimulatedDAQ()
+            self.DAQDriver.setNoiseLevel(self.simulatedNoiseSlider.get())
+            self.ApplicationController.DAQDriver = self.DAQDriver
+            self.ApplicationController.setDAQDeviceName("Simulated")
+            self.ApplicationController.setDAQIP("")
+
+            logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and Simulated DAQ")
+
         self.ApplicationController.setZaberPort(strippedZaberPort)
-        self.ApplicationController.setMFLIDeviceName(strippedMFLIID)
-        self.ApplicationController.setMFLIIP(strippedMFLIIP)
         self.ApplicationController.performInitialization()
+
+    def _showDAQControls(self, daqType):
+        # hide all DAQ-specific controls first
+        for widget in [self.mfliIDLabel, self.mfliIDBox,
+                       self.digilentRangeLabel, self.digilentRangeCombo, self.digilentInfoLabel,
+                       self.simulatedNoiseLabel, self.simulatedNoiseSlider, self.simulatedNoiseValueLabel]:
+            widget.grid_forget()
+
+        if daqType == "MFLI":
+            self.mfliIDLabel.grid(row=5, column=0, sticky="W", padx=5, pady=5)
+            self.mfliIDBox.grid(row=5, column=1, sticky="E", padx=5, pady=5)
+
+        elif daqType == "Digilent ADP2230":
+            self.digilentRangeLabel.grid(row=5, column=0, sticky="W", padx=5, pady=5)
+            self.digilentRangeCombo.grid(row=5, column=1, sticky="E", padx=5, pady=5)
+            self.digilentInfoLabel.grid(row=5, column=0, columnspan=2, sticky="S", padx=5, pady=(30, 0))
+
+        elif daqType == "Simulated":
+            self.simulatedNoiseLabel.grid(row=5, column=0, sticky="W", padx=5, pady=5)
+            self.simulatedNoiseSlider.grid(row=5, column=1, sticky="E", padx=5, pady=5)
+            self.simulatedNoiseSlider.set(float(self.appSettings.get("simulatedNoiseLevel", "0.1")))
+            self.simulatedNoiseValueLabel.grid(row=5, column=0, columnspan=2, sticky="S", padx=5, pady=(30, 0))
+            self.simulatedNoiseValueLabel.configure(text=f"{self.simulatedNoiseSlider.get():.2f}")
+
+    def onCmdDAQTypeChanged(self, selectedType):
+        self.appSettings["daqType"] = selectedType
+        self._showDAQControls(selectedType)
+
+    def onCmdSimulatedNoiseChanged(self, value):
+        self.simulatedNoiseValueLabel.configure(text=f"{float(value):.2f}")
+        self.appSettings["simulatedNoiseLevel"] = str(value)
 
     def onCmdOpenSpectrumPlot(self):
         logging.info(f"External spectrum plot open")
@@ -1191,8 +1314,8 @@ class FTSApp:
         plt.title("Raw data with reference signal", fontsize=20)
         plt.xlabel("Sample num", fontsize=20)
         plt.ylabel("Detector voltage [V]", fontsize=20)
-        plt.plot(self.MFLIDrv.lastReferenceData, alpha=0.75)
-        plt.plot(self.MFLIDrv.lastInterferogramData)
+        plt.plot(self.DAQDriver.lastReferenceData, alpha=0.75)
+        plt.plot(self.DAQDriver.lastInterferogramData)
         plt.grid(alpha=0.3)
         plt.ion()
         plt.pause(1.0)

@@ -4,7 +4,6 @@ from datetime import datetime
 
 import numpy
 
-from mfli_driver import MFLIDriver
 from zaber_driver import ZaberDriver
 from data_processor import DataProcessor
 import logging
@@ -15,7 +14,7 @@ from tkinter import messagebox
 
 class BackgroundController:
 
-    def __init__(self, mfliDrv, zaberDrv):
+    def __init__(self, daqDrv, zaberDrv):
         print("Background controller created")
         self.stopRequestFlag = False
 
@@ -32,7 +31,7 @@ class BackgroundController:
         self.triggerReference = None
         self.selectedApodizationWindowType = None
 
-        self.MFLIDriver     = mfliDrv
+        self.DAQDriver       = daqDrv
         self.ZaberDriver    = zaberDrv
 
         # external methods used for communication between the background controller and the GUI
@@ -45,8 +44,8 @@ class BackgroundController:
         self.NotifyAllMeasurementsDone      = None
 
         self.ZaberPort                      = None
-        self.MFLIDeviceName                 = None
-        self.MFLIIP                         = None
+        self.daqDeviceName                  = None
+        self.daqIP                          = None
 
         self.rawInterferograms = []
         self.rawReferenceSignals = []
@@ -64,21 +63,21 @@ class BackgroundController:
     def requestStop(self):
         self.stopRequestFlag = True
 
-    def setMFLIDeviceName(self, mfliName):
-        self.MFLIDeviceName = mfliName
+    def setDAQDeviceName(self, name):
+        self.daqDeviceName = name
 
-    def setMFLIIP(self, ip):
-        self.MFLIIP = ip
+    def setDAQIP(self, ip):
+        self.daqIP = ip
 
     def initializationWork(self):
 
-        if self.ZaberPort is None or self.MFLIDeviceName is None:
+        if self.ZaberPort is None or self.daqDeviceName is None:
             self.SetStatusMessageMethod("Select ports and IDs\nfor hardware modules")
             return
 
         self.SetStatusMessageMethod("Connecting to hardware...")
 
-        if self.MFLIDriver.tryConnect(self.MFLIDeviceName, serverHost=self.MFLIIP):
+        if self.DAQDriver.tryConnect(self.daqDeviceName, serverHost=self.daqIP):
             self.SetDAQReadyFlagMethod(True)
         else:
             self.SetDAQReadyFlagMethod(False)
@@ -91,7 +90,7 @@ class BackgroundController:
         else:
             self.SetDelayLineReadyFlagMethod(False)
 
-        if self.ZaberDriver.isConnected and self.MFLIDriver.isConnected:
+        if self.ZaberDriver.isConnected and self.DAQDriver.isConnected:
             self.SetStatusMessageMethod("Conneted to hardware")
             self.SetGeneralReadyFlagMethod(True)
         else:
@@ -160,11 +159,11 @@ class BackgroundController:
 
     def performAcqusition(self):
         self.ZaberDriver.waitUntilIdle()
-        mfliSamplingFrequency = MFLIDriver.MFLISamplingRates[self.mfliFrequencyIndex]
+        mfliSamplingFrequency = self.DAQDriver.SamplingRates[self.mfliFrequencyIndex]
         self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
 
-        # configure MFLI
-        self.MFLIDriver.configureForMeasurement(samplingFreqIndex=self.mfliFrequencyIndex,
+        # configure DAQ
+        self.DAQDriver.configureForMeasurement(samplingFreqIndex=self.mfliFrequencyIndex,
                                                 sampleLength=self.mfliSamplesCount,
                                                 triggerEnabled=self.triggerModeEnabled,
                                                 triggerLevel=self.triggerLevel,
@@ -216,7 +215,7 @@ class BackgroundController:
 
             # if trigger mode is enabled arm the trigger and wait for a moment until it takes effect
             if self.triggerModeEnabled:
-                self.MFLIDriver.armTrigger()
+                self.DAQDriver.armTrigger()
                 # time.sleep(1.0)
 
             # wait until the mirror is in position
@@ -237,9 +236,9 @@ class BackgroundController:
             #                                  speed=self.scanSpeed * 1000)
 
             if self.triggerModeEnabled:
-                measStatus = self.MFLIDriver.measureDataWithPrearmedTrigger()
+                measStatus = self.DAQDriver.measureDataWithPrearmedTrigger()
             else:
-                measStatus = self.MFLIDriver.measureDataStandaloneMethod()
+                measStatus = self.DAQDriver.measureDataStandaloneMethod()
 
             self.ZaberDriver.waitUntilIdle()
 
@@ -260,10 +259,10 @@ class BackgroundController:
             # time.sleep(0.1)
 
             try:
-                # results = self.DataAnalyzer.analyzeData(rawReferenceSignal=self.MFLIDriver.lastReferenceData,
-                #                                         rawInterferogram=self.MFLIDriver.lastInterferogramData)
-                results = self.DataAnalyzer.analyzeDataHilbertInterpolation(rawReferenceSignal=self.MFLIDriver.lastReferenceData,
-                                                        rawInterferogram=self.MFLIDriver.lastInterferogramData,
+                # results = self.DataAnalyzer.analyzeData(rawReferenceSignal=self.DAQDriver.lastReferenceData,
+                #                                         rawInterferogram=self.DAQDriver.lastInterferogramData)
+                results = self.DataAnalyzer.analyzeDataHilbertInterpolation(rawReferenceSignal=self.DAQDriver.lastReferenceData,
+                                                        rawInterferogram=self.DAQDriver.lastInterferogramData,
                                                         apodizationWindowType=self.selectedApodizationWindowType)
             except:
                 self.SetStatusMessageMethod("Data acquisition or analysis failed")
@@ -272,8 +271,8 @@ class BackgroundController:
                 print("Data acquisition or analysis failed due to exception")
                 continue
 
-            self.rawInterferograms.append(np.copy(self.MFLIDriver.lastInterferogramData))
-            self.rawReferenceSignals.append(np.copy(self.MFLIDriver.lastReferenceData))
+            self.rawInterferograms.append(np.copy(self.DAQDriver.lastInterferogramData))
+            self.rawReferenceSignals.append(np.copy(self.DAQDriver.lastReferenceData))
             self.interferogramTimestamps.append(scanCompletionTimestamp)
             self.spectraX.append(np.copy(results["spectrumX"]))
             self.spectraY.append(np.copy(results["spectrumY"]))

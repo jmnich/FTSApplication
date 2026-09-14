@@ -75,4 +75,8 @@ def getDefaultSettings():
         "apodizationWindow" : "boxcar"
     }
 
+    defaultSettings["daqType"] = "MFLI"
+    defaultSettings["simulatedNoiseLevel"] = "0.1"
+    defaultSettings["digilentRange"] = "5"
+
     return  defaultSettings

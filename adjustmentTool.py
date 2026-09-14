@@ -414,7 +414,7 @@ class AdjustmentTool:
         print("Scanning thread started")
         freqIndex = 11
 
-        mfliSamplingFrequency = self.MFLIDriver.MFLISamplingRates[freqIndex]
+        mfliSamplingFrequency = self.MFLIDriver.SamplingRates[freqIndex]
 
         startPos = self.centerPointCurrent - self.amplitudeCurrent
 
