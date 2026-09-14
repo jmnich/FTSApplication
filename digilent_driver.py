@@ -1,8 +1,10 @@
 import time
 import logging
 import sys
+import os
+import glob
 import numpy as np
-from ctypes import c_int, c_double, c_bool, c_byte, byref, cdll, create_string_buffer
+from ctypes import c_int, c_double, c_bool, c_byte, byref, cdll, create_string_buffer, CDLL, RTLD_GLOBAL
 from datetime import datetime
 
 from daq_base import DAQDriver
@@ -47,7 +49,40 @@ class DigilentDriver(DAQDriver):
         elif sys.platform.startswith("darwin"):
             return cdll.LoadLibrary("/Library/Frameworks/dwf.framework/dwf")
         else:
-            return cdll.LoadLibrary("libdwf.so")
+            # libdwf.so depends on libraries in the Digilent Adept runtime directory.
+            # Preload them with RTLD_GLOBAL so their symbols are available to libdwf.so.
+            # The Adept runtime directory varies by distro:
+            #   Arch: /usr/lib/digilent/adept
+            #   Ubuntu/Mint: /usr/lib/digilent/adept or /usr/local/lib/digilent/adept
+            adeptPaths = [
+                "/usr/lib/digilent/adept",
+                "/usr/local/lib/digilent/adept",
+            ]
+
+            for adeptPath in adeptPaths:
+                if not os.path.isdir(adeptPath):
+                    continue
+                libs = sorted(glob.glob(os.path.join(adeptPath, "*.so.2")) +
+                              glob.glob(os.path.join(adeptPath, "*.so.1")))
+                loaded = set()
+                for _ in range(3):
+                    for lib in libs:
+                        if lib in loaded:
+                            continue
+                        try:
+                            CDLL(lib, mode=RTLD_GLOBAL)
+                            loaded.add(lib)
+                        except OSError:
+                            pass
+
+            # libdwf.so may be in /usr/lib or /usr/lib/x86_64-linux-gnu (Ubuntu)
+            for dwfPath in ["libdwf.so", "/usr/lib/libdwf.so", "/usr/lib/x86_64-linux-gnu/libdwf.so"]:
+                try:
+                    return CDLL(dwfPath)
+                except OSError:
+                    continue
+
+            raise OSError("Could not load libdwf.so")
 
     def tryConnect(self, *args, **kwargs) -> bool:
         logging.info("Digilent driver: trying to connect to ADP2230 via USB")
@@ -77,6 +112,16 @@ class DigilentDriver(DAQDriver):
         logging.info("Digilent driver: connected")
         self.isConnected = True
         return True
+
+    def disconnect(self):
+        if self.dwf is not None and self.hdwf.value != 0:
+            try:
+                self.dwf.FDwfDeviceClose(self.hdwf)
+            except Exception:
+                pass
+            self.hdwf = c_int(0)
+            self.isConnected = False
+            logging.info("Digilent driver: disconnected")
 
     def configureForMeasurement(self, samplingFreqIndex, sampleLength, triggerEnabled, triggerLevel,
                                 triggerReference, triggerHysteresis):
@@ -176,5 +221,4 @@ class DigilentDriver(DAQDriver):
             print(f"Digilent acquisition failed: {err}")
             status = "acquisition failed"
 
-        finally:
-            return status
+        return status

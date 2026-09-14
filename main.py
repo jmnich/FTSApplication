@@ -927,6 +927,7 @@ class FTSApp:
 
     def onCmdSingleCapture(self):
         self._updateSimulatedNoiseLevel()
+        self._updateDigilentRange()
 
         self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
                                                              index(self.samplingFreqCombo.get()))
@@ -958,6 +959,7 @@ class FTSApp:
     def onCmdMultipleCapture(self):
 
         self._updateSimulatedNoiseLevel()
+        self._updateDigilentRange()
 
         try:
             measCount = int(self.appSettings["averagingCount"])
@@ -1166,6 +1168,10 @@ class FTSApp:
         daqType = self.daqTypeCombo.get()
         self.appSettings["daqType"] = daqType
 
+        # disconnect the previous DAQ driver if it exists
+        if self.DAQDriver is not None and hasattr(self.DAQDriver, 'disconnect'):
+            self.DAQDriver.disconnect()
+
         strippedZaberPort = self.zaberPortCombo.get().replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
 
@@ -1247,6 +1253,10 @@ class FTSApp:
     def _updateSimulatedNoiseLevel(self):
         if self.DAQDriver is not None and isinstance(self.DAQDriver, SimulatedDAQ):
             self.DAQDriver.setNoiseLevel(self.simulatedNoiseSlider.get())
+
+    def _updateDigilentRange(self):
+        if self.DAQDriver is not None and isinstance(self.DAQDriver, DigilentDriver):
+            self.DAQDriver.setChannelRange(float(self.digilentRangeCombo.get()))
 
     def onCmdOpenSpectrumPlot(self):
         logging.info(f"External spectrum plot open")
@@ -1369,6 +1379,8 @@ class FTSApp:
         )
 
     def onClosing(self):
+        if self.DAQDriver is not None and hasattr(self.DAQDriver, 'disconnect'):
+            self.DAQDriver.disconnect()
         SM.saveSettingsToFile(self.appSettings)
         # make sure the application closes properly when the main window is destroyed
         logging.info('========= Application closed =========\n\n\n')
