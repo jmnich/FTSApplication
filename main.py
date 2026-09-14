@@ -423,7 +423,7 @@ class FTSApp:
         self.daqTypeLabel.grid(row=0, column=0, sticky="E", padx=5, pady=5)
 
         self.daqTypeCombo = ctk.CTkComboBox(master=self.settingsTabs.tab("Conn"),
-                                             values=["MFLI", "Digilent ADP2230", "Simulated"],
+                                             values=["MFLI", "ADP2230", "Simulated"],
                                              state="readonly",
                                              width=140,
                                              command=self.onCmdDAQTypeChanged)
@@ -1210,7 +1210,7 @@ class FTSApp:
 
             logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and MFLI devID: {strippedMFLIID}")
 
-        elif daqType == "Digilent ADP2230":
+        elif daqType == "ADP2230":
             self.appSettings["digilentRange"] = self.digilentRangeCombo.get()
 
             self.DAQDriver = DigilentDriver()
@@ -1219,7 +1219,7 @@ class FTSApp:
             self.ApplicationController.setDAQDeviceName("ADP2230")
             self.ApplicationController.setDAQIP("")
 
-            logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and Digilent ADP2230")
+            logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and ADP2230")
 
         elif daqType == "Simulated":
             self.appSettings["simulatedNoiseLevel"] = str(self.simulatedNoiseSlider.get())
@@ -1247,7 +1247,7 @@ class FTSApp:
             self.mfliIDLabel.grid(row=5, column=0, sticky="W", padx=5, pady=5)
             self.mfliIDBox.grid(row=5, column=1, sticky="E", padx=5, pady=5)
 
-        elif daqType == "Digilent ADP2230":
+        elif daqType == "ADP2230":
             self.digilentRangeLabel.grid(row=5, column=0, sticky="W", padx=5, pady=5)
             self.digilentRangeCombo.grid(row=5, column=1, sticky="E", padx=5, pady=5)
 

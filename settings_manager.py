@@ -27,6 +27,16 @@ def validateAndFixSettings(settings):
     elif len(getDefaultSettings().keys()) > len(settings.keys()):
         settings = getDefaultSettings()
 
+    # migrate renamed values
+    if settings.get("daqType") == "Digilent ADP2230":
+        settings["daqType"] = "ADP2230"
+    if settings.get("apodizationWindow") == "norton_beer_weak":
+        settings["apodizationWindow"] = "nb_weak"
+    if settings.get("apodizationWindow") == "norton_beer_medium":
+        settings["apodizationWindow"] = "nb_medium"
+    if settings.get("apodizationWindow") == "norton_beer_strong":
+        settings["apodizationWindow"] = "nb_strong"
+
 def getDefaultSettings():
 
     defaultSettings = {

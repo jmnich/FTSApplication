@@ -2,6 +2,7 @@ import numpy as np
 from scipy.signal import find_peaks
 from scipy import signal
 from scipy.signal import hilbert
+from norton_beer.apodization import norton_beer
 
 
 def getApodizationWindowsTypesList():
@@ -14,6 +15,9 @@ def getApodizationWindowsTypesList():
     "tukey_0.1",
     "tukey_0.2",
     "tukey_0.5",
+    "nb_weak",
+    "nb_medium",
+    "nb_strong",
 ]
 
 class DataProcessor:
@@ -293,11 +297,32 @@ class DataProcessor:
 
             return window
 
-        # elif type == "nb_weak":
-        #     # norton-beer weak
-        #     signal.windows.
+        elif windowType == "nb_weak":
+            winLeft = norton_beer((zpdIdx + 1) * 2, 1.2)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = norton_beer(((len(interferogram) - 1) - zpdIdx) * 2, 1.2)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
 
-        #     return interferogram
+            return window
+
+        elif windowType == "nb_medium":
+            winLeft = norton_beer((zpdIdx + 1) * 2, 1.4)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = norton_beer(((len(interferogram) - 1) - zpdIdx) * 2, 1.4)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
+
+            return window
+
+        elif windowType == "nb_strong":
+            winLeft = norton_beer((zpdIdx + 1) * 2, 1.6)
+            winLeft = winLeft[:int(len(winLeft) / 2)]
+            winRight = norton_beer(((len(interferogram) - 1) - zpdIdx) * 2, 1.6)
+            winRight = winRight[int(len(winRight) / 2):]
+            window = np.concatenate((winLeft, winRight))
+
+            return window
 
         else:
             return None
