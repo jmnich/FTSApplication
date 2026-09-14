@@ -1,4 +1,6 @@
 import os
+import matplotlib
+matplotlib.use("TkAgg")
 import customtkinter as ctk
 import numpy as np
 import matplotlib as mpl
@@ -924,6 +926,8 @@ class FTSApp:
         logging.info(f"COM ports refresh. Found: {self.currentlyAvailableCOMPorts}")
 
     def onCmdSingleCapture(self):
+        self._updateSimulatedNoiseLevel()
+
         self.appSettings["mfliSelectedFrequencyIndex"] = str(self.MFLIFreqneuenciesAsStrings.
                                                              index(self.samplingFreqCombo.get()))
 
@@ -952,6 +956,8 @@ class FTSApp:
                                                        apodizationWindow = self.apodizationTypeCombo.get())
 
     def onCmdMultipleCapture(self):
+
+        self._updateSimulatedNoiseLevel()
 
         try:
             measCount = int(self.appSettings["averagingCount"])
@@ -1202,6 +1208,7 @@ class FTSApp:
 
             logging.info(f"Attempting to connect to hardware. Zaber port: {strippedZaberPort} and Simulated DAQ")
 
+        self.ApplicationController.daqType = daqType
         self.ApplicationController.setZaberPort(strippedZaberPort)
         self.ApplicationController.performInitialization()
 
@@ -1209,7 +1216,7 @@ class FTSApp:
         # hide all DAQ-specific controls first
         for widget in [self.mfliIDLabel, self.mfliIDBox,
                        self.digilentRangeLabel, self.digilentRangeCombo, self.digilentInfoLabel,
-                       self.simulatedNoiseLabel, self.simulatedNoiseSlider, self.simulatedNoiseValueLabel]:
+                       self.simulatedNoiseLabel, self.simulatedNoiseSlider]:
             widget.grid_forget()
 
         if daqType == "MFLI":
@@ -1219,22 +1226,27 @@ class FTSApp:
         elif daqType == "Digilent ADP2230":
             self.digilentRangeLabel.grid(row=5, column=0, sticky="W", padx=5, pady=5)
             self.digilentRangeCombo.grid(row=5, column=1, sticky="E", padx=5, pady=5)
-            self.digilentInfoLabel.grid(row=5, column=0, columnspan=2, sticky="S", padx=5, pady=(30, 0))
 
         elif daqType == "Simulated":
             self.simulatedNoiseLabel.grid(row=5, column=0, sticky="W", padx=5, pady=5)
-            self.simulatedNoiseSlider.grid(row=5, column=1, sticky="E", padx=5, pady=5)
+            self.simulatedNoiseSlider.grid(row=5, column=1, sticky="EW", padx=5, pady=5)
             self.simulatedNoiseSlider.set(float(self.appSettings.get("simulatedNoiseLevel", "0.1")))
-            self.simulatedNoiseValueLabel.grid(row=5, column=0, columnspan=2, sticky="S", padx=5, pady=(30, 0))
-            self.simulatedNoiseValueLabel.configure(text=f"{self.simulatedNoiseSlider.get():.2f}")
+            self._updateNoiseLabel()
 
     def onCmdDAQTypeChanged(self, selectedType):
         self.appSettings["daqType"] = selectedType
         self._showDAQControls(selectedType)
 
     def onCmdSimulatedNoiseChanged(self, value):
-        self.simulatedNoiseValueLabel.configure(text=f"{float(value):.2f}")
         self.appSettings["simulatedNoiseLevel"] = str(value)
+        self._updateNoiseLabel()
+
+    def _updateNoiseLabel(self):
+        self.simulatedNoiseLabel.configure(text=f"Noise: {self.simulatedNoiseSlider.get():.2f}")
+
+    def _updateSimulatedNoiseLevel(self):
+        if self.DAQDriver is not None and isinstance(self.DAQDriver, SimulatedDAQ):
+            self.DAQDriver.setNoiseLevel(self.simulatedNoiseSlider.get())
 
     def onCmdOpenSpectrumPlot(self):
         logging.info(f"External spectrum plot open")

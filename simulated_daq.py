@@ -55,12 +55,14 @@ class SimulatedDAQ(DAQDriver):
     def _measure(self) -> str:
         print("Simulated DAQ: generating measurement data")
 
-        ref = self._embeddedReference.copy()
-        meas = self._embeddedInterferogram.copy()
+        ref = self._embeddedReference.copy().astype(np.float64)
+        meas = self._embeddedInterferogram.copy().astype(np.float64)
 
         if self.noiseLevel > 0:
-            ref = ref + self.noiseLevel * np.random.randn(len(ref))
-            meas = meas + self.noiseLevel * np.random.randn(len(meas))
+            refNoiseAmp = self.noiseLevel * 0.01 * np.max(np.abs(ref))
+            measNoiseAmp = self.noiseLevel * 0.01 * np.max(np.abs(meas))
+            ref = ref + refNoiseAmp * np.random.randn(len(ref))
+            meas = meas + measNoiseAmp * np.random.randn(len(meas))
 
         self.lastReferenceData = ref.astype(np.float32)
         self.lastInterferogramData = meas.astype(np.float32)

@@ -46,6 +46,7 @@ class BackgroundController:
         self.ZaberPort                      = None
         self.daqDeviceName                  = None
         self.daqIP                          = None
+        self.daqType                        = None
 
         self.rawInterferograms = []
         self.rawReferenceSignals = []
@@ -70,6 +71,25 @@ class BackgroundController:
         self.daqIP = ip
 
     def initializationWork(self):
+
+        if self.daqType == "Simulated":
+            self.SetStatusMessageMethod("Connecting to simulated DAQ...")
+
+            if self.DAQDriver.tryConnect(self.daqDeviceName, serverHost=self.daqIP):
+                self.SetDAQReadyFlagMethod(True)
+            else:
+                self.SetDAQReadyFlagMethod(False)
+
+            self.SetDelayLineReadyFlagMethod(True)
+
+            if self.DAQDriver.isConnected:
+                self.SetStatusMessageMethod("Conneted to hardware")
+                self.SetGeneralReadyFlagMethod(True)
+            else:
+                self.SetStatusMessageMethod("One or more hardware components\nfailed to connect")
+                self.SetGeneralReadyFlagMethod(False)
+
+            return
 
         if self.ZaberPort is None or self.daqDeviceName is None:
             self.SetStatusMessageMethod("Select ports and IDs\nfor hardware modules")
@@ -158,6 +178,10 @@ class BackgroundController:
 
 
     def performAcqusition(self):
+
+        if self.daqType == "Simulated":
+            return self._performSimulatedAcquisition()
+
         self.ZaberDriver.waitUntilIdle()
         mfliSamplingFrequency = self.DAQDriver.SamplingRates[self.mfliFrequencyIndex]
         self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
@@ -264,6 +288,106 @@ class BackgroundController:
                 results = self.DataAnalyzer.analyzeDataHilbertInterpolation(rawReferenceSignal=self.DAQDriver.lastReferenceData,
                                                         rawInterferogram=self.DAQDriver.lastInterferogramData,
                                                         apodizationWindowType=self.selectedApodizationWindowType)
+            except:
+                self.SetStatusMessageMethod("Data acquisition or analysis failed")
+                failedAcquisitionsCount += 1
+                i -= 1
+                print("Data acquisition or analysis failed due to exception")
+                continue
+
+            self.rawInterferograms.append(np.copy(self.DAQDriver.lastInterferogramData))
+            self.rawReferenceSignals.append(np.copy(self.DAQDriver.lastReferenceData))
+            self.interferogramTimestamps.append(scanCompletionTimestamp)
+            self.spectraX.append(np.copy(results["spectrumX"]))
+            self.spectraY.append(np.copy(results["spectrumY"]))
+            self.processedInterferogramsX.append(np.copy(results["interferogramX"]))
+            self.processedInterferogramsY.append(np.copy(results["interferogramY"]))
+
+            # equalize lengths of all spectra before averaging
+            minimalSpectrumLength = len(self.spectraX[0])
+
+            for s in self.spectraX:
+                if len(s) < minimalSpectrumLength:
+                    minimalSpectrumLength = len(s)
+
+            for z in range(0, len(self.spectraX)):
+                if len(self.spectraX[z]) > minimalSpectrumLength:
+                    self.spectraX[z] = self.spectraX[z][:minimalSpectrumLength - 1]
+                    self.spectraY[z] = self.spectraY[z][:minimalSpectrumLength - 1]
+
+            # calculate an average spectrum
+            sumArr = numpy.zeros(len(self.spectraY[0]))
+            for s in self.spectraY:
+                sumArr += s
+
+            sumArr /= len(self.spectraY)
+
+            self.averageSpectrumX = self.spectraX[0]
+            self.averageSpectrumY = sumArr
+
+            self.SendResultsToPlot(results["interferogramX"], results["rawInterferogramY"],
+                                   results["spectrumX"], results["spectrumY"],
+                                   self.averageSpectrumX, self.averageSpectrumY, i,
+                                   results["apodizationWindow"])
+
+        return "ok"
+
+
+    def _performSimulatedAcquisition(self):
+        mfliSamplingFrequency = self.DAQDriver.SamplingRates[self.mfliFrequencyIndex]
+        self.mfliSamplesCount = (self.scanLength / (self.scanSpeed * 1000)) * mfliSamplingFrequency
+
+        # configure DAQ
+        self.DAQDriver.configureForMeasurement(samplingFreqIndex=self.mfliFrequencyIndex,
+                                                sampleLength=self.mfliSamplesCount,
+                                                triggerEnabled=self.triggerModeEnabled,
+                                                triggerLevel=self.triggerLevel,
+                                                triggerReference=self.triggerReference,
+                                                triggerHysteresis=self.triggerHysteresis)
+
+        time.sleep(1)
+
+        failedAcquisitionsCount = 0
+
+        i = 0
+        while i < self.orderedMeasurementsCount:
+            i += 1
+
+            if failedAcquisitionsCount >= math.ceil(self.orderedMeasurementsCount * 0.2):
+                if self.orderedMeasurementsCount == 1:
+                    errstatus = "Single measurement failed"
+                else:
+                    errstatus = "More than 20% of the ordered measurements failed"
+                return errstatus
+
+            if self.stopRequestFlag:
+                self.stopRequestFlag = False
+                self.SetStatusMessageMethod("Measurement stopped")
+                return "stop"
+
+            self.SetStatusMessageMethod("Acquisition...")
+
+            if self.triggerModeEnabled:
+                self.DAQDriver.armTrigger()
+                measStatus = self.DAQDriver.measureDataWithPrearmedTrigger()
+            else:
+                measStatus = self.DAQDriver.measureDataStandaloneMethod()
+
+            scanCompletionTimestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+            if measStatus != "ok":
+                failedAcquisitionsCount += 1
+                i -= 1
+                print("Measurement cycle skipped due to error: " + measStatus)
+                continue
+
+            self.SetStatusMessageMethod("Calculations...")
+
+            try:
+                results = self.DataAnalyzer.analyzeDataHilbertInterpolation(
+                    rawReferenceSignal=self.DAQDriver.lastReferenceData,
+                    rawInterferogram=self.DAQDriver.lastInterferogramData,
+                    apodizationWindowType=self.selectedApodizationWindowType)
             except:
                 self.SetStatusMessageMethod("Data acquisition or analysis failed")
                 failedAcquisitionsCount += 1
