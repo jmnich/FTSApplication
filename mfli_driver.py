@@ -25,19 +25,27 @@ class MFLIDriver:
         self.triggerEnabled = False
         # self.tryConnect(self.deviceID)
 
-    def tryConnect(self, deviceID, dataServerIP):
+    def tryConnect(self, deviceID, serverHost="localhost"):
 
         self.deviceID = deviceID.replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
         logging.info(f"MFLI driver trying to connect to: {self.deviceID}")
 
         try:
-            self.DAQ = zhinst.core.ziDAQServer(dataServerIP, 8004, 6)
+            device_id: str = self.deviceID
+            server_host: str = serverHost
+            server_port: int = 8004
+
+            (self.DAQ, device, props) = zhinst.utils.create_api_session(
+                device_id, 6, server_host=server_host, server_port=server_port
+            )
+
+            # restore the base configuration
+            zhinst.utils.disable_everything(self.DAQ, self.deviceID)
             self.Scope = self.DAQ.scopeModule()
 
-            self.DAQ.set(f'/{self.deviceID}/system/identify', 1)
-            self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
             self.Scope.set('mode', 1)
-            # self.Scope.set('averager/weight', 1)
+            # self.Scope.set('lastreplace', 1) # this shouldn't be used with the API, reserved for LabOne
+            self.Scope.set('averager/weight', 1)
             self.Scope.set('averager/restart', 0)
 
 
@@ -69,6 +77,7 @@ class MFLIDriver:
         self.DAQ.sync()
 
         self.DAQ.setInt(f'/{self.deviceID}/sigins/0/ac', 1)
+        self.DAQ.setDouble(f'/{self.deviceID}/sigins/0/range', 3.0)
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/time', int(samplingFreqIndex))
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/length', int(sampleLength))
         self.DAQ.setInt(f'/{self.deviceID}/scopes/0/channels/1/inputselect', 8) # '8' - Ref 0
@@ -101,7 +110,7 @@ class MFLIDriver:
 
         self.DAQ.sync()
 
-        # self.Scope.set("historylength", 1)
+        self.Scope.set("historylength", 1)
         self.Scope.unsubscribe('*')
         self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
 
@@ -170,17 +179,13 @@ class MFLIDriver:
 
     def measureDataStandaloneMethod(self):
         startTime = datetime.now()
-        expectedMeasDuration = (self.currentMeasurementPointsCount / self.currentMeasurementFrequency) + 20.0
+        expectedMeasDuration = (self.currentMeasurementPointsCount / self.currentMeasurementFrequency) + 2.0
         print(f"Max allowed measurement duration: {expectedMeasDuration}s")
         status = "ok"
 
         print("Debug - starting DAQ")
 
         try:
-            self.Scope.unsubscribe('*')
-            self.Scope.subscribe(f'/{self.deviceID}/scopes/0/wave')
-            self.DAQ.sync()
-            
             self.Scope.execute()
 
             self.DAQ.setInt(f'/{self.deviceID}/scopes/0/single', 1)
@@ -198,20 +203,12 @@ class MFLIDriver:
 
                 time.sleep(0.5)
 
-                print(f"Progress {float(self.Scope.progress()[0]) * 100:.2f} %\r")
-
             print("Debug - data acquired")
 
             self.DAQ.sync()
             result = self.Scope.read()
 
-            if len(result) < 1:
-                print("MFLI returned empty data. Retrying...")
-                time.sleep(3)
-                result = self.Scope.read()
-
             self.Scope.finish()
-            self.Scope.unsubscribe('*')
 
             print(f"Debug - data read, dict lenght: {len(result)}")
 

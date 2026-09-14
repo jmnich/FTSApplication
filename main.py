@@ -749,7 +749,7 @@ class FTSApp:
         def _():
             if isReady:
                 self.mfliStatusLabel.configure(text="READY", text_color="lightgreen")
-                self.appSettings["mfliDeviceID"] = self.MFLIDrv.deviceID
+                self.appSettings["mfliDeviceID"] = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace('\r', '')
                 logging.info(f"DAQ status: ready")
             else:
                 self.mfliStatusLabel.configure(text="NOT\nREADY", text_color="red")
@@ -1089,6 +1089,8 @@ class FTSApp:
     def onCmdConnectHardware(self):
         strippedMFLIID = self.mfliIDBox.get("0.0", "end").replace(' ', '').replace('\t', '').replace('\n', '').replace(
             '\r', '')
+
+        self.appSettings["mfliDeviceID"] = strippedMFLIID
 
         print(strippedMFLIID)
 
