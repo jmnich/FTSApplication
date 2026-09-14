@@ -27,7 +27,7 @@ import data_processor as DataProcessor
 class FTSApp:
 
     def __init__(self):
-        self.appVersion = "1.1_240308"
+        self.appVersion = "1.2_260914"
 
         logging.basicConfig(filename='ftsapp.log', format='%(asctime)s %(message)s', level=logging.INFO)
         logging.info('========= Application started =========')
