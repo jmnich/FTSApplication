@@ -497,9 +497,7 @@ class FTSApp:
         # ==============================================================================================================
         self.settingsTabs.tab("Sv").columnconfigure(0, weight=1)
         self.settingsTabs.tab("Sv").columnconfigure(1, weight=1)
-
-        self.settingsTabs.tab("Sv").columnconfigure(0, weight=1)
-        self.settingsTabs.tab("Sv").columnconfigure(1, weight=1)
+        self.settingsTabs.tab("Sv").columnconfigure(2, weight=1)
 
         self.buttonSaveNormal = ctk.CTkButton(master=self.settingsTabs.tab("Sv"),
                                             text="Save\nresults",
@@ -510,17 +508,25 @@ class FTSApp:
         self.buttonSaveNormal.grid(row=0, column=0, sticky="N", padx=5, pady=5)
 
         self.buttonSaveCSV = ctk.CTkButton(master=self.settingsTabs.tab("Sv"),
-                                            text="Save\nspectrum\nas .csv",
+                                            text="Save\nspec.\nas .csv",
                                             width=120,
                                             height=80,
                                             corner_radius=10,
                                             command=self.onCmdSaveCSVOnly)
         self.buttonSaveCSV.grid(row=0, column=1, sticky="N", padx=5, pady=5)
 
+        self.buttonSaveH5 = ctk.CTkButton(master=self.settingsTabs.tab("Sv"),
+                                            text="Save\n.h5",
+                                            width=120,
+                                            height=80,
+                                            corner_radius=10,
+                                            command=self.onCmdSaveH5)
+        self.buttonSaveH5.grid(row=0, column=2, sticky="N", padx=5, pady=5)
+
         self.exportRawDataSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Sv"),
                                                     text="Export raw data", command=self.onExportSwitchModified,
                                                     onvalue="True", offvalue="False")
-        self.exportRawDataSwitch.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="W")
+        self.exportRawDataSwitch.grid(row=1, column=0, columnspan=3, padx=5, pady=5, sticky="W")
 
         if self.appSettings["saveRawData"] == "True":
             self.exportRawDataSwitch.select()
@@ -530,7 +536,7 @@ class FTSApp:
         self.exportToMatSwitch = ctk.CTkSwitch(master=self.settingsTabs.tab("Sv"),
                                                     text="Export to .MAT", command=self.onExportSwitchModified,
                                                     onvalue="True", offvalue="False")
-        self.exportToMatSwitch.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky="W")
+        self.exportToMatSwitch.grid(row=2, column=0, columnspan=3, padx=5, pady=5, sticky="W")
 
         if self.appSettings["saveDataToMAT"] == "True":
             self.exportToMatSwitch.select()
@@ -540,14 +546,14 @@ class FTSApp:
         self.commentsLabel = ctk.CTkLabel(master=self.settingsTabs.tab("Sv"),
                                                     text="Comments:",
                                                     font=ctk.CTkFont(size=12))
-        self.commentsLabel.grid(row=3, column=0, columnspan=2, sticky="W", padx=5, pady=(10,0))
+        self.commentsLabel.grid(row=3, column=0, columnspan=3, sticky="W", padx=5, pady=(10,0))
 
         self.commentsTextBox = ctk.CTkTextbox(master=self.settingsTabs.tab("Sv"),
                                               text_color='ghost white',
                                               bg_color='gray18',
                                               corner_radius=10)
 
-        self.commentsTextBox.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky='W')
+        self.commentsTextBox.grid(row=4, column=0, columnspan=3, padx=5, pady=5, sticky='W')
 
         # configure settings 'PLOTS' tab
         # ==============================================================================================================
@@ -1213,6 +1219,18 @@ class FTSApp:
             referenceSignalsRaw         = self.ApplicationController.rawReferenceSignals,
             settings                    = self.settingsUsedForCurrentMeasurement,
             comments                    = self.commentsTextBox.get("0.0", "end")
+        )
+
+    def onCmdSaveH5(self):
+        exportSettings = self.settingsUsedForCurrentMeasurement.copy()
+        exportSettings["appVersion"] = self.appVersion
+
+        DataExportTool.exportRawInterferogramsToH5(
+            interferogramsRaw       = self.ApplicationController.rawInterferograms,
+            referenceSignalsRaw     = self.ApplicationController.rawReferenceSignals,
+            interferogramTimestamps = self.ApplicationController.interferogramTimestamps,
+            settings                = exportSettings,
+            comments                = self.commentsTextBox.get("0.0", "end")
         )
 
     def onClosing(self):

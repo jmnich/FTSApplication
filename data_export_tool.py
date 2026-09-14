@@ -9,6 +9,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scipy
 import math
+import json
+import h5py
 
 # from serial.serialjava import comm
 
@@ -518,3 +520,125 @@ def exportAllData(spectrumX, spectrumY, interferogramX, interferogramY, interfer
                 f.write(f"{key}:{settings[key]}\n")
 
     logging.info(f"Data export finished. Location: {savePackageRootPath}")
+
+
+def exportRawInterferogramsToH5(interferogramsRaw, referenceSignalsRaw, interferogramTimestamps, settings, comments):
+    if (interferogramsRaw is None or referenceSignalsRaw is None or
+            len(interferogramsRaw) == 0 or len(referenceSignalsRaw) == 0 or
+            len(interferogramsRaw) != len(referenceSignalsRaw)):
+        logging.info("Failed to save raw interferograms as .h5 file: no data available")
+        return
+
+    initial_file_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_raw_interferograms.h5")
+
+    filePath = asksaveasfilename(initialfile=initial_file_name,
+                                 defaultextension=".h5",
+                                 filetypes=[("HDF5", "*.h5"), ("HDF5 Files", "*.h5")])
+
+    if filePath is None or len(filePath) == 0:
+        logging.info("Save .h5 cancelled by user")
+        return
+
+    createdTimestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    appVersion = settings.get("appVersion", "unknown")
+
+    # build measurement_config.json
+    measurementConfig = {
+        "instrument": {
+            "model": "Experimental THz FTS"
+        },
+        "acquisition": {
+            "scans": len(interferogramsRaw),
+            "delayLine": {
+                "minimumSpeed": float(settings.get("delayLineMinimumSpeed", 0)),
+                "maximumSpeed": float(settings.get("delayLineMaximumSpeed", 0)),
+                "configuredScanSpeed": float(settings.get("delayLineConfiguredScanSpeed", 0)),
+                "configuredScanStart": int(float(settings.get("delayLineConfiguredScanStart", 0))),
+                "configuredScanLength": int(float(settings.get("delayLineConfiguredScanLength", 0))),
+                "minimalScanLength": int(float(settings.get("delayLineMinimalScanLength", 0))),
+                "comPort": settings.get("delayLineCOMPort", ""),
+                "speedSliderTicks": int(float(settings.get("delayLineSpeedSliderTicks", 0))),
+            }
+        },
+        "legacy": {}
+    }
+
+    legacyKeys = [
+        "absorbanceToolAbsRangeYMax", "absorbanceToolAbsRangeYMin",
+        "absorbanceToolRangeXMax", "absorbanceToolRangeXMin",
+        "absorbanceToolRangeYMax", "absorbanceToolRangeYMin",
+        "adjustmentAmplitude", "adjustmentCenterPoint", "adjustmentPeriod",
+        "apodizationWindow", "averagingCount",
+        "mfliDeviceID", "mfliSelectedFrequencyIndex",
+        "plotEngine", "plotSpectrumXRangeMax", "plotSpectrumXRangeMin",
+        "plotSpectrumYRangeMax", "plotSpectrumYRangeMin",
+        "saveDataToMAT", "saveRawData",
+        "triggerHysteresis", "triggerLevel", "triggerModeEnabled", "triggerReference",
+    ]
+
+    for key in legacyKeys:
+        if key in settings:
+            measurementConfig["legacy"][key] = settings[key]
+
+    measurementConfigJson = json.dumps(measurementConfig, indent=2)
+
+    # build comment text
+    saveTimestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    commentText = f"NAME: raw_interferograms\nTIMESTAMP: {saveTimestamp}\n\n"
+    if comments is not None:
+        commentText += comments
+
+    # build @origin for the igm group
+    originJson = json.dumps({
+        "timestamp": createdTimestamp,
+        "application": "FTS App_dev",
+        "version": appVersion
+    })
+
+    # build @config for the igm group
+    pointsPerFile = len(referenceSignalsRaw[0])
+    igmConfig = {
+        "sourceFormat": "csv",
+        "dataType": "igm_uncorrected_x",
+        "axisCorrected": False,
+        "detectorUnits": "V",
+        "opdUnits": "um",
+        "channelOrder": ["Reference detector", "Primary detector"],
+        "fileCount": len(interferogramsRaw),
+        "pointsPerFile": pointsPerFile
+    }
+    igmConfigJson = json.dumps(igmConfig, indent=2)
+
+    vlenStrType = h5py.string_dtype()
+
+    with h5py.File(filePath, "w") as h5file:
+        # root attributes
+        h5file.attrs["format"] = "unified-spectral-data-container"
+        h5file.attrs["created"] = createdTimestamp
+
+        # root datasets (scalar vlen string, matching the reference file layout)
+        h5file.create_dataset("measurement_config.json", data=measurementConfigJson, dtype=vlenStrType)
+        h5file.create_dataset("measurement_comment.txt", data=commentText, dtype=vlenStrType)
+        h5file.create_dataset("tags", data="", dtype=vlenStrType)
+
+        # igm_uncorrected_x group
+        igmGroup = h5file.create_group("igm_uncorrected_x")
+        igmGroup.attrs["schema"] = "interferogram"
+        igmGroup.attrs["origin"] = originJson
+        igmGroup.attrs["config"] = igmConfigJson
+
+        for i in range(0, len(interferogramsRaw)):
+            refData = np.array(referenceSignalsRaw[i], dtype=np.float32)
+            measData = np.array(interferogramsRaw[i], dtype=np.float32)
+
+            combined = np.column_stack((refData, measData))
+
+            ds = igmGroup.create_dataset(f"raw_{i}", data=combined)
+            ds.attrs["kind"] = "original"
+            ds.attrs["columns"] = np.array(["Reference detector", "Primary detector"], dtype=object)
+            ds.attrs["units"] = np.array(["V", "V"], dtype=object)
+
+            if i < len(interferogramTimestamps):
+                ds.attrs["timestamp"] = interferogramTimestamps[i]
+
+    logging.info(f"Raw interferograms saved as .h5 file: {filePath}")

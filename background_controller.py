@@ -1,5 +1,6 @@
 import time
 from threading import *
+from datetime import datetime
 
 import numpy
 
@@ -49,6 +50,7 @@ class BackgroundController:
 
         self.rawInterferograms = []
         self.rawReferenceSignals = []
+        self.interferogramTimestamps = []
         self.processedInterferogramsX = []
         self.processedInterferogramsY = []
         self.spectraX = []
@@ -110,6 +112,7 @@ class BackgroundController:
         # reset and configure the backgroung controller
         self.rawInterferograms.clear()
         self.rawReferenceSignals.clear()
+        self.interferogramTimestamps.clear()
         self.processedInterferogramsX.clear()
         self.processedInterferogramsY.clear()
         self.spectraX.clear()
@@ -240,6 +243,8 @@ class BackgroundController:
 
             self.ZaberDriver.waitUntilIdle()
 
+            scanCompletionTimestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
             # try to complete the measurement even if acquisition fails a few times
             if measStatus != "ok":
                 failedAcquisitionsCount += 1
@@ -269,6 +274,7 @@ class BackgroundController:
 
             self.rawInterferograms.append(np.copy(self.MFLIDriver.lastInterferogramData))
             self.rawReferenceSignals.append(np.copy(self.MFLIDriver.lastReferenceData))
+            self.interferogramTimestamps.append(scanCompletionTimestamp)
             self.spectraX.append(np.copy(results["spectrumX"]))
             self.spectraY.append(np.copy(results["spectrumY"]))
             self.processedInterferogramsX.append(np.copy(results["interferogramX"]))
