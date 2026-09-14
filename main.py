@@ -55,6 +55,8 @@ class FTSApp:
         self.currentApodizationWindow = []
 
         self.currentlyAvailableCOMPorts = []
+        self.daqReady = False
+        self.delayLineReady = False
 
         # construct GUI
         ctk.set_appearance_mode("dark")
@@ -117,7 +119,8 @@ class FTSApp:
                                           width=120,
                                           height=75,
                                           corner_radius=10,
-                                          command=self.onCmdSingleCapture)
+                                          command=self.onCmdSingleCapture,
+                                          state="disabled")
         self.buttonSingle.grid(row=0, column=0, sticky="N", padx=5, pady=5)
 
         self.multipleMeasStartButton = ctk.CTkButton(master=self.frameButtonsTop,
@@ -125,7 +128,8 @@ class FTSApp:
                                             width=120,
                                             height=75,
                                             corner_radius=10,
-                                            command=self.onCmdMultipleCapture)
+                                            command=self.onCmdMultipleCapture,
+                                            state="disabled")
         self.multipleMeasStartButton.grid(row=1, column=0, sticky="N", padx=5, pady=5)
 
         self.multipleMeasStopButton = ctk.CTkButton(master=self.frameButtonsTop,
@@ -801,6 +805,7 @@ class FTSApp:
 
     def setDAQReadyFlag(self, isReady):
         def _():
+            self.daqReady = isReady
             if isReady:
                 self.mfliStatusLabel.configure(text="READY", text_color="lightgreen")
                 if self.daqTypeCombo.get() == "MFLI":
@@ -811,7 +816,18 @@ class FTSApp:
                 self.mfliStatusLabel.configure(text="NOT\nREADY", text_color="red")
                 logging.info(f"DAQ status: not ready")
                 self._setScanTrgEnabled(True)
+            self._updateCaptureButtons()
         self.root.after(0, _)
+
+    def _updateCaptureButtons(self):
+        isSimulated = self.daqTypeCombo.get() == "Simulated"
+        if isSimulated:
+            ready = self.daqReady
+        else:
+            ready = self.daqReady and self.delayLineReady
+        state = "normal" if ready else "disabled"
+        self.buttonSingle.configure(state=state)
+        self.multipleMeasStartButton.configure(state=state)
 
     def _setScanTrgEnabled(self, enabled):
         state = "normal" if enabled else "disabled"
@@ -830,6 +846,7 @@ class FTSApp:
 
     def setDelayLineReadyFlag(self, isReady):
         def _():
+            self.delayLineReady = isReady
             if isReady:
                 self.zaberStatusLabel.configure(text="READY", text_color="lightgreen")
                 self.appSettings["delayLineCOMPort"] = self.zaberPortCombo.get()
@@ -837,6 +854,7 @@ class FTSApp:
             else:
                 self.zaberStatusLabel.configure(text="NOT\nREADY", text_color="red")
                 logging.info(f"Delay line status: not ready")
+            self._updateCaptureButtons()
         self.root.after(0, _)
 
     def receiveMeasurementResults(self, interfX, interfY, spectrumX, spectrumY, averageSpectrumX, averageSpectrumY,
